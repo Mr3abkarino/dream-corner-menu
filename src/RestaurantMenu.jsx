@@ -131,10 +131,10 @@ const DEFAULT_MENU = [
   { id: "sd3", cat: "الأصناف الجانبية", name: "صوص رانش هوم ميد", price: 15 },
 
   // المشروبات
-  { id: "d1", cat: "المشروبات", name: "بيبسي علب", price: 15 },
-  { id: "d2", cat: "المشروبات", name: "سفن أب علب", price: 15 },
+  { id: "d1", cat: "المشروبات", name: "بيبسي كانز", price: 15 },
+  { id: "d2", cat: "المشروبات", name: "سفن أب كانز", price: 15 },
   { id: "d3", cat: "المشروبات", name: "ميرندا برتقال", price: 15 },
-  { id: "d4", cat: "المشروبات", name: "مياة معدنية صغيرة", price: 8 }
+  { id: "d4", cat: "المشروبات", name: "مياة معدنية صغيرة", price: 6 }
 ];
 
 // دمج كلاسيكي بدون استخدام الـ backticks لضمان النجاح التام للبناء على Vercel
@@ -191,12 +191,12 @@ function OrnamentDivider({ color }) {
 export default function RestaurantMenu() {
   const [theme, setTheme] = useState(THEMES[0]);
   const [restaurantName, setRestaurantName] = useState("دريم كورنر");
-  const [tagline, setTagline] = useState("PIZZA & SANDWICHES — طعم يفرق .. جودة تليق بيك");
-  const [address, setAddress] = useState("البيبرامون، بجوار عيادة الدكتورة إلهام العشري");
+  const [tagline, setTagline] = useState("PIZZA & SANDWICHES — طعم يفرق .. جودة تليق بك");
+  const [address, setAddress] = useState("البرامون، بجوار عيادة الدكتورة إلهام العشري");
   const [menuUrl, setMenuUrl] = useState("https://your-restaurant-menu.com");
   const [whatsappNumber, setWhatsappNumber] = useState("+201006113627");
-  const [vodafoneCash, setVodafoneCash] = useState("+201006113627");
-  const [instapay, setInstapay] = useState("dreamcorner@instapay");
+  const [vodafoneCash, setVodafoneCash] = useState("+201023590020");
+  const [instapay, setInstapay] = useState("");
 
   const [items, setItems] = useState(DEFAULT_MENU);
   const [activeCat, setActiveCat] = useState("الكل");
