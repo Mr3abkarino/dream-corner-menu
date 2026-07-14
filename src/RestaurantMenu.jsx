@@ -1,4 +1,3 @@
-```react
 import { useState, useEffect, useMemo, useRef } from "react";
 import {
   ShoppingCart, Plus, Minus, X, Pencil, Trash2, Check, Copy,
@@ -188,6 +187,7 @@ function OrnamentDivider({ color }) {
   );
 }
 
+// التصدير الافتراضي المباشر والوحيد لمنع أي تعارضات مع Vite
 export default function RestaurantMenu() {
   const [theme, setTheme] = useState(THEMES[0]);
   const [restaurantName, setRestaurantName] = useState("دريم كورنر");
@@ -221,7 +221,7 @@ export default function RestaurantMenu() {
   
   const saveTimer = useRef(null);
 
-  // تحميل الخطوط بأمان
+  // استدعاء وتحميل الخطوط بأمان بدون مخالفة قواعد الـ Hooks
   useEffect(() => {
     const id = "menu-fonts";
     if (document.getElementById(id)) return;
@@ -232,7 +232,7 @@ export default function RestaurantMenu() {
     document.head.appendChild(link);
   }, []);
 
-  // استعادة البيانات المخزنة
+  // استعادة البيانات مع رمز الأمان المشفر
   useEffect(() => {
     (async () => {
       try {
@@ -347,6 +347,7 @@ export default function RestaurantMenu() {
 
   const findItem = (id) => items.find((i) => i.id === id);
 
+  // صياغة تفكيك آمنة للمتغيرات لحظر أي أخطاء تجميعية في Rollup
   const cartList = useMemo(() => {
     return Object.entries(cart)
       .filter((entry) => entry[1] > 0)
@@ -636,21 +637,21 @@ export default function RestaurantMenu() {
               <Field label="حساب InstaPay" value={instapay} onChange={setInstapay} theme={theme} dir="ltr" />
               <Field label="رمز الأمان للإدارة (PIN)" value={adminPin} onChange={setAdminPin} theme={theme} dir="ltr" />
 
-              <div className="pt-4 border-t" style={{ borderColor: theme.muted + "30" }}>
+              <div className="pt-4 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
                 <div className="flex items-center justify-between mb-3">
                   <p className="font-bold text-sm">قائمة المأكولات والأصناف</p>
                   <button onClick={addNewItem} className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full" style={{ background: theme.accent, color: theme.bg }}><PlusCircle size={14} /> إضافة صنف</button>
                 </div>
                 <div className="space-y-3">
                   {items.map((item) => (
-                    <div key={item.id} className="p-3 rounded-xl border" style={{ borderColor: theme.muted + "25", background: theme.surface }}>
+                    <div key={item.id} className="p-3 rounded-xl border" style={{ borderColor: (theme.muted || "#B3A18C") + "25", background: theme.surface }}>
                       {editingId === item.id ? (
                         <div className="space-y-2">
-                          <input value={item.name} onChange={(e) => updateItem(item.id, { name: e.target.value })} className="w-full px-2.5 py-1.5 rounded-lg border bg-transparent text-sm font-bold" style={{ borderColor: theme.muted + "40", color: theme.text }} />
-                          <input value={item.desc || ""} onChange={(e) => updateItem(item.id, { desc: e.target.value })} className="w-full px-2.5 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
+                          <input value={item.name} onChange={(e) => updateItem(item.id, { name: e.target.value })} className="w-full px-2.5 py-1.5 rounded-lg border bg-transparent text-sm font-bold" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
+                          <input value={item.desc || ""} onChange={(e) => updateItem(item.id, { desc: e.target.value })} className="w-full px-2.5 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
                           <div className="grid grid-cols-2 gap-2">
-                            <input value={item.cat} onChange={(e) => updateItem(item.id, { cat: e.target.value })} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
-                            <input value={item.subcat || ""} onChange={(e) => updateItem(item.id, { subcat: e.target.value })} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
+                            <input value={item.cat} onChange={(e) => updateItem(item.id, { cat: e.target.value })} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
+                            <input value={item.subcat || ""} onChange={(e) => updateItem(item.id, { subcat: e.target.value })} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
                           </div>
                           <div className="flex justify-between items-center py-1">
                             {item.sizes ? (
@@ -663,13 +664,13 @@ export default function RestaurantMenu() {
                             <div className="space-y-1.5">
                               {item.sizes.map((sz, idx) => (
                                 <div key={idx} className="flex items-center gap-2">
-                                  <input value={sz.label} onChange={(e) => updateSize(item.id, idx, { label: e.target.value })} className="w-20 px-2 py-1.5 rounded-lg border bg-transparent text-xs text-center" style={{ borderColor: theme.muted + "40", color: theme.text }} />
-                                  <input type="number" value={sz.price} onChange={(e) => updateSize(item.id, idx, { price: Number(e.target.value) })} className="flex-1 px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
+                                  <input value={sz.label} onChange={(e) => updateSize(item.id, idx, { label: e.target.value })} className="w-20 px-2 py-1.5 rounded-lg border bg-transparent text-xs text-center" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
+                                  <input type="number" value={sz.price} onChange={(e) => updateSize(item.id, idx, { price: Number(e.target.value) })} className="flex-1 px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
                                 </div>
                               ))}
                             </div>
                           ) : (
-                            <input type="number" value={item.price} onChange={(e) => updateItem(item.id, { price: Number(e.target.value) })} className="w-full px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
+                            <input type="number" value={item.price} onChange={(e) => updateItem(item.id, { price: Number(e.target.value) })} className="w-full px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
                           )}
                           <button onClick={() => setEditingId(null)} className="w-full py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-1 shadow" style={{ background: theme.accent, color: theme.bg }}><Save size={13} /> حفظ التعديل</button>
                         </div>
@@ -761,5 +762,3 @@ function PayRow({ icon, label, value, theme, onCopy, copied }) {
     </div>
   );
 }
-
-```
