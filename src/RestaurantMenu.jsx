@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import {
   ShoppingCart, Plus, Minus, X, Pencil, Trash2, Check, Copy,
   QrCode, Settings, Phone, CreditCard, Sparkles, Search, RotateCcw,
-  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut
+  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText
 } from "lucide-react";
 
 // شعار تفاعلي ذكي فائق الدقة والأداء لتجنب مشاكل تشويه النصوص المقتطعة أثناء النشر
@@ -211,9 +211,10 @@ export default function RestaurantMenu() {
   const [loaded, setLoaded] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  // خانات إدخال بيانات العميل الجديد لطلب الدليفري
+  // خانات إدخال بيانات العميل لطلب الدليفري والملاحظات
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
+  const [customerNotes, setCustomerNotes] = useState("");
   const [validationError, setValidationError] = useState("");
 
   // نظام حماية الإدارة
@@ -237,7 +238,7 @@ export default function RestaurantMenu() {
     document.head.appendChild(link);
   }, []);
 
-  // :استعادة البيانات مع رمز الأمان المشفر
+  // استعادة البيانات مع رمز الأمان المشفر + استعادة بيانات العميل المحفوظة تلقائياً
   useEffect(() => {
     (async () => {
       try {
@@ -258,6 +259,15 @@ export default function RestaurantMenu() {
             if (t) setTheme(t);
           }
         }
+
+        // استرجاع هاتف وعنوان العميل المحفوظين لتوفير وقت الكتابة عليه[cite: 1]
+        if (typeof window !== "undefined" && window.localStorage) {
+          const savedPhone = localStorage.getItem("customer-phone-cache");
+          const savedAddress = localStorage.getItem("customer-address-cache");
+          if (savedPhone) setCustomerPhone(savedPhone);
+          if (savedAddress) setCustomerAddress(savedAddress);
+        }
+
       } catch (e) {
         console.error("خطأ أثناء استدعاء التخزين", e);
       } finally {
@@ -385,7 +395,7 @@ export default function RestaurantMenu() {
     setItems((its) => its.map((i) => (i.id === id ? { ...i, ...patch } : i)));
 
   const updateSize = (id, sizeIdx, patch) =>
-    setItems((its) => its.map((i) => i.id === id ? { ...i, sizes: i.sizes.map((s, idx) => (idx === sizeIdx ? { ...s, ...patch } : s)) } : i));
+    setItems((its) => i.id === id ? { ...i, sizes: i.sizes.map((s, idx) => (idx === sizeIdx ? { ...s, ...patch } : s)) } : i);
 
   const deleteItem = (id) => setItems((its) => its.filter((i) => i.id !== id));
 
@@ -398,21 +408,33 @@ export default function RestaurantMenu() {
   const sendWhatsApp = () => {
     if (cartList.length === 0) return;
     
-    // التحقق من إدخال البيانات قبل الإرسال لمنع الطلبات الناقصة
+    // التحقق من إدخال البيانات الإلزامية أولاً[cite: 1]
     if (!customerPhone.trim() || !customerAddress.trim()) {
       setValidationError("برجاء كتابة رقم الهاتف وعنوان التوصيل أولاً لتأكيد طلبك!");
       return;
     }
     
     setValidationError("");
+
+    // حفظ البيانات في كاش المتصفح لعدم تكرار الكتابة مستقبلاً[cite: 1]
+    if (typeof window !== "undefined" && window.localStorage) {
+      localStorage.setItem("customer-phone-cache", customerPhone.trim());
+      localStorage.setItem("customer-address-cache", customerAddress.trim());
+    }
+
     const lines = cartList.map((cartItem) => "• " + cartItem.label + " x" + cartItem.qty + " — " + money(cartItem.price * cartItem.qty));
     
-    // صياغة الرسالة النهائية بالبيانات الجديدة للعميل
-    const text = "طلب جديد من منيو " + restaurantName + " 🍽️\n\n" + 
-                 "📱 تليفون العميل: " + customerPhone + "\n" +
-                 "📍 عنوان التوصيل: " + customerAddress + "\n\n" +
-                 "الطلبات:\n" + lines.join("\n") + "\n\n" +
-                 "إجمالي الحساب: " + money(cartTotal);
+    // صياغة الرسالة النهائية بالبيانات الجديدة والملاحظات[cite: 1]
+    let text = "طلب جديد من منيو " + restaurantName + " 🍽️\n\n" + 
+               "📱 تليفون العميل: " + customerPhone + "\n" +
+               "📍 عنوان التوصيل: " + customerAddress + "\n";
+               
+    if (customerNotes.trim()) {
+      text += "📝 ملاحظات العميل: " + customerNotes.trim() + "\n";
+    }
+
+    text += "\nالطلبات:\n" + lines.join("\n") + "\n\n" +
+            "إجمالي الحساب: " + money(cartTotal);
                  
     const phone = whatsappNumber.replace(/[^\d+]/g, "");
     window.open("https://wa.me/" + phone + "?text=" + encodeURIComponent(text), "_blank");
@@ -568,7 +590,8 @@ export default function RestaurantMenu() {
           <Sheet theme={theme} title="سلة المشتريات" onClose={() => setCartOpen(false)}>
             {cartList.length === 0 ? <p className="text-center py-8" style={{ color: theme.muted }}>العربة فارغة حالياً</p> : (
               <>
-                <div className="space-y-3 max-h-[35vh] overflow-y-auto pr-1">
+                {/* قائمة المنتجات مع تحديد الحجم الأقصى لضمان عدم خروج العناصر من الشاشة */}
+                <div className="space-y-3 max-h-[28vh] overflow-y-auto pr-1">
                   {cartList.map((cartItem) => (
                     <div key={cartItem.key} className="flex items-center justify-between gap-2 border-b pb-2" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
                       <div className="min-w-0">
@@ -584,16 +607,17 @@ export default function RestaurantMenu() {
                   ))}
                 </div>
                 
-                <div className="flex items-center justify-between pt-4 mt-2 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
-                  <span className="font-bold text-sm" style={{ color: theme.muted }}>الإجمالي الإجمالي</span>
+                <div className="flex items-center justify-between pt-3 mt-2 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
+                  <span className="font-bold text-sm" style={{ color: theme.muted }}>الإجمالي النهائي</span>
                   <span className="font-black text-lg" style={{ color: theme.accent }}>{money(cartTotal)}</span>
                 </div>
 
-                {/* ===================== KHANAT KHASAH BE AL-AYMEEL ===================== */}
-                <div className="mt-4 pt-3 border-t space-y-3" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
-                  <p className="text-xs font-bold" style={{ color: theme.accent }}>بيانات التوصيل (الدليفري):</p>
+                {/* ===================== KHANAT AL-AMIL MA'A AL-MOLAHZAT ===================== */}
+                <div className="mt-3 pt-2 border-t space-y-2.5" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
+                  <p className="text-xs font-bold" style={{ color: theme.accent }}>بيانات التوصيل والطلب (الدليفري):</p>
                   
                   <div className="space-y-2">
+                    {/* خانة رقم الهاتف */}
                     <div className="relative">
                       <input 
                         type="tel" 
@@ -606,16 +630,30 @@ export default function RestaurantMenu() {
                       <Phone size={14} className="absolute right-3 top-3.5 opacity-60" style={{ color: theme.text }} />
                     </div>
 
+                    {/* خانة العنوان بالتفصيل */}
                     <div className="relative">
                       <input 
                         type="text" 
-                        placeholder="عنوان التوصيل بالتفصيل (البيت، الشارع، علامة مميزة)..." 
+                        placeholder="عنوان التوصيل بالتفصيل (البيت، الشارع)..." 
                         value={customerAddress}
                         onChange={(e) => setCustomerAddress(e.target.value)}
                         className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none" 
                         style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }}
                       />
                       <MapPin size={14} className="absolute right-3 top-3.5 opacity-60" style={{ color: theme.text }} />
+                    </div>
+
+                    {/* خانة الملاحظات الإضافية الذكية */}
+                    <div className="relative">
+                      <textarea 
+                        placeholder="أي ملاحظات إضافية؟ (مثال: بدون بصل، الكرانشي حار، البيبسي ساقع...)" 
+                        value={customerNotes}
+                        onChange={(e) => setCustomerNotes(e.target.value)}
+                        rows={2}
+                        className="w-full px-3 py-2 pr-9 rounded-xl text-xs border focus:outline-none resize-none leading-relaxed" 
+                        style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }}
+                      />
+                      <FileText size={14} className="absolute right-3 top-2.5 opacity-60" style={{ color: theme.text }} />
                     </div>
                   </div>
                   
@@ -626,9 +664,9 @@ export default function RestaurantMenu() {
                   )}
                 </div>
 
-                <button onClick={sendWhatsApp} className="w-full mt-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform" style={{ background: "#25D366", color: "#fff" }}><MessageCircle size={18} />تأكيد وإرسال عبر واتساب</button>
+                <button onClick={sendWhatsApp} className="w-full mt-3 py-3 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform" style={{ background: "#25D366", color: "#fff" }}><MessageCircle size={18} />تأكيد وإرسال عبر واتساب</button>
                 
-                <div className="mt-4 pt-4 border-t space-y-2" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
+                <div className="mt-3 pt-3 border-t space-y-2" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
                   <p className="text-xs font-bold" style={{ color: theme.muted }}>خيارات الدفع الإلكتروني المباشر</p>
                   <PayRow icon={<Phone size={16} />} label="فودافون كاش كود" value={vodafoneCash} theme={theme} onCopy={copyText} copied={copied} />
                   <PayRow icon={<CreditCard size={16} />} label="حساب InstaPay" value={instapay} theme={theme} onCopy={copyText} copied={copied} />
