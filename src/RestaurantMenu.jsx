@@ -2,18 +2,11 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import {
   ShoppingCart, Plus, Minus, X, Pencil, Trash2, Check, Copy,
   QrCode, Settings, Phone, CreditCard, Sparkles, Search, RotateCcw,
-  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, Truck
+  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText
 } from "lucide-react";
 
 // شعار تفاعلي ذكي فائق الدقة والأداء لتجنب مشاكل تشويه النصوص المقتطعة أثناء النشر
 const LOGO_SRC = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='50' fill='%23D4AF37'/><text y='70' x='18' font-size='60'>🍕</text></svg>";
-
-/* قائمة مناطق التوصيل وأسعار الشحن - يمكنك تعديل الأسعار والمناطق من هنا بسهولة */
-const DELIVERY_AREAS = [
-  { id: "area1", name: "البرامون", price: 10 },
-  { id: "area2", name: "بر الترعة", price: 20 },
-  { id: "area3", name: "سرسو البرامون", price: 35 },
-   ];
 
 /* الهويات البصرية المتاحة لصاحب المطعم للتعديل السريع للمظهر */
 const THEMES = [
@@ -92,6 +85,14 @@ const THEMES = [
   }
 ];
 
+/* قائمة مناطق التوصيل وأسعارها - يمكنك تعديل الأسعار والمناطق من هنا بسهولة */
+const DELIVERY_AREAS = [
+  { name: "اختر منطقة التوصيل...", price: 0 },
+  { name: "البرامون (داخل البلد)", price: 10 },
+  { name: "البرامون (بر الترعة)", price: 20 },
+  { name: "سرسو البرامون", price: 35 },
+];
+
 /* منيو دريم كورنر الافتراضي المستخرج من صور منيو دريم كورنر */
 const DEFAULT_MENU = [
   // البيتزا
@@ -133,21 +134,21 @@ const DEFAULT_MENU = [
   { id: "s14", cat: "السندوتشات", subcat: "التوست", name: "ميكس توست جبن", price: 60 },
 
   // الأصناف الجانبية
-  { id: "sd1", cat: "الأصناف الجانبية", name: "بطاطس مقلية ذهبية", price: 25 },
-  { id: "sd2", cat: "الأصناف الجانبية", name: "بطاطس بالجبنة الشيدر", price: 40 },
-  { id: "sd3", cat: "الأصناف الجانبية", name: "صوص رانش هوم ميد", price: 15 },
+  { id: "sd1", cat: "الأصناف الجانبية", name: "بطاطس مقلية ذهبية", price: 35 },
+  { id: "sd2", cat: "الأصناف الجانبية", name: "بطاطس بالجبنة الشيدر", price: 45 },
+  { id: "sd3", cat: "الأصناف الجانبية", name: "صوص رانش هوم ميد", price: 10 },
 
   // المشروبات
   { id: "d1", cat: "المشروبات", name: "بيبسي كانز", price: 15 },
   { id: "d2", cat: "المشروبات", name: "سفن أب كانز", price: 15 },
-  { id: "d3", cat: "المشروبات", name: "ميرندا برتقال", price: 15 },
+  { id: "d3", cat: "المشروبات", name: "ميرندا برتقال كانز", price: 15 },
   { id: "d4", cat: "المشروبات", name: "مياة معدنية صغيرة", price: 6 }
 ];
 
 // دمج كلاسيكي بدون استخدام الـ backticks لضمان النجاح التام للبناء على Vercel
 const money = (n) => Number(n).toLocaleString("ar-EG") + " ج.م";
 
-// نظام حماية وحفظ ذكي متوافق بالكامل مع Vercel
+// نظام حماية وحفظ ذكي متوافق بالكامل مع Vercel[cite: 1]
 const safeStorage = {
   get: async (key) => {
     if (typeof window !== "undefined" && window.storage && typeof window.storage.get === "function") {
@@ -218,11 +219,11 @@ export default function RestaurantMenu() {
   const [loaded, setLoaded] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  // خانات إدخال بيانات العميل لطلب الدليفري والملاحظات ومصاريف الشحن
+  // خانات إدخال بيانات العميل الجديد لطلب الدليفري والملاحظات[cite: 1]
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
   const [customerNotes, setCustomerNotes] = useState("");
-  const [selectedArea, setSelectedArea] = useState(DELIVERY_AREAS[0]);
+  const [deliveryArea, setDeliveryArea] = useState(DELIVERY_AREAS[0]);
   const [validationError, setValidationError] = useState("");
 
   // نظام حماية الإدارة
@@ -246,7 +247,7 @@ export default function RestaurantMenu() {
     document.head.appendChild(link);
   }, []);
 
-  // استعادة البيانات مع رمز الأمان المشفر + استعادة بيانات العميل المحفوظة تلقائياً
+  // استعادة البيانات مع رمز الأمان المشفر + استرجاع الكاش[cite: 1]
   useEffect(() => {
     (async () => {
       try {
@@ -268,18 +269,12 @@ export default function RestaurantMenu() {
           }
         }
 
-        // استرجاع هاتف وعنوان العميل والمنطقة المحفوظة لتوفير وقت الكتابة عليه
+        // استرجاع الكاش لهاتف وعنوان العميل إذا كان قد سجل مسبقاً لتوفير الوقت عليه[cite: 1]
         if (typeof window !== "undefined" && window.localStorage) {
           const savedPhone = localStorage.getItem("customer-phone-cache");
           const savedAddress = localStorage.getItem("customer-address-cache");
-          const savedAreaId = localStorage.getItem("customer-area-id-cache");
-          
           if (savedPhone) setCustomerPhone(savedPhone);
           if (savedAddress) setCustomerAddress(savedAddress);
-          if (savedAreaId) {
-            const area = DELIVERY_AREAS.find(a => a.id === savedAreaId);
-            if (area) setSelectedArea(area);
-          }
         }
 
       } catch (e) {
@@ -300,7 +295,7 @@ export default function RestaurantMenu() {
     }
   }, []);
 
-  // الحفظ التلقائي متضمناً الـ PIN الجديد
+  // الحفظ التلقائي متضمناً الـ PIN الجديد[cite: 1]
   useEffect(() => {
     if (!loaded) return;
     clearTimeout(saveTimer.current);
@@ -397,11 +392,9 @@ export default function RestaurantMenu() {
 
   const cartCount = cartList.reduce((s, i) => s + i.qty, 0);
   const cartTotal = cartList.reduce((s, i) => s + i.qty * i.price, 0);
-  
-  // الإجمالي النهائي مع دمج سعر منطقة الدليفري
-  const finalTotalWithDelivery = useMemo(() => {
-    return cartTotal + (selectedArea ? selectedArea.price : 0);
-  }, [cartTotal, selectedArea]);
+
+  // حساب إجمالي السلة شاملاً تكلفة توصيل المنطقة المختارة[cite: 1]
+  const finalTotal = cartTotal + deliveryArea.price;
 
   const addToCart = (key, delta) =>
     setCart((c) => {
@@ -414,7 +407,7 @@ export default function RestaurantMenu() {
     setItems((its) => its.map((i) => (i.id === id ? { ...i, ...patch } : i)));
 
   const updateSize = (id, sizeIdx, patch) =>
-    setItems((its) => i.id === id ? { ...i, sizes: i.sizes.map((s, idx) => (idx === sizeIdx ? { ...s, ...patch } : s)) } : i);
+    setItems((its) => its.map((i) => i.id === id ? { ...i, sizes: i.sizes.map((s, idx) => (idx === sizeIdx ? { ...s, ...patch } : s)) } : i));
 
   const deleteItem = (id) => setItems((its) => its.filter((i) => i.id !== id));
 
@@ -427,27 +420,32 @@ export default function RestaurantMenu() {
   const sendWhatsApp = () => {
     if (cartList.length === 0) return;
     
-    // التحقق من إدخال البيانات الإلزامية أولاً
-    if (!customerPhone.trim() || !customerAddress.trim() || !selectedArea) {
-      setValidationError("برجاء كتابة الهاتف، العنوان، واختيار المنطقة لتأكيد طلبك!");
+    // التحقق من تعبئة البيانات الأساسية قبل الإرسال[cite: 1]
+    if (!customerPhone.trim() || !customerAddress.trim()) {
+      setValidationError("برجاء كتابة رقم الهاتف وعنوان التوصيل أولاً لتأكيد طلبك!");
+      return;
+    }
+
+    // التحقق من قيام العميل باختيار منطقة توصيل حقيقية[cite: 1]
+    if (deliveryArea.price === 0 && deliveryArea.name === DELIVERY_AREAS[0].name) {
+      setValidationError("برجاء اختيار منطقة التوصيل لحساب إجمالي الأوردر بدقة!");
       return;
     }
     
     setValidationError("");
 
-    // حفظ البيانات في كاش المتصفح لعدم تكرار الكتابة مستقبلاً
+    // حفظ البيانات في الكاش لعدم تكرار الإدخال مستقبلاً[cite: 1]
     if (typeof window !== "undefined" && window.localStorage) {
       localStorage.setItem("customer-phone-cache", customerPhone.trim());
       localStorage.setItem("customer-address-cache", customerAddress.trim());
-      localStorage.setItem("customer-area-id-cache", selectedArea.id);
     }
 
     const lines = cartList.map((cartItem) => "• " + cartItem.label + " x" + cartItem.qty + " — " + money(cartItem.price * cartItem.qty));
     
-    // صياغة الرسالة النهائية الاحترافية متضمنة تفصيل الشحن والتوصيل
+    // صياغة الرسالة النهائية بالبيانات والملاحظات الجديدة وحساب التوصيل تلقائياً[cite: 1]
     let text = "طلب جديد من منيو " + restaurantName + " 🍽️\n\n" + 
                "📱 تليفون العميل: " + customerPhone + "\n" +
-               "📍 المنطقة: " + selectedArea.name + "\n" +
+               "📍 المنطقة: " + deliveryArea.name + "\n" +
                "🏠 العنوان بالتفصيل: " + customerAddress + "\n";
                
     if (customerNotes.trim()) {
@@ -456,8 +454,8 @@ export default function RestaurantMenu() {
 
     text += "\nالطلبات:\n" + lines.join("\n") + "\n\n" +
             "💵 حساب الأكل: " + money(cartTotal) + "\n" +
-            "🛵 مصاريف التوصيل: " + money(selectedArea.price) + "\n" +
-            "💰 الإجمالي النهائي: " + money(finalTotalWithDelivery);
+            "🛵 مصاريف التوصيل: " + money(deliveryArea.price) + "\n" +
+            "💰 الإجمالي النهائي: " + money(finalTotal);
                  
     const phone = whatsappNumber.replace(/[^\d+]/g, "");
     window.open("https://wa.me/" + phone + "?text=" + encodeURIComponent(text), "_blank");
@@ -603,7 +601,7 @@ export default function RestaurantMenu() {
           <ShoppingCart size={18} />
           <span>{cartCount} طلبات</span>
           <span className="opacity-60">|</span>
-          <span>{money(finalTotalWithDelivery)}</span>
+          <span>{money(cartTotal)}</span>
         </button>
       )}
 
@@ -613,8 +611,8 @@ export default function RestaurantMenu() {
           <Sheet theme={theme} title="سلة المشتريات" onClose={() => setCartOpen(false)}>
             {cartList.length === 0 ? <p className="text-center py-8" style={{ color: theme.muted }}>العربة فارغة حالياً</p> : (
               <>
-                {/* قائمة المنتجات مع تحديد الحجم الأقصى لضمان عدم خروج العناصر من الشاشة */}
-                <div className="space-y-3 max-h-[25vh] overflow-y-auto pr-1">
+                {/* قائمة السلة مع قفل الحجم والاسكرول لعدم الخروج من الشاشة */}
+                <div className="space-y-3 max-h-[22vh] overflow-y-auto pr-1">
                   {cartList.map((cartItem) => (
                     <div key={cartItem.key} className="flex items-center justify-between gap-2 border-b pb-2" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
                       <div className="min-w-0">
@@ -630,6 +628,287 @@ export default function RestaurantMenu() {
                   ))}
                 </div>
                 
-                {/* تفصيل الفاتورة وحساب التوصيل التلقائي */}
-                <div className="pt-2 mt-2 border-t space-y-1 text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
-                  <div className="flex items-center justify-between opacity
+                {/* الحساب التفصيلي مع إضافة مصاريف التوصيل للمجموع الكلي[cite: 1] */}
+                <div className="space-y-1 pt-2 mt-1 border-t text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
+                  <div className="flex items-center justify-between opacity-80">
+                    <span>حساب المأكولات:</span>
+                    <span>{money(cartTotal)}</span>
+                  </div>
+                  <div className="flex items-center justify-between opacity-80">
+                    <span>توصيل لـ ({deliveryArea.price > 0 ? deliveryArea.name : "لم تحدد"}):</span>
+                    <span>{money(deliveryArea.price)}</span>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 text-sm font-black border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "15" }}>
+                    <span style={{ color: theme.muted }}>الإجمالي الإجمالي:</span>
+                    <span style={{ color: theme.accent }} className="text-base">{money(finalTotal)}</span>
+                  </div>
+                </div>
+
+                {/* ===================== بيانات العميل والتوصيل والملاحظات[cite: 1] ===================== */}
+                <div className="mt-3 pt-2 border-t space-y-2" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
+                  <p className="text-[11px] font-bold" style={{ color: theme.accent }}>بيانات التوصيل والطلب (الدليفري):</p>
+                  
+                  <div className="space-y-2">
+                    {/* اختيار المنطقة وحساب التوصيل تلقائياً[cite: 1] */}
+                    <div className="relative">
+                      <select 
+                        value={deliveryArea.name}
+                        onChange={(e) => {
+                          const selected = DELIVERY_AREAS.find(a => a.name === e.target.value);
+                          if (selected) setDeliveryArea(selected);
+                        }}
+                        className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none appearance-none" 
+                        style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }}
+                      >
+                        {DELIVERY_AREAS.map((area) => (
+                          <option key={area.name} value={area.name} style={{ background: theme.surface, color: theme.text }}>
+                            {area.name} {area.price > 0 ? `(+${area.price} ج.م)` : ""}
+                          </option>
+                        ))}
+                      </select>
+                      <MapPin size={14} className="absolute right-3 top-3.5 opacity-60" style={{ color: theme.text }} />
+                    </div>
+
+                    {/* خانة رقم الهاتف[cite: 1] */}
+                    <div className="relative">
+                      <input 
+                        type="tel" 
+                        placeholder="رقم تليفونك لتأكيد الطلب..." 
+                        value={customerPhone}
+                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none" 
+                        style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }}
+                      />
+                      <Phone size={14} className="absolute right-3 top-3.5 opacity-60" style={{ color: theme.text }} />
+                    </div>
+
+                    {/* خانة عنوان التوصيل بالتفصيل[cite: 1] */}
+                    <div className="relative">
+                      <input 
+                        type="text" 
+                        placeholder="العنوان بالتفصيل (البيت، الشارع، دور كام)..." 
+                        value={customerAddress}
+                        onChange={(e) => setCustomerAddress(e.target.value)}
+                        className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none" 
+                        style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }}
+                      />
+                      <MapPin size={14} className="absolute right-3 top-3.5 opacity-60" style={{ color: theme.text }} />
+                    </div>
+
+                    {/* خانة الملاحظات الإضافية الذكية[cite: 1] */}
+                    <div className="relative">
+                      <textarea 
+                        placeholder="أي ملاحظات إضافية على الأكل؟ (مثال: بدون بصل، الكرانشي حار...)" 
+                        value={customerNotes}
+                        onChange={(e) => setCustomerNotes(e.target.value)}
+                        rows={1}
+                        className="w-full px-3 py-2 pr-9 rounded-xl text-xs border focus:outline-none resize-none" 
+                        style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }}
+                      />
+                      <FileText size={14} className="absolute right-3 top-2.5 opacity-60" style={{ color: theme.text }} />
+                    </div>
+                  </div>
+                  
+                  {validationError && (
+                    <p className="text-[10px] text-center font-bold text-red-500 bg-red-500/10 py-1 rounded-lg animate-pulse">
+                      {validationError}
+                    </p>
+                  )}
+                </div>
+
+                <button onClick={sendWhatsApp} className="w-full mt-3 py-3 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform" style={{ background: "#25D366", color: "#fff" }}><MessageCircle size={18} />تأكيد وإرسال عبر واتساب</button>
+                
+                <div className="mt-3 pt-3 border-t space-y-2" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
+                  <p className="text-xs font-bold" style={{ color: theme.muted }}>خيارات الدفع الإلكتروني المباشر</p>
+                  <PayRow icon={<Phone size={16} />} label="فودافون كاش كود" value={vodafoneCash} theme={theme} onCopy={copyText} copied={copied} />
+                  <PayRow icon={<CreditCard size={16} />} label="حساب InstaPay" value={instapay} theme={theme} onCopy={copyText} copied={copied} />
+                </div>
+              </>
+            )}
+          </Sheet>
+        </Overlay>
+      )}
+
+      {qrOpen && (
+        <Overlay onClose={() => setQrOpen(false)}>
+          <Sheet theme={theme} title="بار كود المنيو للعملاء" onClose={() => setQrOpen(false)}>
+            <div className="flex flex-col items-center gap-4">
+              <div className="p-4 rounded-2xl bg-white shadow-md"><img src={qrSrc} alt="QR Code للمنيو" width={220} height={220} /></div>
+              <label className="w-full text-sm">
+                <span style={{ color: theme.muted }}>رابط موقع المنيو الحالي</span>
+                <input value={menuUrl} onChange={(e) => setMenuUrl(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border bg-transparent text-sm font-semibold text-center" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }} dir="ltr" />
+              </label>
+            </div>
+          </Sheet>
+        </Overlay>
+      )}
+
+      {themePickerOpen && (
+        <Overlay onClose={() => setThemePickerOpen(false)}>
+          <Sheet theme={theme} title="اختر هوية مطعمك البصرية" onClose={() => setThemePickerOpen(false)}>
+            <div className="grid grid-cols-1 gap-2.5">
+              {THEMES.map((t) => (
+                <button key={t.id} onClick={() => { setTheme(t); setThemePickerOpen(false); }} className="flex items-center gap-3 p-3 rounded-xl border text-right transition-colors hover:bg-black/5" style={{ borderColor: (theme.muted || "#B3A18C") + "30", background: t.bg }}>
+                  <div className="flex gap-1 shrink-0"><span className="w-6 h-6 rounded-full border border-white/20" style={{ background: t.accent }} /><span className="w-6 h-6 rounded-full border border-white/20" style={{ background: t.accent2 }} /></div>
+                  <span style={{ fontFamily: t.display, color: t.text }} className="text-lg">{t.name}</span>
+                  {t.id === theme.id && <Check size={16} className="mr-auto" style={{ color: t.accent }} />}
+                </button>
+              ))}
+            </div>
+          </Sheet>
+        </Overlay>
+      )}
+
+      {pinModalOpen && (
+        <Overlay onClose={() => setPinModalOpen(false)}>
+          <Sheet theme={theme} title="التحقق من هوية المدير" onClose={() => setPinModalOpen(false)}>
+            <form onSubmit={handleVerifyPin} className="space-y-4">
+              <div className="flex flex-col items-center justify-center py-2"><KeyRound size={40} className="mb-2" style={{ color: theme.accent }} /><p className="text-xs text-center" style={{ color: theme.muted }}>هذه المنطقة مخصصة لإدارة المطعم فقط.</p></div>
+              <label className="block text-sm space-y-1">
+                <span className="font-bold opacity-90" style={{ color: theme.muted }}>رمز الأمان الحالي</span>
+                <input type="password" maxLength={12} value={enteredPin} onChange={(e) => setEnteredPin(e.target.value)} placeholder="••••" className="w-full px-3 py-2.5 rounded-lg border bg-transparent text-center text-lg tracking-widest font-bold focus:outline-none" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} required />
+              </label>
+              {pinError && <p className="text-xs text-center font-bold text-red-500 bg-red-500/10 py-1.5 rounded-lg">{pinError}</p>}
+              <div className="flex gap-2"><button type="submit" className="flex-1 py-2 rounded-xl font-bold text-xs" style={{ background: theme.accent, color: theme.bg }}>دخول الإدارة</button><button type="button" onClick={() => setPinModalOpen(false)} className="px-4 py-2 border rounded-xl text-xs font-bold" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }}>إلغاء</button></div>
+            </form>
+          </Sheet>
+        </Overlay>
+      )}
+
+      {adminOpen && (
+        <Overlay onClose={() => setAdminOpen(false)}>
+          <Sheet theme={theme} title="إعدادات الإدارة والأسعار" onClose={() => setAdminOpen(false)}>
+            <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
+              <Field label="اسم المطعم" value={restaurantName} onChange={setRestaurantName} theme={theme} />
+              <Field label="الشعار الفرعي للمنيو" value={tagline} onChange={setTagline} theme={theme} />
+              <Field label="العنوان الجغرافي" value={address} onChange={setAddress} theme={theme} />
+              <Field label="رقم واتساب الاستقبال" value={whatsappNumber} onChange={setWhatsappNumber} theme={theme} dir="ltr" hint="بالصيغة الدولية مثال: +201006113627" />
+              <Field label="رقم فودافون كاش" value={vodafoneCash} onChange={setVodafoneCash} theme={theme} dir="ltr" />
+              <Field label="حساب InstaPay" value={instapay} onChange={setInstapay} theme={theme} dir="ltr" />
+              <Field label="رمز الأمان للإدارة (PIN)" value={adminPin} onChange={setAdminPin} theme={theme} dir="ltr" />
+
+              <div className="pt-4 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="font-bold text-sm">قائمة المأكولات والأصناف</p>
+                  <button onClick={addNewItem} className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full" style={{ background: theme.accent, color: theme.bg }}><PlusCircle size={14} /> إضافة صنف</button>
+                </div>
+                <div className="space-y-3">
+                  {items.map((item) => (
+                    <div key={item.id} className="p-3 rounded-xl border" style={{ borderColor: (theme.muted || "#B3A18C") + "25", background: theme.surface }}>
+                      {editingId === item.id ? (
+                        <div className="space-y-2">
+                          <input value={item.name} onChange={(e) => updateItem(item.id, { name: e.target.value })} className="w-full px-2.5 py-1.5 rounded-lg border bg-transparent text-sm font-bold" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
+                          <input value={item.desc || ""} onChange={(e) => updateItem(item.id, { desc: e.target.value })} className="w-full px-2.5 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
+                          <div className="grid grid-cols-2 gap-2">
+                            <input value={item.cat} onChange={(e) => updateItem(item.id, { cat: e.target.value })} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
+                            <input value={item.subcat || ""} onChange={(e) => updateItem(item.id, { subcat: e.target.value })} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
+                          </div>
+                          <div className="flex justify-between items-center py-1">
+                            {item.sizes ? (
+                              <button type="button" onClick={() => updateItem(item.id, { sizes: undefined, price: item.sizes[0]?.price || 40 })} className="text-[11px] font-bold underline" style={{ color: theme.accent }}>تحويل إلى سعر موحد</button>
+                            ) : (
+                              <button type="button" onClick={() => updateItem(item.id, { sizes: [{ label: "كبير", price: item.price || 90 }, { label: "وسط", price: item.price ? Math.max(20, item.price - 20) : 70 }, { label: "صغير", price: item.price ? Math.max(10, item.price - 40) : 45 }], price: undefined })} className="text-[11px] font-bold underline" style={{ color: theme.accent }}>تحويل إلى أحجام متعددة</button>
+                            )}
+                          </div>
+                          {item.sizes ? (
+                            <div className="space-y-1.5">
+                              {item.sizes.map((sz, idx) => (
+                                <div key={idx} className="flex items-center gap-2">
+                                  <input value={sz.label} onChange={(e) => updateSize(item.id, idx, { label: e.target.value })} className="w-20 px-2 py-1.5 rounded-lg border bg-transparent text-xs text-center" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
+                                  <input type="number" value={sz.price} onChange={(e) => updateSize(item.id, idx, { price: Number(e.target.value) })} className="flex-1 px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <input type="number" value={item.price} onChange={(e) => updateItem(item.id, { price: Number(e.target.value) })} className="w-full px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
+                          )}
+                          <button onClick={() => setEditingId(null)} className="w-full py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-1 shadow" style={{ background: theme.accent, color: theme.bg }}><Save size={13} /> حفظ التعديل</button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="font-bold text-sm truncate">{item.name}</p>
+                            <p className="text-xs opacity-80" style={{ color: theme.muted }}>{item.cat}{item.subcat ? " · " + item.subcat : ""} · {item.sizes ? item.sizes.map((s) => s.label + ":" + money(s.price)).join(" / ") : money(item.price)}</p>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button onClick={() => setEditingId(item.id)} className="p-2 rounded-full border" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }}><Pencil size={13} /></button>
+                            <button onClick={() => deleteItem(item.id)} className="p-2 rounded-full border" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }}><Trash2 size={13} /></button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="pt-4 mt-2 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
+                <button onClick={() => setShowResetConfirm(true)} className="w-full py-2.5 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 text-red-500 border-red-500/30"><RotateCcw size={14} /> إعادة تعيين منيو دريم كورنر الافتراضي</button>
+              </div>
+            </div>
+          </Sheet>
+        </Overlay>
+      )}
+
+      {showResetConfirm && (
+        <Overlay onClose={() => setShowResetConfirm(false)}>
+          <Sheet theme={theme} title="تأكيد إعادة التعيين" onClose={() => setShowResetConfirm(false)}>
+            <div className="space-y-4 text-center">
+              <p className="text-sm">هل أنت متأكد من رغبتك في استعادة منيو دريم كورنر الأصلي؟</p>
+              <div className="flex gap-2 justify-center">
+                <button onClick={handleResetMenu} className="px-4 py-2 bg-red-600 text-white rounded-lg text-xs font-bold">نعم</button>
+                <button onClick={() => setShowResetConfirm(false)} className="px-4 py-2 border rounded-lg text-xs font-bold" style={{ borderColor: theme.muted + "40" }}>إلغاء</button>
+              </div>
+            </div>
+          </Sheet>
+        </Overlay>
+      )}
+    </div>
+  );
+}
+
+function Overlay({ children, onClose }) {
+  return (
+    <div className="fixed inset-0 z-40 flex items-end md:items-center justify-center p-0 md:p-4">
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
+      {children}
+    </div>
+  );
+}
+
+function Sheet({ theme, title, onClose, children }) {
+  return (
+    <div className="relative z-10 w-full md:max-w-md max-h-[85vh] rounded-t-3xl md:rounded-3xl p-5 overflow-y-auto" style={{ background: theme.bg, color: theme.text, border: "1px solid " + (theme.muted || "#B3A18C") + "30" }} dir="rtl">
+      <div className="flex items-center justify-between mb-4 pb-2 border-b" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
+        <h2 className="text-lg font-black" style={{ fontFamily: theme.display, color: theme.accent }}>{title}</h2>
+        <button onClick={onClose} className="p-1.5 rounded-full border" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }}><X size={15} /></button>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Field({ label, value, onChange, theme, dir = "rtl", hint }) {
+  return (
+    <label className="block text-sm space-y-1">
+      <span className="font-bold opacity-90" style={{ color: theme.muted }}>{label}</span>
+      <input value={value} onChange={(e) => onChange(e.target.value)} dir={dir} className="w-full px-3 py-2 rounded-lg border bg-transparent" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
+      {hint && <span className="block mt-1 text-xs opacity-70" style={{ color: theme.muted }}>{hint}</span>}
+    </label>
+  );
+}
+
+function PayRow({ icon, label, value, theme, onCopy, copied }) {
+  return (
+    <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg" style={{ background: theme.surface2 }}>
+      <div className="flex items-center gap-2 min-w-0">
+        <span style={{ color: theme.accent }}>{icon}</span>
+        <div className="min-w-0">
+          <p className="text-xs" style={{ color: theme.muted }}>{label}</p>
+          <p className="text-sm font-bold truncate" dir="ltr">{value}</p>
+        </div>
+      </div>
+      <button onClick={() => onCopy(label, value)} className="p-1.5 rounded-full border shrink-0 transition-transform active:scale-95" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }}>
+        {copied === label ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
+      </button>
+    </div>
+  );
+}
