@@ -221,7 +221,7 @@ export default function RestaurantMenu() {
   
   const saveTimer = useRef(null);
 
-  // استدعاء وتحميل الخطوط بأمان بدون مخالفة قواعد الـ Hooks
+  // تحميل الخطوط بأمان
   useEffect(() => {
     const id = "menu-fonts";
     if (document.getElementById(id)) return;
@@ -232,7 +232,7 @@ export default function RestaurantMenu() {
     document.head.appendChild(link);
   }, []);
 
-  // استعادة البيانات مع رمز الأمان المشفر
+  // استعادة البيانات المخزنة
   useEffect(() => {
     (async () => {
       try {
