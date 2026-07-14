@@ -211,6 +211,11 @@ export default function RestaurantMenu() {
   const [loaded, setLoaded] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
+  // خانات إدخال بيانات العميل الجديد لطلب الدليفري
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerAddress, setCustomerAddress] = useState("");
+  const [validationError, setValidationError] = useState("");
+
   // نظام حماية الإدارة
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminPin, setAdminPin] = useState("1234");
@@ -232,7 +237,7 @@ export default function RestaurantMenu() {
     document.head.appendChild(link);
   }, []);
 
-  // استعادة البيانات مع رمز الأمان المشفر
+  // :استعادة البيانات مع رمز الأمان المشفر
   useEffect(() => {
     (async () => {
       try {
@@ -392,8 +397,23 @@ export default function RestaurantMenu() {
 
   const sendWhatsApp = () => {
     if (cartList.length === 0) return;
+    
+    // التحقق من إدخال البيانات قبل الإرسال لمنع الطلبات الناقصة
+    if (!customerPhone.trim() || !customerAddress.trim()) {
+      setValidationError("برجاء كتابة رقم الهاتف وعنوان التوصيل أولاً لتأكيد طلبك!");
+      return;
+    }
+    
+    setValidationError("");
     const lines = cartList.map((cartItem) => "• " + cartItem.label + " x" + cartItem.qty + " — " + money(cartItem.price * cartItem.qty));
-    const text = "طلب جديد من منيو " + restaurantName + " 🍽️\n\n" + lines.join("\n") + "\n\nالإجمالي النهائي: " + money(cartTotal) + "\nالعنوان المطلوب: " + address;
+    
+    // صياغة الرسالة النهائية بالبيانات الجديدة للعميل
+    const text = "طلب جديد من منيو " + restaurantName + " 🍽️\n\n" + 
+                 "📱 تليفون العميل: " + customerPhone + "\n" +
+                 "📍 عنوان التوصيل: " + customerAddress + "\n\n" +
+                 "الطلبات:\n" + lines.join("\n") + "\n\n" +
+                 "إجمالي الحساب: " + money(cartTotal);
+                 
     const phone = whatsappNumber.replace(/[^\d+]/g, "");
     window.open("https://wa.me/" + phone + "?text=" + encodeURIComponent(text), "_blank");
   };
@@ -548,7 +568,7 @@ export default function RestaurantMenu() {
           <Sheet theme={theme} title="سلة المشتريات" onClose={() => setCartOpen(false)}>
             {cartList.length === 0 ? <p className="text-center py-8" style={{ color: theme.muted }}>العربة فارغة حالياً</p> : (
               <>
-                <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-1">
+                <div className="space-y-3 max-h-[35vh] overflow-y-auto pr-1">
                   {cartList.map((cartItem) => (
                     <div key={cartItem.key} className="flex items-center justify-between gap-2 border-b pb-2" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
                       <div className="min-w-0">
@@ -563,11 +583,51 @@ export default function RestaurantMenu() {
                     </div>
                   ))}
                 </div>
-                <div className="flex items-center justify-between pt-4 mt-4 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
+                
+                <div className="flex items-center justify-between pt-4 mt-2 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
                   <span className="font-bold text-sm" style={{ color: theme.muted }}>الإجمالي الإجمالي</span>
                   <span className="font-black text-lg" style={{ color: theme.accent }}>{money(cartTotal)}</span>
                 </div>
+
+                {/* ===================== KHANAT KHASAH BE AL-AYMEEL ===================== */}
+                <div className="mt-4 pt-3 border-t space-y-3" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
+                  <p className="text-xs font-bold" style={{ color: theme.accent }}>بيانات التوصيل (الدليفري):</p>
+                  
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <input 
+                        type="tel" 
+                        placeholder="رقم تليفونك لتأكيد الطلب..." 
+                        value={customerPhone}
+                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none" 
+                        style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }}
+                      />
+                      <Phone size={14} className="absolute right-3 top-3.5 opacity-60" style={{ color: theme.text }} />
+                    </div>
+
+                    <div className="relative">
+                      <input 
+                        type="text" 
+                        placeholder="عنوان التوصيل بالتفصيل (البيت، الشارع، علامة مميزة)..." 
+                        value={customerAddress}
+                        onChange={(e) => setCustomerAddress(e.target.value)}
+                        className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none" 
+                        style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }}
+                      />
+                      <MapPin size={14} className="absolute right-3 top-3.5 opacity-60" style={{ color: theme.text }} />
+                    </div>
+                  </div>
+                  
+                  {validationError && (
+                    <p className="text-[11px] text-center font-bold text-red-500 bg-red-500/10 py-1.5 rounded-lg animate-pulse">
+                      {validationError}
+                    </p>
+                  )}
+                </div>
+
                 <button onClick={sendWhatsApp} className="w-full mt-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform" style={{ background: "#25D366", color: "#fff" }}><MessageCircle size={18} />تأكيد وإرسال عبر واتساب</button>
+                
                 <div className="mt-4 pt-4 border-t space-y-2" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
                   <p className="text-xs font-bold" style={{ color: theme.muted }}>خيارات الدفع الإلكتروني المباشر</p>
                   <PayRow icon={<Phone size={16} />} label="فودافون كاش كود" value={vodafoneCash} theme={theme} onCopy={copyText} copied={copied} />
