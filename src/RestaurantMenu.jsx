@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import restaurantLogo from "./assets/logo.png";
 import {
   ShoppingCart, Plus, Minus, X, Pencil, Trash2, Check, Copy,
   QrCode, Settings, Phone, CreditCard, Sparkles, Search, RotateCcw,
   Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation
 } from "lucide-react";
 
-const LOGO_SRC = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='50' fill='%23D4AF37'/><text y='70' x='18' font-size='60'>🍕</text></svg>";
+const LOGO_SRC = restaurantLogo;
 
 const THEMES = [
   { id: "brand", name: "هوية دريم كورنر", bg: "#0A0A0A", surface: "#141414", surface2: "#1F1F1F", accent: "#D4AF37", accent2: "#8B1E1E", text: "#F3E9D8", muted: "#A3A3A3", display: "'Tajawal', sans-serif" },
@@ -68,7 +69,7 @@ const DEFAULT_MENU = [
   { id: "d4", cat: "المشروبات", name: "مياة معدنية صغيرة", price: 6 }
 ];
 
-const money = (n) => Number(n).toLocaleString("ar-EG") + " ج.م";
+const money = (n) => Number(n).toLocaleString("en-US") + " جنيه";
 
 const safeStorage = {
   get: async (key) => {
@@ -110,7 +111,7 @@ export default function RestaurantMenu() {
   const [restaurantName, setRestaurantName] = useState("دريم كورنر");
   const [tagline, setTagline] = useState("PIZZA & SANDWICHES — طعم يفرق .. جودة تليق بك");
   const [address, setAddress] = useState("البرامون، بجوار عيادة الدكتورة إلهام العشري");
-  const [menuUrl, setMenuUrl] = useState("https://your-restaurant-menu.com");
+  const [menuUrl, setMenuUrl] = useState("https://dream-corner-menu-4nfj.vercel.app");
   const [whatsappNumber, setWhatsappNumber] = useState("+201006113627");
   const [vodafoneCash, setVodafoneCash] = useState("+201023590020");
   const [instapay, setInstapay] = useState("zxzwd@instapay");
