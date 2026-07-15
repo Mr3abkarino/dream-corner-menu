@@ -5,63 +5,15 @@ import {
   Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation
 } from "lucide-react";
 
-// شعار تفاعلي ذكي فائق الدقة والأداء لتجنب مشاكل تشويه النصوص المقتطعة أثناء النشر
 const LOGO_SRC = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='50' fill='%23D4AF37'/><text y='70' x='18' font-size='60'>🍕</text></svg>";
 
-/* الهويات البصرية المتاحة لمطابقة المظهر العصري الجديد الفلات */
 const THEMES = [
-  {
-    id: "brand",
-    name: "هوية دريم كورنر",
-    bg: "#0A0A0A",
-    surface: "#141414",
-    surface2: "#1F1F1F",
-    accent: "#D4AF37",
-    accent2: "#8B1E1E",
-    text: "#F3E9D8",
-    muted: "#A3A3A3",
-    display: "'Tajawal', sans-serif"
-  },
-  {
-    id: "night",
-    name: "ليلي فاخر",
-    bg: "#120E0D",
-    surface: "#1E1816",
-    surface2: "#2A211E",
-    accent: "#D4A24C",
-    accent2: "#A63D2F",
-    text: "#F3E9D8",
-    muted: "#B3A18C",
-    display: "'Tajawal', sans-serif"
-  },
-  {
-    id: "emerald",
-    name: "شرقي فاخر",
-    bg: "#081410",
-    surface: "#10221C",
-    surface2: "#19322A",
-    accent: "#C9A24B",
-    accent2: "#2F6E52",
-    text: "#EFEAD9",
-    muted: "#9DB0A6",
-    display: "'Tajawal', sans-serif"
-  },
-  {
-    id: "cafe",
-    name: "كافيه دافئ",
-    bg: "#F7F5F0",
-    surface: "#FFFFFF",
-    surface2: "#F0EAE1",
-    accent: "#B5622E",
-    accent2: "#6B4226",
-    text: "#2B2118",
-    muted: "#8A7A66",
-    display: "'Tajawal', sans-serif",
-    light: true
-  }
+  { id: "brand", name: "هوية دريم كورنر", bg: "#0A0A0A", surface: "#141414", surface2: "#1F1F1F", accent: "#D4AF37", accent2: "#8B1E1E", text: "#F3E9D8", muted: "#A3A3A3", display: "'Tajawal', sans-serif" },
+  { id: "night", name: "ليلي فاخر", bg: "#120E0D", surface: "#1E1816", surface2: "#2A211E", accent: "#D4A24C", accent2: "#A63D2F", text: "#F3E9D8", muted: "#B3A18C", display: "'Tajawal', sans-serif" },
+  { id: "emerald", name: "شرقي فاخر", bg: "#081410", surface: "#10221C", surface2: "#19322A", accent: "#C9A24B", accent2: "#2F6E52", text: "#EFEAD9", muted: "#9DB0A6", display: "'Tajawal', sans-serif" },
+  { id: "cafe", name: "كافيه دافئ", bg: "#F7F5F0", surface: "#FFFFFF", surface2: "#F0EAE1", accent: "#B5622E", accent2: "#6B4226", text: "#2B2118", muted: "#8A7A66", display: "'Tajawal', sans-serif", light: true }
 ];
 
-/* قائمة مناطق التوصيل المحدثة بناءً على طلبك */
 const DEFAULT_DELIVERY_AREAS = [
   { name: "البرامون (داخل البلد)", price: 10 },
   { name: "البرامون (بر الترعة)", price: 20 },
@@ -70,18 +22,15 @@ const DEFAULT_DELIVERY_AREAS = [
   { name: "الخيارية", price: 50 },
   { name: "كفر البرامون", price: 40 },
   { name: "كفر بداوي", price: 50 },
-  { name: "شربين", price: 80 },
+  { name: "شربين", price: 80 }
 ];
 
-/* قائمة الكوبونات الافتراضية للمطعم */
 const DEFAULT_PROMO_CODES = [
   { code: "OFF10", discount: 10 },
   { code: "DREAM", discount: 15 }
 ];
 
-/* منيو دريم كورنر الافتراضي المحدث بأسعاره الأخيرة */
 const DEFAULT_MENU = [
-  // البيتزا
   { id: "p1", cat: "البيتزا", name: "مارجريتا", sizes: [{ label: "كبير", price: 90 }, { label: "وسط", price: 70 }, { label: "صغير", price: 45 }] },
   { id: "p2", cat: "البيتزا", name: "ميكس جبنة", sizes: [{ label: "كبير", price: 120 }, { label: "وسط", price: 90 }, { label: "صغير", price: 60 }] },
   { id: "p3", cat: "البيتزا", name: "خضار", sizes: [{ label: "كبير", price: 120 }, { label: "وسط", price: 90 }, { label: "صغير", price: 60 }] },
@@ -96,35 +45,23 @@ const DEFAULT_MENU = [
   { id: "p12", cat: "البيتزا", name: "كرانشي (حار أو بارد)", sizes: [{ label: "كبير", price: 130 }, { label: "وسط", price: 100 }, { label: "صغير", price: 80 }] },
   { id: "p13", cat: "البيتزا", name: "ميكس دجاج", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 105 }, { label: "صغير", price: 85 }] },
   { id: "p14", cat: "البيتزا", name: "حشو الأطراف", desc: "إضافة أطراف محشوة لأي بيتزا", sizes: [{ label: "كبير", price: 35 }, { label: "وسط", price: 30 }, { label: "صغير", price: 25 }] },
-
-  // السندوتشات - اللحوم
   { id: "s1", cat: "السندوتشات", subcat: "اللحوم", name: "كفتة مشوية", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
   { id: "s2", cat: "السندوتشات", subcat: "اللحوم", name: "سجق مشوي", sizes: [{ label: "كبير", price: 70 }, { label: "وسط", price: 60 }] },
   { id: "s3", cat: "السندوتشات", subcat: "اللحوم", name: "كبدة إسكندراني", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
   { id: "s4", cat: "السندوتشات", subcat: "اللحوم", name: "ميكس لحوم (سجق+كبدة)", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
   { id: "s5", cat: "السندوتشات", subcat: "اللحوم", name: "حواوشي دبل طعم", price: 45 },
-
-  // السندوتشات - ساندوتشات الدجاج
   { id: "s6", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "تشكن بانية", sizes: [{ label: "كبير", price: 85 }, { label: "وسط", price: 70 }] },
   { id: "s7", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "زنجر سوبريم", sizes: [{ label: "كبير", price: 95 }, { label: "وسط", price: 80 }] },
   { id: "s8", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "سوبر كرانشي", sizes: [{ label: "كبير", price: 95 }, { label: "وسط", price: 80 }] },
   { id: "s9", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "شيش طاووق", sizes: [{ label: "كبير", price: 90 }, { label: "وسط", price: 75 }] },
   { id: "s10", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "تشكن رانش", sizes: [{ label: "كبير", price: 90 }, { label: "وسط", price: 75 }] },
-
-  // السندوتشات - البرجر
   { id: "s11", cat: "السندوتشات", subcat: "البرجر", name: "كلاسيك برجر", sizes: [{ label: "كبير", price: 65 }, { label: "وسط", price: 55 }] },
   { id: "s12", cat: "السندوتشات", subcat: "البرجر", name: "تشيز برجر ليدر", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
   { id: "s13", cat: "السندوتشات", subcat: "البرجر", name: "تشكن برجر مقرمش", sizes: [{ label: "كبير", price: 65 }, { label: "وسط", price: 50 }] },
-
-  // السندوتشات - التوست
   { id: "s14", cat: "السندوتشات", subcat: "التوست", name: "ميكس توست جبن", price: 60 },
-
-  // الأصناف الجانبية
   { id: "sd1", cat: "الأصناف الجانبية", name: "بطاطس مقلية ذهبية", price: 35 },
   { id: "sd2", cat: "الأصناف الجانبية", name: "بطاطس بالجبنة الشيدر", price: 45 },
   { id: "sd3", cat: "الأصناف الجانبية", name: "صوص رانش هوم ميد", price: 10 },
-
-  // المشروبات
   { id: "d1", cat: "المشروبات", name: "بيبسي كانز", price: 15 },
   { id: "d2", cat: "المشروبات", name: "سفن أب كانز", price: 15 },
   { id: "d3", cat: "المشروبات", name: "ميرندا برتقال كانز", price: 15 },
@@ -154,6 +91,20 @@ const safeStorage = {
   }
 };
 
+const copyTextToClipboard = (text) => {
+  if (typeof document === "undefined") return false;
+  const textArea = document.createElement("textarea");
+  textArea.value = text;
+  textArea.style.position = "fixed";
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+  let success = false;
+  try { success = document.execCommand("copy"); } catch (err) {}
+  document.body.removeChild(textArea);
+  return success;
+};
+
 export default function RestaurantMenu() {
   const [theme, setTheme] = useState(THEMES[0]);
   const [restaurantName, setRestaurantName] = useState("دريم كورنر");
@@ -177,7 +128,6 @@ export default function RestaurantMenu() {
   const [loaded, setLoaded] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  // إدارة التوصيل والكوبونات ديناميكياً من لوحة التحكم
   const [deliveryAreas, setDeliveryAreas] = useState(DEFAULT_DELIVERY_AREAS);
   const [newAreaName, setNewAreaName] = useState("");
   const [newAreaPrice, setNewAreaPrice] = useState("");
@@ -186,7 +136,6 @@ export default function RestaurantMenu() {
   const [newPromoCode, setNewPromoCode] = useState("");
   const [newPromoDiscount, setNewPromoDiscount] = useState("");
 
-  // بيانات العميل والكاش والإحداثيات الجغرافية
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
@@ -211,7 +160,30 @@ export default function RestaurantMenu() {
   
   const saveTimer = useRef(null);
 
-  // حساب منطقة التوصيل بأمان
+  // تم تصحيح ترتيب المتغيرات هنا وحساب المجموع أولاً لتجنب مشكلة الـ Initialization
+  const findItem = (id) => items.find((i) => i.id === id);
+
+  const cartList = useMemo(() => {
+    return Object.entries(cart)
+      .filter((entry) => entry[1] > 0)
+      .map((entry) => {
+        const key = entry[0];
+        const qty = entry[1];
+        const parts = key.split("::");
+        const id = parts[0];
+        const sizeLabel = parts[1] || "";
+        const item = findItem(id);
+        if (!item) return null;
+        const price = sizeLabel ? item.sizes.find((s) => s.label === sizeLabel)?.price ?? 0 : item.price;
+        const label = sizeLabel ? item.name + " (" + sizeLabel + ")" : item.name;
+        return { key, id, label, price, qty };
+      })
+      .filter(Boolean);
+  }, [cart, items]);
+
+  const cartCount = useMemo(() => cartList.reduce((s, i) => s + i.qty, 0), [cartList]);
+  const cartTotal = useMemo(() => cartList.reduce((s, i) => s + i.qty * i.price, 0), [cartList]);
+
   const activeDeliveryArea = useMemo(() => {
     if (selectedAreaIndex >= 0 && selectedAreaIndex < deliveryAreas.length) {
       return deliveryAreas[selectedAreaIndex];
@@ -219,7 +191,6 @@ export default function RestaurantMenu() {
     return { name: "اختر منطقة التوصيل...", price: 0 };
   }, [selectedAreaIndex, deliveryAreas]);
 
-  // حساب إجمالي الخصم الكوبوني وقيمة الإجمالي الكلي النهائي
   const discountAmount = useMemo(() => {
     return Math.round((cartTotal * appliedDiscountPercent) / 100);
   }, [cartTotal, appliedDiscountPercent]);
@@ -228,7 +199,6 @@ export default function RestaurantMenu() {
     return Math.max(0, cartTotal - discountAmount) + activeDeliveryArea.price;
   }, [cartTotal, discountAmount, activeDeliveryArea]);
 
-  // دالة تحديد الموقع الجغرافي التلقائي بالـ GPS وتحويله لرابط خريطة
   const handleGetLocation = () => {
     if (!navigator.geolocation) {
       setValidationError("متصفحك لا يدعم تحديد الموقع تلقائياً.");
@@ -240,7 +210,7 @@ export default function RestaurantMenu() {
         const lat = position.coords.latitude;
         const lon = position.coords.longitude;
         setGeoLink("https://www.google.com/maps?q=" + lat + "," + lon);
-        setCustomerAddress(customerAddress + " [تم تحديد الموقع الجغرافي بنجاح 📍]");
+        setCustomerAddress(prev => prev + " [تم تحديد اللوكيشن بـ GPS 📍]");
         setGeoLinkLoading(false);
       },
       () => {
@@ -250,7 +220,6 @@ export default function RestaurantMenu() {
     );
   };
 
-  // دالة تطبيق كود الخصم في السلة
   const handleApplyPromo = () => {
     const codeClean = enteredPromo.trim().toUpperCase();
     if (!codeClean) return;
@@ -264,17 +233,6 @@ export default function RestaurantMenu() {
     }
   };
 
-  useEffect(() => {
-    const id = "menu-fonts";
-    if (document.getElementById(id)) return;
-    const link = document.createElement("link");
-    link.id = id;
-    link.rel = "stylesheet";
-    link.href = "https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap";
-    document.head.appendChild(link);
-  }, []);
-
-  // استعادة البيانات ومناطق التوصيل والكوبونات من التخزين والكاش
   useEffect(() => {
     (async () => {
       try {
@@ -297,7 +255,6 @@ export default function RestaurantMenu() {
             if (t) setTheme(t);
           }
         }
-
         if (typeof window !== "undefined" && window.localStorage) {
           const savedName = localStorage.getItem("customer-name-cache");
           const savedPhone = localStorage.getItem("customer-phone-cache");
@@ -307,20 +264,13 @@ export default function RestaurantMenu() {
           if (savedAddress) setCustomerAddress(savedAddress);
         }
       } catch (e) {
-        console.error("خطأ أثناء استدعاء التخزين", e);
+        console.error("Storage error", e);
       } finally {
         setLoaded(true);
       }
     })();
   }, []);
 
-  useEffect(() => {
-    if (window.location.search.toLowerCase().includes("admin") || window.location.hash.toLowerCase().includes("admin")) {
-      setIsAdmin(true);
-    }
-  }, []);
-
-  // الحفظ التلقائي لمناطق التوصيل والمنيو والكوبونات
   useEffect(() => {
     if (!loaded) return;
     clearTimeout(saveTimer.current);
@@ -331,26 +281,10 @@ export default function RestaurantMenu() {
           vodafoneCash, instapay, adminPin, deliveryAreas, promoCodes, themeId: theme.id,
         }));
       } catch (e) {
-        console.error("فشل الحفظ التلقائي", e);
+        console.error("Auto-save failed", e);
       }
     }, 500);
   }, [items, restaurantName, tagline, address, menuUrl, whatsappNumber, vodafoneCash, instapay, adminPin, deliveryAreas, promoCodes, theme, loaded]);
-
-  const handleLogoClick = () => {
-    if (isAdmin) return;
-    setLogoClicks((prev) => {
-      const next = prev + 1;
-      if (next >= 5) {
-        setPinModalOpen(true);
-        setEnteredPin("");
-        setPinError("");
-        return 0;
-      }
-      return next;
-    });
-    clearTimeout(window.logoClickTimeout);
-    window.logoClickTimeout = setTimeout(() => { setLogoClicks(0); }, 2500);
-  };
 
   const handleVerifyPin = (e) => {
     e.preventDefault();
@@ -390,29 +324,6 @@ export default function RestaurantMenu() {
     });
     return Array.from(map.entries());
   }, [visibleItems]);
-
-  const findItem = (id) => items.find((i) => i.id === id);
-
-  const cartList = useMemo(() => {
-    return Object.entries(cart)
-      .filter((entry) => entry[1] > 0)
-      .map((entry) => {
-        const key = entry[0];
-        const qty = entry[1];
-        const parts = key.split("::");
-        const id = parts[0];
-        const sizeLabel = parts[1] || "";
-        const item = findItem(id);
-        if (!item) return null;
-        const price = sizeLabel ? item.sizes.find((s) => s.label === sizeLabel)?.price ?? 0 : item.price;
-        const label = sizeLabel ? item.name + " (" + sizeLabel + ")" : item.name;
-        return { key, id, label, price, qty };
-      })
-      .filter(Boolean);
-  }, [cart, items]);
-
-  const cartCount = cartList.reduce((s, i) => s + i.qty, 0);
-  const cartTotal = cartList.reduce((s, i) => s + i.qty * i.price, 0);
 
   const addToCart = (key, delta) =>
     setCart((c) => {
@@ -484,7 +395,7 @@ export default function RestaurantMenu() {
                "🏠 العنوان بالتفصيل: " + customerAddress + "\n";
                
     if (geoLink) {
-      text += "📍 لوكيشن موقع العميل (جوجل مابس): " + geoLink + "\n";
+      text += "📍 لوكيشن خريطة العميل: " + geoLink + "\n";
     }
     if (customerNotes.trim()) {
       text += "📝 ملاحظات العميل: " + customerNotes.trim() + "\n";
@@ -511,6 +422,23 @@ export default function RestaurantMenu() {
     setEnteredPromo("");
     setGeoLink("");
   };
+
+  const copyText = (label, value) => {
+    const ok = copyTextToClipboard(value);
+    if (ok) {
+      setCopied(label);
+      setTimeout(() => setCopied(""), 1500);
+    }
+  };
+
+  const handleResetMenu = () => {
+    setItems(DEFAULT_MENU);
+    setDeliveryAreas(DEFAULT_DELIVERY_AREAS);
+    setPromoCodes(DEFAULT_PROMO_CODES);
+    setShowResetConfirm(false);
+  };
+
+  const qrSrc = "https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=8&data=" + encodeURIComponent(menuUrl);
 
   return (
     <div dir="rtl" className="min-h-screen w-full transition-colors duration-500 pb-28" style={{ background: theme.bg, color: theme.text, fontFamily: "'Tajawal', sans-serif" }}>
@@ -688,7 +616,6 @@ export default function RestaurantMenu() {
                   ))}
                 </div>
                 
-                {/* تفاصيل الحساب المالي الموسع بالخصومات */}
                 <div className="space-y-1 pt-2 mt-1 border-t text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
                   <div className="flex items-center justify-between opacity-80">
                     <span>حساب المأكولات:</span>
@@ -710,7 +637,7 @@ export default function RestaurantMenu() {
                   </div>
                 </div>
 
-                {/* نظام كود الخصم الفوري في السلة */}
+                {/* نظام كود الخصم */}
                 <div className="pt-2.5 flex gap-2">
                   <div className="relative flex-1">
                     <input type="text" placeholder="هل لديك كوبون خصم؟" value={enteredPromo} onChange={(e) => setEnteredPromo(e.target.value)} className="w-full px-3 py-2 pr-8 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "25", color: theme.text }} />
@@ -754,13 +681,12 @@ export default function RestaurantMenu() {
                       <Phone size={14} className="absolute right-3 top-3.5 opacity-60" style={{ color: theme.text }} />
                     </div>
 
-                    {/* خانة العنوان المدعومة بزر تتبع الـ GPS الذكي */}
                     <div className="flex gap-2">
                       <div className="relative flex-1">
                         <input type="text" placeholder="العنوان بالتفصيل (البيت، الشارع)..." value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }} />
                         <MapPin size={14} className="absolute right-3 top-3.5 opacity-60" style={{ color: theme.text }} />
                       </div>
-                      <button type="button" onClick={handleGetLocation} className="px-3 rounded-xl border font-bold text-xs flex items-center justify-center bg-black/10 transition-transform active:scale-95 shrink-0" style={{ borderColor: theme.accent, color: theme.accent }} title="تحديد موقعي التلقائي عبر الـ GPS">
+                      <button type="button" onClick={handleGetLocation} className="px-3 rounded-xl border font-bold text-xs flex items-center justify-center bg-black/10 transition-transform active:scale-95 shrink-0" style={{ borderColor: theme.accent, color: theme.accent }}>
                         {geoLoading ? "..." : <Navigation size={14} className="animate-pulse" />}
                       </button>
                     </div>
@@ -787,7 +713,6 @@ export default function RestaurantMenu() {
         </Overlay>
       )}
 
-      {/* شاشة نجاح الأوردر */}
       {orderSuccess && (
         <Overlay onClose={() => setOrderSuccess(false)}>
           <Sheet theme={theme} title="تم إرسال طلبك بنجاح! 🎉" onClose={() => setOrderSuccess(false)}>
@@ -861,18 +786,15 @@ export default function RestaurantMenu() {
               <Field label="حساب InstaPay" value={instapay} onChange={setInstapay} theme={theme} dir="ltr" />
               <Field label="رمز الأمان للإدارة (PIN)" value={adminPin} onChange={setAdminPin} theme={theme} dir="ltr" />
 
-              {/* لوحة تحكم مناطق التوصيل */}
               <div className="pt-4 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
                 <p className="font-bold text-sm mb-2">إدارة قرى ومناطق التوصيل (الدليفري)</p>
-                
                 <div className="bg-black/20 p-3 rounded-xl border border-[#1F1F1F] space-y-2 mb-3">
                   <div className="grid grid-cols-2 gap-2">
-                    <input type="text" placeholder="اسم القرية/المنطقة" value={newAreaName} onChange={(e) => setNewAreaName(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
+                    <input type="text" placeholder="اسم القرية" value={newAreaName} onChange={(e) => setNewAreaName(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
                     <input type="number" placeholder="سعر التوصيل" value={newAreaPrice} onChange={(e) => setNewAreaPrice(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
                   </div>
-                  <button onClick={handleAddDeliveryArea} className="w-full py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><PlusCircle size={13}/>إضافة المنطقة الحالية</button>
+                  <button onClick={handleAddDeliveryArea} className="w-full py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><PlusCircle size={13}/>إضافة المنطقة</button>
                 </div>
-
                 <div className="space-y-1.5 max-h-[15vh] overflow-y-auto pr-1">
                   {deliveryAreas.map((area, idx) => (
                     <div key={idx} className="flex items-center justify-between text-xs p-2 rounded-lg bg-black/10 border border-[#1F1F1F]">
@@ -883,18 +805,15 @@ export default function RestaurantMenu() {
                 </div>
               </div>
 
-              {/* ===================== لوحة تحكم كوبونات الخصم للمدير ===================== */}
               <div className="pt-4 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
-                <p className="font-bold text-sm mb-2">إدارة كوبونات وأكواد الخصم (Promo Codes)</p>
-                
+                <p className="font-bold text-sm mb-2">إدارة كوبونات الخصم (Promo Codes)</p>
                 <div className="bg-black/20 p-3 rounded-xl border border-[#1F1F1F] space-y-2 mb-3">
                   <div className="grid grid-cols-2 gap-2">
-                    <input type="text" placeholder="كود الخصم (مثال: OFF10)" value={newPromoCode} onChange={(e) => setNewPromoCode(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs uppercase" style={{ borderColor: theme.muted + "40", color: theme.text }} />
-                    <input type="number" placeholder="نسبة الخصم %" value={newPromoDiscount} onChange={(e) => setNewPromoDiscount(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
+                    <input type="text" placeholder="الكود" value={newPromoCode} onChange={(e) => setNewPromoCode(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs uppercase" style={{ borderColor: theme.muted + "40", color: theme.text }} />
+                    <input type="number" placeholder="الخصم %" value={newPromoDiscount} onChange={(e) => setNewPromoDiscount(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
                   </div>
-                  <button onClick={handleAddPromoCode} className="w-full py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><PlusCircle size={13}/>إضافة كود الخصم الجديد</button>
+                  <button onClick={handleAddPromoCode} className="w-full py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><PlusCircle size={13}/>إضافة الكود</button>
                 </div>
-
                 <div className="space-y-1.5 max-h-[15vh] overflow-y-auto pr-1">
                   {promoCodes.map((promo, idx) => (
                     <div key={idx} className="flex items-center justify-between text-xs p-2 rounded-lg bg-black/10 border border-[#1F1F1F]">
