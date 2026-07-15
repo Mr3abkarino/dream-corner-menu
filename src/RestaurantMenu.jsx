@@ -1,13 +1,12 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import restaurantLogo from "./assets/logo.png";
 import {
   ShoppingCart, Plus, Minus, X, Pencil, Trash2, Check, Copy,
   QrCode, Settings, Phone, CreditCard, Sparkles, Search, RotateCcw,
-  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown
+  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User
 } from "lucide-react";
 
 // شعار تفاعلي ذكي فائق الدقة والأداء لتجنب مشاكل تشويه النصوص المقتطعة أثناء النشر
-const LOGO_SRC = restaurantLogo;
+const LOGO_SRC = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='50' fill='%23D4AF37'/><text y='70' x='18' font-size='60'>🍕</text></svg>";
 
 /* الهويات البصرية المتاحة لمطابقة المظهر العصري الجديد الفلات */
 const THEMES = [
@@ -84,7 +83,7 @@ const DEFAULT_MENU = [
   { id: "p4", cat: "البيتزا", name: "هوت دوج", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 100 }, { label: "صغير", price: 70 }] },
   { id: "p5", cat: "البيتزا", name: "سجق", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 100 }, { label: "صغير", price: 70 }] },
   { id: "p6", cat: "البيتزا", name: "لحمة مفرومة", sizes: [{ label: "كبير", price: 145 }, { label: "وسط", price: 110 }, { label: "صغير", price: 75 }] },
-  { id: "p7", cat: "البيتزا", name: "بيبروني", sizes: [{ label: "كبير", price: 110 }, { label: "وسط", price: 90 }, { label: "صغير", price: 70 }] },
+  { id: "p7", cat: "البيتزا", name: "بيروني", sizes: [{ label: "كبير", price: 110 }, { label: "وسط", price: 90 }, { label: "صغير", price: 70 }] },
   { id: "p8", cat: "البيتزا", name: "سلامي", sizes: [{ label: "كبير", price: 110 }, { label: "وسط", price: 90 }, { label: "صغير", price: 70 }] },
   { id: "p9", cat: "البيتزا", name: "شاورما دجاج", sizes: [{ label: "كبير", price: 155 }, { label: "وسط", price: 120 }, { label: "صغير", price: 80 }] },
   { id: "p10", cat: "البيتزا", name: "دجاج رانش", sizes: [{ label: "كبير", price: 155 }, { label: "وسط", price: 120 }, { label: "صغير", price: 80 }] },
@@ -127,7 +126,7 @@ const DEFAULT_MENU = [
   { id: "d4", cat: "المشروبات", name: "مياة معدنية صغيرة", price: 6 }
 ];
 
-const money = (n) => Number(n).toLocaleString("en-US") + " جنيه";
+const money = (n) => Number(n).toLocaleString("ar-EG") + " ج.م";
 
 const safeStorage = {
   get: async (key) => {
@@ -173,12 +172,19 @@ export default function RestaurantMenu() {
   const [loaded, setLoaded] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  // الكاش والبيانات الإضافية للعميل والتوصيل
+  // إدارة مناطق التوصيل ديناميكياً من لوحة التحكم
+  const [deliveryAreas, setDeliveryAreas] = useState(DEFAULT_DELIVERY_AREAS);
+  const [newAreaName, setNewAreaName] = useState("");
+  const [newAreaPrice, setNewAreaPrice] = useState("");
+
+  // الكاش والبيانات الإضافية للعميل والتوصيل وحالة النجاح[cite: 1]
+  const [customerName, setCustomerName] = useState(""); // خانة الاسم الجديدة[cite: 1]
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
   const [customerNotes, setCustomerNotes] = useState("");
-  const [deliveryArea, setDeliveryArea] = useState(DELIVERY_AREAS[0]);
+  const [selectedAreaIndex, setSelectedAreaIndex] = useState(-1);
   const [validationError, setValidationError] = useState("");
+  const [orderSuccess, setOrderSuccess] = useState(false);
 
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminPin, setAdminPin] = useState("1234");
@@ -188,6 +194,14 @@ export default function RestaurantMenu() {
   const [logoClicks, setLogoClicks] = useState(0);
   
   const saveTimer = useRef(null);
+
+  // حساب منطقة التوصيل المختارة بأمان[cite: 1]
+  const activeDeliveryArea = useMemo(() => {
+    if (selectedAreaIndex >= 0 && selectedAreaIndex < deliveryAreas.length) {
+      return deliveryAreas[selectedAreaIndex];
+    }
+    return { name: "اختر منطقة التوصيل...", price: 0 };
+  }, [selectedAreaIndex, deliveryAreas]);
 
   useEffect(() => {
     const id = "menu-fonts";
@@ -199,6 +213,7 @@ export default function RestaurantMenu() {
     document.head.appendChild(link);
   }, []);
 
+  // استعادة البيانات ومناطق التوصيل والكاش[cite: 1]
   useEffect(() => {
     (async () => {
       try {
@@ -214,6 +229,7 @@ export default function RestaurantMenu() {
           if (d.vodafoneCash) setVodafoneCash(d.vodafoneCash);
           if (d.instapay) setInstapay(d.instapay);
           if (d.adminPin) setAdminPin(d.adminPin);
+          if (d.deliveryAreas) setDeliveryAreas(d.deliveryAreas);
           if (d.themeId) {
             const t = THEMES.find((themeItem) => themeItem.id === d.themeId);
             if (t) setTheme(t);
@@ -221,8 +237,10 @@ export default function RestaurantMenu() {
         }
 
         if (typeof window !== "undefined" && window.localStorage) {
+          const savedName = localStorage.getItem("customer-name-cache"); // استرجاع الاسم من الكاش[cite: 1]
           const savedPhone = localStorage.getItem("customer-phone-cache");
           const savedAddress = localStorage.getItem("customer-address-cache");
+          if (savedName) setCustomerName(savedName);[cite: 1]
           if (savedPhone) setCustomerPhone(savedPhone);
           if (savedAddress) setCustomerAddress(savedAddress);
         }
@@ -240,6 +258,7 @@ export default function RestaurantMenu() {
     }
   }, []);
 
+  // الحفظ التلقائي لمناطق التوصيل والمنيو[cite: 1]
   useEffect(() => {
     if (!loaded) return;
     clearTimeout(saveTimer.current);
@@ -247,13 +266,13 @@ export default function RestaurantMenu() {
       try {
         await safeStorage.set("dream-corner-menu", JSON.stringify({
           items, restaurantName, tagline, address, menuUrl, whatsappNumber,
-          vodafoneCash, instapay, adminPin, themeId: theme.id,
+          vodafoneCash, instapay, adminPin, deliveryAreas, themeId: theme.id,
         }));
       } catch (e) {
         console.error("فشل الحفظ التلقائي", e);
       }
     }, 500);
-  }, [items, restaurantName, tagline, address, menuUrl, whatsappNumber, vodafoneCash, instapay, adminPin, theme, loaded]);
+  }, [items, restaurantName, tagline, address, menuUrl, whatsappNumber, vodafoneCash, instapay, adminPin, deliveryAreas, theme, loaded]);
 
   const handleLogoClick = () => {
     if (isAdmin) return;
@@ -332,7 +351,7 @@ export default function RestaurantMenu() {
 
   const cartCount = cartList.reduce((s, i) => s + i.qty, 0);
   const cartTotal = cartList.reduce((s, i) => s + i.qty * i.price, 0);
-  const finalTotal = cartTotal + deliveryArea.price;
+  const finalTotal = cartTotal + activeDeliveryArea.price;
 
   const addToCart = (key, delta) =>
     setCart((c) => {
@@ -355,38 +374,57 @@ export default function RestaurantMenu() {
     setEditingId(id);
   };
 
+  const handleAddDeliveryArea = () => {
+    if (!newAreaName.trim() || !newAreaPrice.trim()) return;
+    setDeliveryAreas([...deliveryAreas, { name: newAreaName.trim(), price: Number(newAreaPrice) }]);
+    setNewAreaName("");
+    setNewAreaPrice("");
+  };
+
+  const handleRemoveDeliveryArea = (index) => {
+    setDeliveryAreas(deliveryAreas.filter((_, idx) => idx !== index));
+    setSelectedAreaIndex(-1);
+  };
+
+  // دالة الإرسال مع تفريغ السلة وتفعيل شاشة النجاح[cite: 1]
   const sendWhatsApp = () => {
     if (cartList.length === 0) return;
-    if (!customerPhone.trim() || !customerAddress.trim()) {
-      setValidationError("برجاء كتابة رقم الهاتف وعنوان التوصيل أولاً لتأكيد طلبك!");
+    if (!customerName.trim() || !customerPhone.trim() || !customerAddress.trim()) {[cite: 1]
+      setValidationError("برجاء كتابة الاسم، ورقم الهاتف، وعنوان التوصيل أولاً لتأكيد طلبك!");[cite: 1]
       return;
     }
-    if (deliveryArea.price === 0 && deliveryArea.name === DELIVERY_AREAS[0].name) {
+    if (selectedAreaIndex === -1) {
       setValidationError("برجاء اختيار منطقة التوصيل لحساب إجمالي الأوردر بدقة!");
       return;
     }
     setValidationError("");
 
     if (typeof window !== "undefined" && window.localStorage) {
+      localStorage.setItem("customer-name-cache", customerName.trim()); // حفظ الاسم في الكاش[cite: 1]
       localStorage.setItem("customer-phone-cache", customerPhone.trim());
       localStorage.setItem("customer-address-cache", customerAddress.trim());
     }
 
     const lines = cartList.map((cartItem) => "• " + cartItem.label + " x" + cartItem.qty + " — " + money(cartItem.price * cartItem.qty));
     let text = "طلب جديد من منيو " + restaurantName + " 🍽️\n\n" + 
+               "👤 اسم العميل: " + customerName + "\n" + // إضافة الاسم للرسالة[cite: 1]
                "📱 تليفون العميل: " + customerPhone + "\n" +
-               "📍 المنطقة: " + deliveryArea.name + "\n" +
+               "📍 المنطقة: " + activeDeliveryArea.name + "\n" +
                "🏠 العنوان بالتفصيل: " + customerAddress + "\n";
     if (customerNotes.trim()) {
       text += "📝 ملاحظات العميل: " + customerNotes.trim() + "\n";
     }
     text += "\nالطلبات:\n" + lines.join("\n") + "\n\n" +
             "💵 حساب الأكل: " + money(cartTotal) + "\n" +
-            "🛵 مصاريف التوصيل: " + money(deliveryArea.price) + "\n" +
+            "🛵 مصاريف التوصيل: " + money(activeDeliveryArea.price) + "\n" +
             "💰 الإجمالي النهائي: " + money(finalTotal);
                  
     const phone = whatsappNumber.replace(/[^\d+]/g, "");
     window.open("https://wa.me/" + phone + "?text=" + encodeURIComponent(text), "_blank");
+
+    setCartOpen(false);
+    setCart({});
+    setOrderSuccess(true);
   };
 
   const copyText = (label, value) => {
@@ -399,6 +437,7 @@ export default function RestaurantMenu() {
 
   const handleResetMenu = () => {
     setItems(DEFAULT_MENU);
+    setDeliveryAreas(DEFAULT_DELIVERY_AREAS);
     setShowResetConfirm(false);
   };
 
@@ -424,7 +463,7 @@ export default function RestaurantMenu() {
               <>
                 <button onClick={() => setThemePickerOpen(true)} className="p-2 rounded-full border border-green-500/30 text-green-500 bg-green-500/5 transition-all hover:bg-green-500/10 active:scale-95" title="تغيير المظهر"><Palette size={18} /></button>
                 <button onClick={() => setQrOpen(true)} className="p-2 rounded-full border border-green-500/30 text-green-500 bg-green-500/5 transition-all hover:bg-green-500/10 active:scale-95" title="عرض QR"><QrCode size={18} /></button>
-                <button onClick={() => setAdminOpen(true)} className="p-2 rounded-full border border-green-500/50 text-green-500 bg-green-500/10 transition-all hover:bg-green-500/20 active:scale-95 animate-pulse" title="إعدادات المنيو"><Settings size={18} /></button>
+                <button onClick={() => setAdminOpen(true)} className="p-2 rounded-full border border-green-500/50 text-green-500 bg-green-500/10 transition-all hover:bg-green-500/20 active:scale-95 animate-pulse" title="إعدادات المنيو والأسعار"><Settings size={18} /></button>
                 <button onClick={() => setIsAdmin(false)} className="p-2 rounded-full border border-red-500/30 text-red-500 bg-red-500/5 transition-all hover:bg-red-500/10 active:scale-95" title="خروج من وضع الإدارة"><LogOut size={16} /></button>
               </>
             ) : (
@@ -532,29 +571,17 @@ export default function RestaurantMenu() {
         )}
       </main>
 
-                  {/* ===================== FOOTER INFO STRIP ===================== */}
+      {/* ===================== FOOTER INFO STRIP ===================== */}
       <div className="fixed bottom-0 inset-x-0 z-20 border-t px-4 py-3.5 flex items-center justify-center gap-4 text-xs font-semibold shadow-inner" style={{ background: theme.bg + "F2", borderColor: (theme.muted || "#B3A18C") + "20" , color: theme.muted, backdropFilter: "blur(8px)" }}>
-        {/* تحويل الاسم لرابط تفاعلي يحول لصفحتك على فيسبوك عند الضغط عليه */}
-        <a 
-          href="https://fb.com/mr.3abkarino" 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className="flex items-center gap-1 font-bold tracking-wide shrink-0 cursor-pointer hover:underline"
-          style={{ color: theme.accent }}
-        >
+        <a href="https://fb.com/mr.3abkarino" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 font-bold tracking-wide shrink-0 cursor-pointer hover:underline" style={{ color: theme.accent }}>
           Mr3abkarino© <span className="text-red-500 text-sm animate-pulse">❤️</span>
         </a>
-        
         <span className="opacity-40 shrink-0">|</span>
-        
-        {/* العنوان كما هو */}
         <span className="flex items-center gap-1 truncate min-w-0">
           <MapPin size={13} className="shrink-0" /> 
           <span className="truncate opacity-90">{address}</span>
         </span>
       </div>
-
-
 
       {/* ===================== FLOATING CART BUTTON ===================== */}
       {cartCount > 0 && (
@@ -598,8 +625,8 @@ export default function RestaurantMenu() {
                     <span>{money(cartTotal)}</span>
                   </div>
                   <div className="flex items-center justify-between opacity-80">
-                    <span>توصيل لـ ({deliveryArea.price > 0 ? deliveryArea.name : "لم تحدد"}):</span>
-                    <span>{money(deliveryArea.price)}</span>
+                    <span>توصيل لـ ({selectedAreaIndex >= 0 ? activeDeliveryArea.name : "لم تحدد"}):</span>
+                    <span>{money(activeDeliveryArea.price)}</span>
                   </div>
                   <div className="flex items-center justify-between pt-2 text-sm font-black border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "15" }}>
                     <span style={{ color: theme.muted }}>الإجمالي الإجمالي:</span>
@@ -607,24 +634,28 @@ export default function RestaurantMenu() {
                   </div>
                 </div>
 
-                {/* ===================== بيانات العميل والتوصيل والملاحظات ===================== */}
+                {/* بيانات العميل والتوصيل والملاحظات */}
                 <div className="mt-3 pt-2 border-t space-y-2" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
                   <p className="text-[11px] font-bold" style={{ color: theme.accent }}>بيانات التوصيل والطلب (الدليفري):</p>
                   
                   <div className="space-y-2">
+                    {/* خانة إدخال اسم العميل الجديدة المميّزة[cite: 1] */}
+                    <div className="relative">
+                      <input type="text" placeholder="اكتب اسمك الكريم هنا..." value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }} />[cite: 1]
+                      <User size={14} className="absolute right-3 top-3.5 opacity-60" style={{ color: theme.text }} />
+                    </div>
+
                     <div className="relative">
                       <select 
-                        value={deliveryArea.name}
-                        onChange={(e) => {
-                          const selected = DELIVERY_AREAS.find(a => a.name === e.target.value);
-                          if (selected) setDeliveryArea(selected);
-                        }}
+                        value={selectedAreaIndex}
+                        onChange={(e) => setSelectedAreaIndex(Number(e.target.value))}
                         className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none appearance-none" 
                         style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }}
                       >
-                        {DELIVERY_AREAS.map((area) => (
-                          <option key={area.name} value={area.name} style={{ background: theme.surface, color: theme.text }}>
-                            {area.name} {area.price > 0 ? `(+${area.price} ج.م)` : ""}
+                        <option value={-1}>اختر منطقة التوصيل...</option>
+                        {deliveryAreas.map((area, idx) => (
+                          <option key={idx} value={idx} style={{ background: theme.surface, color: theme.text }}>
+                            {area.name} (+{money(area.price)})
                           </option>
                         ))}
                       </select>
@@ -660,6 +691,22 @@ export default function RestaurantMenu() {
                 </div>
               </>
             )}
+          </Sheet>
+        </Overlay>
+      )}
+
+      {/* شاشة نجاح الأوردر */}
+      {orderSuccess && (
+        <Overlay onClose={() => setOrderSuccess(false)}>
+          <Sheet theme={theme} title="تم إرسال طلبك بنجاح! 🎉" onClose={() => setOrderSuccess(false)}>
+            <div className="text-center py-6 space-y-4">
+              <div className="w-16 h-16 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto text-3xl animate-bounce">✓</div>
+              <p className="text-sm font-bold leading-relaxed">
+                تم تجهيز الأوردر وتصفير السلة بنجاح. <br/>
+                جاري الآن تحويلك إلى تطبيق واتساب لإرسال الفاتورة وتأكيد التوصيل مع الكابتن!
+              </p>
+              <button onClick={() => setOrderSuccess(false)} className="px-6 py-2 rounded-xl text-xs font-bold" style={{ background: theme.accent, color: theme.bg }}>فهمت، شكراً لك</button>
+            </div>
           </Sheet>
         </Overlay>
       )}
@@ -721,6 +768,28 @@ export default function RestaurantMenu() {
               <Field label="رقم فودافون كاش" value={vodafoneCash} onChange={setVodafoneCash} theme={theme} dir="ltr" />
               <Field label="حساب InstaPay" value={instapay} onChange={setInstapay} theme={theme} dir="ltr" />
               <Field label="رمز الأمان للإدارة (PIN)" value={adminPin} onChange={setAdminPin} theme={theme} dir="ltr" />
+
+              {/* لوحة تحكم مناطق التوصيل */}
+              <div className="pt-4 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
+                <p className="font-bold text-sm mb-2">إدارة قرى ومناطق التوصيل (الدليفري)</p>
+                
+                <div className="bg-black/20 p-3 rounded-xl border border-[#1F1F1F] space-y-2 mb-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <input type="text" placeholder="اسم القرية/المنطقة" value={newAreaName} onChange={(e) => setNewAreaName(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
+                    <input type="number" placeholder="سعر التوصيل" value={newAreaPrice} onChange={(e) => setNewAreaPrice(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
+                  </div>
+                  <button onClick={handleAddDeliveryArea} className="w-full py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><PlusCircle size={13}/>إضافة المنطقة الحالية</button>
+                </div>
+
+                <div className="space-y-1.5 max-h-[20vh] overflow-y-auto pr-1">
+                  {deliveryAreas.map((area, idx) => (
+                    <div key={idx} className="flex items-center justify-between text-xs p-2 rounded-lg bg-black/10 border border-[#1F1F1F]">
+                      <span className="font-medium">{area.name} · <span style={{ color: theme.accent }}>{money(area.price)}</span></span>
+                      <button onClick={() => handleRemoveDeliveryArea(idx)} className="p-1 rounded-full text-red-500 border border-red-500/20 bg-red-500/5"><Trash2 size={12}/></button>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
               <div className="pt-4 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
                 <div className="flex items-center justify-between mb-3">
@@ -805,45 +874,6 @@ function Overlay({ children, onClose }) {
     <div className="fixed inset-0 z-40 flex items-end md:items-center justify-center p-0 md:p-4">
       <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
       {children}
-    </div>
-  );
-}
-
-function Sheet({ theme, title, onClose, children }) {
-  return (
-    <div className="relative z-10 w-full md:max-w-md max-h-[85vh] rounded-t-3xl md:rounded-3xl p-5 overflow-y-auto" style={{ background: theme.bg, color: theme.text, border: "1px solid " + (theme.muted || "#B3A18C") + "30" }} dir="rtl">
-      <div className="flex items-center justify-between mb-4 pb-2 border-b" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
-        <h2 className="text-lg font-black" style={{ color: theme.accent }}>{title}</h2>
-        <button onClick={onClose} className="p-1.5 rounded-full border" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }}><X size={15} /></button>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function Field({ label, value, onChange, theme, dir = "rtl", hint }) {
-  return (
-    <label className="block text-sm space-y-1">
-      <span className="font-bold opacity-90" style={{ color: theme.muted }}>{label}</span>
-      <input value={value} onChange={(e) => onChange(e.target.value)} dir={dir} className="w-full px-3 py-2 rounded-lg border bg-transparent" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
-      {hint && <span className="block mt-1 text-xs opacity-70" style={{ color: theme.muted }}>{hint}</span>}
-    </label>
-  );
-}
-
-function PayRow({ icon, label, value, theme, onCopy, copied }) {
-  return (
-    <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg" style={{ background: theme.surface2 }}>
-      <div className="flex items-center gap-2 min-w-0">
-        <span style={{ color: theme.accent }}>{icon}</span>
-        <div className="min-w-0">
-          <p className="text-xs" style={{ color: theme.muted }}>{label}</p>
-          <p className="text-sm font-bold truncate" dir="ltr">{value}</p>
-        </div>
-      </div>
-      <button onClick={() => onCopy(label, value)} className="p-1.5 rounded-full border shrink-0 transition-transform active:scale-95" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }}>
-        {copied === label ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
-      </button>
     </div>
   );
 }
