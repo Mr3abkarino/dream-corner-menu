@@ -407,7 +407,7 @@ export default function RestaurantMenu() {
     setValidationError("");
 
     // حساب النقاط الجديدة المكتسبة من هذا الطلب (نقطة لكل 10 جنيه)
-    const newlyEarnedPoints = Math.floor(cartTotal / 10);
+    const newlyEarnedPoints = Math.floor(cartTotal / 100);
     let updatedPoints = userPoints;
 
     // خصم النقاط المستخدمة وإضافة النقاط الجديدة للمحفظة
