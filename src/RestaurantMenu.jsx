@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import restaurantLogo from "./assets/logo.png";
 import {
   ShoppingCart, Plus, Minus, X, Pencil, Trash2, Check, Copy,
   QrCode, Settings, Phone, CreditCard, Sparkles, Search, RotateCcw,
@@ -6,7 +7,7 @@ import {
 } from "lucide-react";
 
 // شعار تفاعلي ذكي فائق الدقة والأداء لتجنب مشاكل تشويه النصوص المقتطعة أثناء النشر
-const LOGO_SRC = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='50' fill='%23D4AF37'/><text y='70' x='18' font-size='60'>🍕</text></svg>";
+const LOGO_SRC = restaurantLogo;
 
 /* الهويات البصرية المتاحة لمطابقة المظهر العصري الجديد الفلات */
 const THEMES = [
