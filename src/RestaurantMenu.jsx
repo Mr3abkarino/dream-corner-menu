@@ -209,7 +209,7 @@ export default function RestaurantMenu() {
   const [menuUrl, setMenuUrl] = useState("https://your-restaurant-menu.com");
   const [whatsappNumber, setWhatsappNumber] = useState("+201006113627");
   const [vodafoneCash, setVodafoneCash] = useState("+201023590020");
-  const [instapay, setInstapay] = useState("");
+  const [instapay, setInstapay] = useState("zxzwd@instapay");
 
   const [items, setItems] = useState(DEFAULT_MENU);
   const [activeCat, setActiveCat] = useState("الكل");
