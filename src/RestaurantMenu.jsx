@@ -2,90 +2,66 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import {
   ShoppingCart, Plus, Minus, X, Pencil, Trash2, Check, Copy,
   QrCode, Settings, Phone, CreditCard, Sparkles, Search, RotateCcw,
-  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText
+  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown
 } from "lucide-react";
 
 // شعار تفاعلي ذكي فائق الدقة والأداء لتجنب مشاكل تشويه النصوص المقتطعة أثناء النشر
 const LOGO_SRC = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='50' fill='%23D4AF37'/><text y='70' x='18' font-size='60'>🍕</text></svg>";
 
-/* الهويات البصرية المتاحة لصاحب المطعم للتعديل السريع للمظهر */
+/* الهويات البصرية المتاحة لمطابقة المظهر العصري الجديد الفلات */
 const THEMES = [
   {
     id: "brand",
     name: "هوية دريم كورنر",
-    bg: "#0E0C0B",
-    surface: "#1A1613",
-    surface2: "#241E19",
+    bg: "#0A0A0A",
+    surface: "#141414",
+    surface2: "#1F1F1F",
     accent: "#D4AF37",
     accent2: "#8B1E1E",
     text: "#F3E9D8",
-    muted: "#B3A18C",
-    display: "'Lalezar', cursive"
+    muted: "#A3A3A3",
+    display: "'Tajawal', sans-serif"
   },
   {
     id: "night",
     name: "ليلي فاخر",
-    bg: "#181110",
-    surface: "#241A17",
-    surface2: "#2E211D",
+    bg: "#120E0D",
+    surface: "#1E1816",
+    surface2: "#2A211E",
     accent: "#D4A24C",
     accent2: "#A63D2F",
     text: "#F3E9D8",
     muted: "#B3A18C",
-    display: "'Lalezar', cursive"
+    display: "'Tajawal', sans-serif"
   },
   {
     id: "emerald",
     name: "شرقي فاخر",
-    bg: "#0E1A16",
-    surface: "#152620",
-    surface2: "#1B2F27",
+    bg: "#081410",
+    surface: "#10221C",
+    surface2: "#19322A",
     accent: "#C9A24B",
     accent2: "#2F6E52",
     text: "#EFEAD9",
     muted: "#9DB0A6",
-    display: "'Aref Ruqaa', serif"
+    display: "'Tajawal', sans-serif"
   },
   {
     id: "cafe",
     name: "كافيه دافئ",
-    bg: "#F5EFE3",
+    bg: "#F7F5F0",
     surface: "#FFFFFF",
-    surface2: "#EFE4CE",
+    surface2: "#F0EAE1",
     accent: "#B5622E",
     accent2: "#6B4226",
     text: "#2B2118",
     muted: "#8A7A66",
-    display: "'Aref Ruqaa', serif",
+    display: "'Tajawal', sans-serif",
     light: true
-  },
-  {
-    id: "street",
-    name: "ستريت فود",
-    bg: "#111111",
-    surface: "#1C1C1C",
-    surface2: "#242424",
-    accent: "#FF5A1F",
-    accent2: "#FFC93C",
-    text: "#F5F5F5",
-    muted: "#9A9A9A",
-    display: "'Lalezar', cursive"
-  },
-  {
-    id: "marine",
-    name: "بحري منعش",
-    bg: "#0B1E2A",
-    surface: "#122B3A",
-    surface2: "#173547",
-    accent: "#4FC3C0",
-    accent2: "#E7B45C",
-    text: "#EAF4F4",
-    muted: "#8CA9B3",
-    display: "'Lalezar', cursive"
   }
 ];
 
-/* قائمة مناطق التوصيل وأسعارها - يمكنك تعديل الأسعار والمناطق من هنا بسهولة */
+/* قائمة مناطق التوصيل المحدثة بناءً على طلبك */
 const DELIVERY_AREAS = [
   { name: "اختر منطقة التوصيل...", price: 0 },
   { name: "البرامون (داخل البلد)", price: 10 },
@@ -98,7 +74,7 @@ const DELIVERY_AREAS = [
   { name: "شربين", price: 80 },
 ];
 
-/* منيو دريم كورنر الافتراضي المستخرج من صور منيو دريم كورنر */
+/* منيو دريم كورنر الافتراضي المحدث بأسعاره الأخيرة */
 const DEFAULT_MENU = [
   // البيتزا
   { id: "p1", cat: "البيتزا", name: "مارجريتا", sizes: [{ label: "كبير", price: 90 }, { label: "وسط", price: 70 }, { label: "صغير", price: 45 }] },
@@ -150,10 +126,8 @@ const DEFAULT_MENU = [
   { id: "d4", cat: "المشروبات", name: "مياة معدنية صغيرة", price: 6 }
 ];
 
-// دمج كلاسيكي بدون استخدام الـ backticks لضمان النجاح التام للبناء على Vercel
 const money = (n) => Number(n).toLocaleString("ar-EG") + " ج.م";
 
-// نظام حماية وحفظ ذكي متوافق بالكامل مع Vercel[cite: 1]
 const safeStorage = {
   get: async (key) => {
     if (typeof window !== "undefined" && window.storage && typeof window.storage.get === "function") {
@@ -175,32 +149,6 @@ const safeStorage = {
   }
 };
 
-const copyTextToClipboard = (text) => {
-  const textArea = document.createElement("textarea");
-  textArea.value = text;
-  textArea.style.position = "fixed";
-  document.body.appendChild(textArea);
-  textArea.focus();
-  textArea.select();
-  let success = false;
-  try { success = document.execCommand("copy"); } catch (err) {}
-  document.body.removeChild(textArea);
-  return success;
-};
-
-function OrnamentDivider({ color }) {
-  return (
-    <div className="flex items-center justify-center gap-2 py-1 select-none" aria-hidden="true">
-      {Array.from({ length: 9 }).map((_, i) => (
-        <svg key={i} width="10" height="10" viewBox="0 0 10 10" style={{ opacity: i === 4 ? 1 : 0.35 }}>
-          <path d="M5 0 L6.5 3.5 L10 5 L6.5 6.5 L5 10 L3.5 6.5 L0 5 L3.5 3.5 Z" fill={color} />
-        </svg>
-      ))}
-    </div>
-  );
-}
-
-// التصدير الافتراضي المباشر والوحيد لمنع أي تعارضات مع Vite
 export default function RestaurantMenu() {
   const [theme, setTheme] = useState(THEMES[0]);
   const [restaurantName, setRestaurantName] = useState("دريم كورنر");
@@ -224,14 +172,13 @@ export default function RestaurantMenu() {
   const [loaded, setLoaded] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  // خانات إدخال بيانات العميل الجديد لطلب الدليفري والملاحظات[cite: 1]
+  // الكاش والبيانات الإضافية للعميل والتوصيل
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
   const [customerNotes, setCustomerNotes] = useState("");
   const [deliveryArea, setDeliveryArea] = useState(DELIVERY_AREAS[0]);
   const [validationError, setValidationError] = useState("");
 
-  // نظام حماية الإدارة
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminPin, setAdminPin] = useState("1234");
   const [pinModalOpen, setPinModalOpen] = useState(false);
@@ -241,18 +188,16 @@ export default function RestaurantMenu() {
   
   const saveTimer = useRef(null);
 
-  // استدعاء وتحميل الخطوط بأمان بدون مخالفة قواعد الـ Hooks
   useEffect(() => {
     const id = "menu-fonts";
     if (document.getElementById(id)) return;
     const link = document.createElement("link");
     link.id = id;
     link.rel = "stylesheet";
-    link.href = "https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Lalezar&family=Aref+Ruqaa:wght@400;700&display=swap";
+    link.href = "https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap";
     document.head.appendChild(link);
   }, []);
 
-  // استعادة البيانات مع رمز الأمان المشفر + استرجاع الكاش[cite: 1]
   useEffect(() => {
     (async () => {
       try {
@@ -274,14 +219,12 @@ export default function RestaurantMenu() {
           }
         }
 
-        // استرجاع الكاش لهاتف وعنوان العميل إذا كان قد سجل مسبقاً لتوفير الوقت عليه[cite: 1]
         if (typeof window !== "undefined" && window.localStorage) {
           const savedPhone = localStorage.getItem("customer-phone-cache");
           const savedAddress = localStorage.getItem("customer-address-cache");
           if (savedPhone) setCustomerPhone(savedPhone);
           if (savedAddress) setCustomerAddress(savedAddress);
         }
-
       } catch (e) {
         console.error("خطأ أثناء استدعاء التخزين", e);
       } finally {
@@ -290,17 +233,12 @@ export default function RestaurantMenu() {
     })();
   }, []);
 
-  // تفعيل الإدارة تلقائياً عند وجود الرابط المخصص للمشرف
   useEffect(() => {
-    if (
-      window.location.search.toLowerCase().includes("admin") || 
-      window.location.hash.toLowerCase().includes("admin")
-    ) {
+    if (window.location.search.toLowerCase().includes("admin") || window.location.hash.toLowerCase().includes("admin")) {
       setIsAdmin(true);
     }
   }, []);
 
-  // الحفظ التلقائي متضمناً الـ PIN الجديد[cite: 1]
   useEffect(() => {
     if (!loaded) return;
     clearTimeout(saveTimer.current);
@@ -316,7 +254,6 @@ export default function RestaurantMenu() {
     }, 500);
   }, [items, restaurantName, tagline, address, menuUrl, whatsappNumber, vodafoneCash, instapay, adminPin, theme, loaded]);
 
-  // آلية عد النقرات على اللوجو لفتح حوار حماية الإدارة
   const handleLogoClick = () => {
     if (isAdmin) return;
     setLogoClicks((prev) => {
@@ -329,7 +266,6 @@ export default function RestaurantMenu() {
       }
       return next;
     });
-
     clearTimeout(window.logoClickTimeout);
     window.logoClickTimeout = setTimeout(() => { setLogoClicks(0); }, 2500);
   };
@@ -354,7 +290,6 @@ export default function RestaurantMenu() {
       const matchesCategory = activeCat === "الكل" || item.cat === activeCat;
       const cleanQuery = searchQuery.trim().toLowerCase();
       if (!cleanQuery) return matchesCategory;
-
       return matchesCategory && (
         item.name.toLowerCase().includes(cleanQuery) ||
         (item.desc && item.desc.toLowerCase().includes(cleanQuery)) ||
@@ -376,7 +311,6 @@ export default function RestaurantMenu() {
 
   const findItem = (id) => items.find((i) => i.id === id);
 
-  // صياغة تفكيك آمنة للمتغيرات لحظر أي أخطاء تجميعية في Rollup
   const cartList = useMemo(() => {
     return Object.entries(cart)
       .filter((entry) => entry[1] > 0)
@@ -397,8 +331,6 @@ export default function RestaurantMenu() {
 
   const cartCount = cartList.reduce((s, i) => s + i.qty, 0);
   const cartTotal = cartList.reduce((s, i) => s + i.qty * i.price, 0);
-
-  // حساب إجمالي السلة شاملاً تكلفة توصيل المنطقة المختارة[cite: 1]
   const finalTotal = cartTotal + deliveryArea.price;
 
   const addToCart = (key, delta) =>
@@ -424,39 +356,29 @@ export default function RestaurantMenu() {
 
   const sendWhatsApp = () => {
     if (cartList.length === 0) return;
-    
-    // التحقق من تعبئة البيانات الأساسية قبل الإرسال[cite: 1]
     if (!customerPhone.trim() || !customerAddress.trim()) {
       setValidationError("برجاء كتابة رقم الهاتف وعنوان التوصيل أولاً لتأكيد طلبك!");
       return;
     }
-
-    // التحقق من قيام العميل باختيار منطقة توصيل حقيقية[cite: 1]
     if (deliveryArea.price === 0 && deliveryArea.name === DELIVERY_AREAS[0].name) {
       setValidationError("برجاء اختيار منطقة التوصيل لحساب إجمالي الأوردر بدقة!");
       return;
     }
-    
     setValidationError("");
 
-    // حفظ البيانات في الكاش لعدم تكرار الإدخال مستقبلاً[cite: 1]
     if (typeof window !== "undefined" && window.localStorage) {
       localStorage.setItem("customer-phone-cache", customerPhone.trim());
       localStorage.setItem("customer-address-cache", customerAddress.trim());
     }
 
     const lines = cartList.map((cartItem) => "• " + cartItem.label + " x" + cartItem.qty + " — " + money(cartItem.price * cartItem.qty));
-    
-    // صياغة الرسالة النهائية بالبيانات والملاحظات الجديدة وحساب التوصيل تلقائياً[cite: 1]
     let text = "طلب جديد من منيو " + restaurantName + " 🍽️\n\n" + 
                "📱 تليفون العميل: " + customerPhone + "\n" +
                "📍 المنطقة: " + deliveryArea.name + "\n" +
                "🏠 العنوان بالتفصيل: " + customerAddress + "\n";
-               
     if (customerNotes.trim()) {
       text += "📝 ملاحظات العميل: " + customerNotes.trim() + "\n";
     }
-
     text += "\nالطلبات:\n" + lines.join("\n") + "\n\n" +
             "💵 حساب الأكل: " + money(cartTotal) + "\n" +
             "🛵 مصاريف التوصيل: " + money(deliveryArea.price) + "\n" +
@@ -479,107 +401,121 @@ export default function RestaurantMenu() {
     setShowResetConfirm(false);
   };
 
-  const qrSrc = "https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=8&data=" + encodeURIComponent(menuUrl);
-
   return (
-    <div dir="rtl" className="min-h-screen w-full transition-colors duration-500 pb-20" style={{ background: theme.bg, color: theme.text, fontFamily: "'Tajawal', sans-serif" }}>
+    <div dir="rtl" className="min-h-screen w-full transition-colors duration-500 pb-28" style={{ background: theme.bg, color: theme.text, fontFamily: "'Tajawal', sans-serif" }}>
       {/* ===================== HEADER ===================== */}
-      <header className="sticky top-0 z-30 backdrop-blur border-b" style={{ background: theme.bg + "E6", borderColor: (theme.muted || "#B3A18C") + "30" }}>
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2.5 min-w-0">
+      <header className="sticky top-0 z-30 backdrop-blur-md border-b" style={{ background: theme.bg + "D9", borderColor: (theme.muted || "#B3A18C") + "20" }}>
+        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3 min-w-0">
             <div onClick={handleLogoClick} className="cursor-pointer active:scale-95 transition-transform shrink-0 relative">
-              <img src={LOGO_SRC} alt={restaurantName + " logo"} className="w-10 h-10 rounded-full object-contain border border-white/20" style={{ padding: 1 }} />
+              <img src={LOGO_SRC} alt={restaurantName + " logo"} className="w-11 h-11 rounded-full object-contain border border-white/10" style={{ padding: 1 }} />
               {logoClicks > 0 && <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-600 text-white rounded-full flex items-center justify-center text-[9px] font-bold animate-ping">{logoClicks}</span>}
             </div>
             <div className="min-w-0">
-              <h1 className="text-xl md:text-2xl truncate leading-tight" style={{ fontFamily: theme.display, color: theme.accent, letterSpacing: "0.5px" }}>{restaurantName}</h1>
-              <p className="text-[11px] truncate opacity-85" style={{ color: theme.muted }}>{tagline}</p>
+              <h1 className="text-xl md:text-2xl font-black truncate leading-tight" style={{ color: theme.accent }}>{restaurantName}</h1>
+              <p className="text-[11px] truncate opacity-75 mt-0.5" style={{ color: theme.muted }}>{tagline}</p>
             </div>
           </div>
-          
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             {isAdmin ? (
               <>
-                <button onClick={() => setThemePickerOpen(true)} className="p-2 rounded-full border border-green-500/30 text-green-500 bg-green-500/5 transition-transform active:scale-95" title="تغيير المظهر"><Palette size={18} /></button>
-                <button onClick={() => setQrOpen(true)} className="p-2 rounded-full border border-green-500/30 text-green-500 bg-green-500/5 transition-transform active:scale-95" title="عرض QR"><QrCode size={18} /></button>
-                <button onClick={() => setAdminOpen(true)} className="p-2 rounded-full border border-green-500/50 text-green-500 bg-green-500/10 transition-transform active:scale-95 animate-pulse" title="إعدادات المنيو"><Settings size={18} /></button>
-                <button onClick={() => setIsAdmin(false)} className="p-2 rounded-full border border-red-500/30 text-red-500 bg-red-500/5 transition-transform active:scale-95" title="خروج من وضع الإدارة"><LogOut size={16} /></button>
+                <button onClick={() => setThemePickerOpen(true)} className="p-2 rounded-full border border-green-500/30 text-green-500 bg-green-500/5 transition-all hover:bg-green-500/10 active:scale-95" title="تغيير المظهر"><Palette size={18} /></button>
+                <button onClick={() => setQrOpen(true)} className="p-2 rounded-full border border-green-500/30 text-green-500 bg-green-500/5 transition-all hover:bg-green-500/10 active:scale-95" title="عرض QR"><QrCode size={18} /></button>
+                <button onClick={() => setAdminOpen(true)} className="p-2 rounded-full border border-green-500/50 text-green-500 bg-green-500/10 transition-all hover:bg-green-500/20 active:scale-95 animate-pulse" title="إعدادات المنيو"><Settings size={18} /></button>
+                <button onClick={() => setIsAdmin(false)} className="p-2 rounded-full border border-red-500/30 text-red-500 bg-red-500/5 transition-all hover:bg-red-500/10 active:scale-95" title="خروج من وضع الإدارة"><LogOut size={16} /></button>
               </>
             ) : (
-              <a href={"tel:" + whatsappNumber} className="p-2 rounded-full border transition-transform active:scale-95" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }} aria-label="اتصل بنا"><Phone size={17} /></a>
+              <a href={"tel:" + whatsappNumber} className="p-2 rounded-full border transition-transform active:scale-95" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }} aria-label="اتصل بنا"><Phone size={17} /></a>
             )}
           </div>
         </div>
-        <OrnamentDivider color={theme.accent} />
       </header>
 
-      {/* ===================== CATEGORY TABS & SEARCH ===================== */}
-      <div className="max-w-3xl mx-auto px-4 pt-4 space-y-3">
-        <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
+      {/* ===================== CATEGORIES BAR (Fixed Horizontal Menu4U Style) ===================== */}
+      <div className="sticky top-[77px] z-20 backdrop-blur-md border-b py-3 shadow-sm" style={{ background: theme.bg + "F2", borderColor: (theme.muted || "#B3A18C") + "15" }}>
+        <div className="max-w-3xl mx-auto px-4 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
           {categories.map((c) => (
-            <button key={c} onClick={() => { setActiveCat(c); }} className="whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-bold border transition-all" style={activeCat === c ? { background: theme.accent, color: theme.bg, borderColor: theme.accent } : { borderColor: (theme.muted || "#B3A18C") + "40", color: theme.muted }}>{c}</button>
+            <button 
+              key={c} 
+              onClick={() => { setActiveCat(c); }} 
+              className="whitespace-nowrap px-5 py-2 rounded-full text-xs font-bold border transition-all duration-300" 
+              style={activeCat === c ? { background: theme.accent, color: theme.bg, borderColor: theme.accent, boxShadow: `0 4px 10px ${theme.accent}30` } : { borderColor: (theme.muted || "#B3A18C") + "20", color: theme.muted, background: theme.surface }}
+            >
+              {c}
+            </button>
           ))}
         </div>
+      </div>
 
+      {/* ===================== SEARCH ===================== */}
+      <div className="max-w-3xl mx-auto px-4 pt-4">
         <div className="relative">
-          <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="ابحث عن بيتزا، سجق، مشروب..." className="w-full px-4 py-2.5 pr-10 rounded-xl text-sm border focus:outline-none transition-all" style={{ background: theme.surface, borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
-          <Search size={16} className="absolute right-3.5 top-3.5" style={{ color: theme.muted }} />
+          <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="ابحث عن بيتزا، سندوتش، مشروب..." className="w-full px-4 py-3 pr-10 rounded-2xl text-xs border focus:outline-none transition-all shadow-sm" style={{ background: theme.surface, borderColor: (theme.muted || "#B3A18C") + "25", color: theme.text }} />
+          <Search size={15} className="absolute right-3.5 top-3.5" style={{ color: theme.muted }} />
           {searchQuery && <button onClick={() => setSearchQuery("")} className="absolute left-3 top-2.5 p-1 rounded-full hover:bg-black/10 transition-colors" style={{ color: theme.muted }}><X size={14} /></button>}
         </div>
       </div>
 
-      {/* ===================== MENU ITEMS ===================== */}
-      <main className="max-w-3xl mx-auto px-4 pb-32 pt-4 space-y-6">
+      {/* ===================== MENU ITEMS (Grid Style Layout) ===================== */}
+      <main className="max-w-3xl mx-auto px-4 pb-32 pt-5 space-y-8">
         {groups.map((group) => {
           const subcat = group[0];
           const list = group[1];
           return (
             <div key={subcat || "main"}>
-              {subcat && <h2 className="text-sm font-black mb-3 px-1 tracking-wide" style={{ color: theme.accent, fontFamily: theme.display }}>{subcat}</h2>}
-              <div className="space-y-3">
+              {subcat && (
+                <h2 className="text-xs font-black mb-4 px-1 tracking-wide uppercase flex items-center gap-2" style={{ color: theme.accent }}>
+                  <span className="w-1.5 h-3.5 rounded-full" style={{ background: theme.accent }} />
+                  {subcat}
+                </h2>
+              )}
+              {/* شبكة المنتجات المتجاورة: كرتين في الموبايل */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {list.map((item) => (
-                  <div key={item.id} className="rounded-2xl p-4 border transition-all" style={{ background: theme.surface, borderColor: (theme.muted || "#B3A18C") + "25" }}>
-                    <div className="flex items-baseline justify-between gap-2 mb-1">
-                      <h3 className="font-bold text-base truncate">{item.name}</h3>
-                      {!item.sizes && <span className="font-black shrink-0" style={{ color: theme.accent }}>{money(item.price)}</span>}
+                  <div key={item.id} className="rounded-2xl p-3.5 border transition-all duration-300 flex flex-col justify-between hover:shadow-lg shadow-sm" style={{ background: theme.surface, borderColor: (theme.muted || "#B3A18C") + "15" }}>
+                    <div className="space-y-1.5">
+                      <h3 className="font-bold text-sm leading-snug line-clamp-2">{item.name}</h3>
+                      {item.desc && <p className="text-[10px] opacity-75 line-clamp-3 leading-relaxed" style={{ color: theme.muted }}>{item.desc}</p>}
                     </div>
-                    {item.desc && <p className="text-sm mb-2 opacity-90" style={{ color: theme.muted }}>{item.desc}</p>}
 
-                    {item.sizes ? (
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {item.sizes.map((sz) => {
-                          const key = item.id + "::" + sz.label;
-                          const qty = cart[key] || 0;
-                          return (
-                            <div key={sz.label} className="flex items-center gap-2 rounded-full px-2.5 py-1.5 border transition-colors" style={{ borderColor: (theme.muted || "#B3A18C") + "30", background: theme.surface2 }}>
-                              <span className="text-xs font-bold" style={{ color: theme.muted }}>{sz.label}</span>
-                              <span className="text-xs font-black" style={{ color: theme.accent }}>{money(sz.price)}</span>
-                              {qty > 0 ? (
-                                <div className="flex items-center gap-1.5 mr-1.5">
-                                  <button onClick={() => addToCart(key, 1)} className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: theme.bg }}><Plus size={11} /></button>
-                                  <span className="w-3 text-center text-xs font-bold">{qty}</span>
-                                  <button onClick={() => addToCart(key, -1)} className="w-5 h-5 rounded-full flex items-center justify-center border" style={{ borderColor: (theme.muted || "#B3A18C") + "50" }}><Minus size={11} /></button>
-                                </div>
-                              ) : (
-                                <button onClick={() => addToCart(key, 1)} className="w-5 h-5 rounded-full flex items-center justify-center mr-1.5 hover:scale-105 active:scale-95 transition-transform" style={{ background: theme.accent, color: theme.bg }} aria-label={"إضافة " + item.name + " " + sz.label}><Plus size={11} /></button>
-                              )}
+                    <div className="mt-4 pt-2 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "10" }}>
+                      {item.sizes ? (
+                        <div className="space-y-1.5">
+                          {item.sizes.map((sz) => {
+                            const key = item.id + "::" + sz.label;
+                            const qty = cart[key] || 0;
+                            return (
+                              <div key={sz.label} className="flex items-center justify-between gap-1 rounded-lg px-2 py-1 text-[10px]" style={{ background: theme.surface2 }}>
+                                <span className="font-bold opacity-80">{sz.label}</span>
+                                <span className="font-extrabold" style={{ color: theme.accent }}>{money(sz.price)}</span>
+                                {qty > 0 ? (
+                                  <div className="flex items-center gap-1">
+                                    <button onClick={() => addToCart(key, -1)} className="w-4 h-4 rounded-full flex items-center justify-center border" style={{ borderColor: theme.accent }}><Minus size={9} /></button>
+                                    <span className="w-2.5 text-center font-bold">{qty}</span>
+                                    <button onClick={() => addToCart(key, 1)} className="w-4 h-4 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: theme.bg }}><Plus size={9} /></button>
+                                  </div>
+                                ) : (
+                                  <button onClick={() => addToCart(key, 1)} className="w-4 h-4 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: theme.bg }}><Plus size={9} /></button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-black" style={{ color: theme.accent }}>{money(item.price)}</span>
+                          {cart[item.id] > 0 ? (
+                            <div className="flex items-center gap-1.5 rounded-full px-1.5 py-0.5" style={{ background: theme.surface2 }}>
+                              <button onClick={() => addToCart(item.id, -1)} className="w-5.5 h-5.5 rounded-full flex items-center justify-center border" style={{ borderColor: theme.accent }}><Minus size={10} /></button>
+                              <span className="w-3 text-center font-bold text-xs">{cart[item.id]}</span>
+                              <button onClick={() => addToCart(item.id, 1)} className="w-5.5 h-5.5 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: theme.bg }}><Plus size={10} /></button>
                             </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="flex justify-end -mt-6">
-                        {cart[item.id] > 0 ? (
-                          <div className="flex items-center gap-2 rounded-full px-1.5 py-1" style={{ background: theme.surface2 }}>
-                            <button onClick={() => addToCart(item.id, 1)} className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: theme.bg }}><Plus size={14} /></button>
-                            <span className="w-4 text-center font-bold text-sm">{cart[item.id]}</span>
-                            <button onClick={() => addToCart(item.id, -1)} className="w-7 h-7 rounded-full flex items-center justify-center border" style={{ borderColor: (theme.muted || "#B3A18C") + "50" }}><Minus size={14} /></button>
-                          </div>
-                        ) : (
-                          <button onClick={() => addToCart(item.id, 1)} className="w-9 h-9 rounded-full flex items-center justify-center hover:scale-105 active:scale-90 transition-transform" style={{ background: theme.accent, color: theme.bg }} aria-label={"إضافة " + item.name}><Plus size={18} /></button>
-                        )}
-                      </div>
-                    )}
+                          ) : (
+                            <button onClick={() => addToCart(item.id, 1)} className="w-6.5 h-6.5 rounded-full flex items-center justify-center transition-transform hover:scale-105 active:scale-95" style={{ background: theme.accent, color: theme.bg }}><Plus size={13} /></button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -595,18 +531,22 @@ export default function RestaurantMenu() {
       </main>
 
       {/* ===================== FOOTER INFO STRIP ===================== */}
-      <div className="fixed bottom-0 inset-x-0 z-20 border-t px-4 py-3 flex items-center justify-center gap-5 text-xs font-semibold shadow-inner" style={{ background: theme.bg + "F5", borderColor: (theme.muted || "#B3A18C") + "25", color: theme.muted, backdropFilter: "blur(8px)" }}>
+      <div className="fixed bottom-0 inset-x-0 z-20 border-t px-4 py-3.5 flex items-center justify-center gap-5 text-xs font-semibold shadow-inner" style={{ background: theme.bg + "F2", borderColor: (theme.muted || "#B3A18C") + "20" , color: theme.muted, backdropFilter: "blur(8px)" }}>
         <a href={"tel:" + whatsappNumber} className="flex items-center gap-1 hover:underline"><Phone size={13} /> {whatsappNumber}</a>
         <span className="flex items-center gap-1 truncate"><MapPin size={13} className="shrink-0" /> <span className="truncate">{address}</span></span>
       </div>
 
-      {/* ===================== FLOATING CART BUTTON ===================== */}
+      {/* ===================== FLOATING CART BUTTON (Menu4U Full Style) ===================== */}
       {cartCount > 0 && (
-        <button onClick={() => setCartOpen(true)} className="fixed bottom-14 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 px-6 py-3 rounded-full shadow-2xl font-bold text-sm active:scale-95 transition-all" style={{ background: theme.accent2, color: "#fff" }}>
-          <ShoppingCart size={18} />
-          <span>{cartCount} طلبات</span>
-          <span className="opacity-60">|</span>
-          <span>{money(cartTotal)}</span>
+        <button onClick={() => setCartOpen(true)} className="fixed bottom-14 left-1/2 -translate-x-1/2 z-35 flex items-center justify-between gap-6 px-6 py-3.5 rounded-full shadow-2xl font-bold text-sm active:scale-95 transition-all" style={{ background: theme.accent, color: theme.bg, width: "90%", maxWidth: "450px" }}>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <ShoppingCart size={18} />
+              <span className="absolute -top-2.5 -right-2 w-4.5 h-4.5 bg-red-600 text-white text-[9px] rounded-full flex items-center justify-center font-bold">{cartCount}</span>
+            </div>
+            <span>عرض الطلبات</span>
+          </div>
+          <span className="text-xs tracking-wide">الإجمالي: {money(cartTotal)}</span>
         </button>
       )}
 
@@ -616,7 +556,6 @@ export default function RestaurantMenu() {
           <Sheet theme={theme} title="سلة المشتريات" onClose={() => setCartOpen(false)}>
             {cartList.length === 0 ? <p className="text-center py-8" style={{ color: theme.muted }}>العربة فارغة حالياً</p> : (
               <>
-                {/* قائمة السلة مع قفل الحجم والاسكرول لعدم الخروج من الشاشة */}
                 <div className="space-y-3 max-h-[22vh] overflow-y-auto pr-1">
                   {cartList.map((cartItem) => (
                     <div key={cartItem.key} className="flex items-center justify-between gap-2 border-b pb-2" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
@@ -633,7 +572,6 @@ export default function RestaurantMenu() {
                   ))}
                 </div>
                 
-                {/* الحساب التفصيلي مع إضافة مصاريف التوصيل للمجموع الكلي[cite: 1] */}
                 <div className="space-y-1 pt-2 mt-1 border-t text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
                   <div className="flex items-center justify-between opacity-80">
                     <span>حساب المأكولات:</span>
@@ -649,12 +587,11 @@ export default function RestaurantMenu() {
                   </div>
                 </div>
 
-                {/* ===================== بيانات العميل والتوصيل والملاحظات[cite: 1] ===================== */}
+                {/* ===================== بيانات العميل والتوصيل والملاحظات ===================== */}
                 <div className="mt-3 pt-2 border-t space-y-2" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
                   <p className="text-[11px] font-bold" style={{ color: theme.accent }}>بيانات التوصيل والطلب (الدليفري):</p>
                   
                   <div className="space-y-2">
-                    {/* اختيار المنطقة وحساب التوصيل تلقائياً[cite: 1] */}
                     <div className="relative">
                       <select 
                         value={deliveryArea.name}
@@ -672,56 +609,29 @@ export default function RestaurantMenu() {
                         ))}
                       </select>
                       <MapPin size={14} className="absolute right-3 top-3.5 opacity-60" style={{ color: theme.text }} />
+                      <ChevronDown size={14} className="absolute left-3 top-3.5 opacity-60" style={{ color: theme.text }} />
                     </div>
 
-                    {/* خانة رقم الهاتف[cite: 1] */}
                     <div className="relative">
-                      <input 
-                        type="tel" 
-                        placeholder="رقم تليفونك لتأكيد الطلب..." 
-                        value={customerPhone}
-                        onChange={(e) => setCustomerPhone(e.target.value)}
-                        className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none" 
-                        style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }}
-                      />
+                      <input type="tel" placeholder="رقم تليفونك لتأكيد الطلب..." value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }} />
                       <Phone size={14} className="absolute right-3 top-3.5 opacity-60" style={{ color: theme.text }} />
                     </div>
 
-                    {/* خانة عنوان التوصيل بالتفصيل[cite: 1] */}
                     <div className="relative">
-                      <input 
-                        type="text" 
-                        placeholder="العنوان بالتفصيل (البيت، الشارع، دور كام)..." 
-                        value={customerAddress}
-                        onChange={(e) => setCustomerAddress(e.target.value)}
-                        className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none" 
-                        style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }}
-                      />
+                      <input type="text" placeholder="العنوان بالتفصيل (البيت، الشارع، دور كام)..." value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }} />
                       <MapPin size={14} className="absolute right-3 top-3.5 opacity-60" style={{ color: theme.text }} />
                     </div>
 
-                    {/* خانة الملاحظات الإضافية الذكية[cite: 1] */}
                     <div className="relative">
-                      <textarea 
-                        placeholder="أي ملاحظات إضافية على الأكل؟ (مثال: بدون بصل، الكرانشي حار...)" 
-                        value={customerNotes}
-                        onChange={(e) => setCustomerNotes(e.target.value)}
-                        rows={1}
-                        className="w-full px-3 py-2 pr-9 rounded-xl text-xs border focus:outline-none resize-none" 
-                        style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }}
-                      />
+                      <textarea placeholder="أي ملاحظات إضافية على الأكل؟ (مثال: بدون بصل، الكرانشي حار...)" value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} rows={1} className="w-full px-3 py-2 pr-9 rounded-xl text-xs border focus:outline-none resize-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }} />
                       <FileText size={14} className="absolute right-3 top-2.5 opacity-60" style={{ color: theme.text }} />
                     </div>
                   </div>
                   
-                  {validationError && (
-                    <p className="text-[10px] text-center font-bold text-red-500 bg-red-500/10 py-1 rounded-lg animate-pulse">
-                      {validationError}
-                    </p>
-                  )}
+                  {validationError && <p className="text-[10px] text-center font-bold text-red-500 bg-red-500/10 py-1 rounded-lg animate-pulse">{validationError}</p>}
                 </div>
 
-                <button onClick={sendWhatsApp} className="w-full mt-3 py-3 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform" style={{ background: "#25D366", color: "#fff" }}><MessageCircle size={18} />تأكيد وإرسال عبر واتساب</button>
+                <button onClick={sendWhatsApp} className="w-full mt-3 py-3 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-md hover:opacity-90" style={{ background: "#25D366", color: "#fff" }}><MessageCircle size={18} />تأكيد وإرسال عبر واتساب</button>
                 
                 <div className="mt-3 pt-3 border-t space-y-2" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
                   <p className="text-xs font-bold" style={{ color: theme.muted }}>خيارات الدفع الإلكتروني المباشر</p>
@@ -734,6 +644,7 @@ export default function RestaurantMenu() {
         </Overlay>
       )}
 
+      {/* باقي الـ Modals الـ QR والـ Theme والإدارة بتفضل شغالة تمام */}
       {qrOpen && (
         <Overlay onClose={() => setQrOpen(false)}>
           <Sheet theme={theme} title="بار كود المنيو للعملاء" onClose={() => setQrOpen(false)}>
@@ -755,7 +666,7 @@ export default function RestaurantMenu() {
               {THEMES.map((t) => (
                 <button key={t.id} onClick={() => { setTheme(t); setThemePickerOpen(false); }} className="flex items-center gap-3 p-3 rounded-xl border text-right transition-colors hover:bg-black/5" style={{ borderColor: (theme.muted || "#B3A18C") + "30", background: t.bg }}>
                   <div className="flex gap-1 shrink-0"><span className="w-6 h-6 rounded-full border border-white/20" style={{ background: t.accent }} /><span className="w-6 h-6 rounded-full border border-white/20" style={{ background: t.accent2 }} /></div>
-                  <span style={{ fontFamily: t.display, color: t.text }} className="text-lg">{t.name}</span>
+                  <span className="text-base font-bold" style={{ color: t.text }}>{t.name}</span>
                   {t.id === theme.id && <Check size={16} className="mr-auto" style={{ color: t.accent }} />}
                 </button>
               ))}
@@ -873,47 +784,8 @@ export default function RestaurantMenu() {
 function Overlay({ children, onClose }) {
   return (
     <div className="fixed inset-0 z-40 flex items-end md:items-center justify-center p-0 md:p-4">
-      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
       {children}
-    </div>
-  );
-}
-
-function Sheet({ theme, title, onClose, children }) {
-  return (
-    <div className="relative z-10 w-full md:max-w-md max-h-[85vh] rounded-t-3xl md:rounded-3xl p-5 overflow-y-auto" style={{ background: theme.bg, color: theme.text, border: "1px solid " + (theme.muted || "#B3A18C") + "30" }} dir="rtl">
-      <div className="flex items-center justify-between mb-4 pb-2 border-b" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
-        <h2 className="text-lg font-black" style={{ fontFamily: theme.display, color: theme.accent }}>{title}</h2>
-        <button onClick={onClose} className="p-1.5 rounded-full border" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }}><X size={15} /></button>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function Field({ label, value, onChange, theme, dir = "rtl", hint }) {
-  return (
-    <label className="block text-sm space-y-1">
-      <span className="font-bold opacity-90" style={{ color: theme.muted }}>{label}</span>
-      <input value={value} onChange={(e) => onChange(e.target.value)} dir={dir} className="w-full px-3 py-2 rounded-lg border bg-transparent" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
-      {hint && <span className="block mt-1 text-xs opacity-70" style={{ color: theme.muted }}>{hint}</span>}
-    </label>
-  );
-}
-
-function PayRow({ icon, label, value, theme, onCopy, copied }) {
-  return (
-    <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg" style={{ background: theme.surface2 }}>
-      <div className="flex items-center gap-2 min-w-0">
-        <span style={{ color: theme.accent }}>{icon}</span>
-        <div className="min-w-0">
-          <p className="text-xs" style={{ color: theme.muted }}>{label}</p>
-          <p className="text-sm font-bold truncate" dir="ltr">{value}</p>
-        </div>
-      </div>
-      <button onClick={() => onCopy(label, value)} className="p-1.5 rounded-full border shrink-0 transition-transform active:scale-95" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }}>
-        {copied === label ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
-      </button>
     </div>
   );
 }
