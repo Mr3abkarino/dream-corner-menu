@@ -3,7 +3,7 @@ import restaurantLogo from "./assets/logo.png";
 import {
   ShoppingCart, Plus, Minus, X, Pencil, Trash2, Check, Copy,
   QrCode, Settings, Phone, CreditCard, Sparkles, Search, RotateCcw,
-  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation
+  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation, Award, Calendar
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
@@ -152,6 +152,14 @@ export default function RestaurantMenu() {
   const [validationError, setValidationError] = useState("");
   const [orderSuccess, setOrderSuccess] = useState(false);
 
+  // إعدادات الولاء ومحفظة النقاط الذكية
+  const [userPoints, setUserPoints] = useState(0);
+  const [redeemPoints, setRedeemPoints] = useState(false);
+
+  // إعدادات جدولة المواعيد
+  const [scheduleType, setScheduleType] = useState("now"); // "now" or "later"
+  const [scheduleTime, setScheduleTime] = useState("");
+
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminPin, setAdminPin] = useState("1234");
   const [pinModalOpen, setPinModalOpen] = useState(false);
@@ -191,15 +199,21 @@ export default function RestaurantMenu() {
     return { name: "اختر منطقة التوصيل...", price: 0 };
   }, [selectedAreaIndex, deliveryAreas]);
 
+  // حساب إجمالي الخصومات (خصم الكوبون + خصم النقاط)
   const discountAmount = useMemo(() => {
     return Math.round((cartTotal * appliedDiscountPercent) / 100);
   }, [cartTotal, appliedDiscountPercent]);
 
-  const finalTotal = useMemo(() => {
-    return Math.max(0, cartTotal - discountAmount) + activeDeliveryArea.price;
-  }, [cartTotal, discountAmount, activeDeliveryArea]);
+  // حساب قيمة خصم نقاط الولاء (كل نقطة تساوى 1 جنيه خصم)
+  const pointsDiscountValue = useMemo(() => {
+    if (!redeemPoints) return 0;
+    return Math.min(userPoints, Math.max(0, cartTotal - discountAmount));
+  }, [redeemPoints, userPoints, cartTotal, discountAmount]);
 
-  // حساب كود الـ QR ديناميكياً بأمان جوه الـ Component
+  const finalTotal = useMemo(() => {
+    return Math.max(0, cartTotal - discountAmount - pointsDiscountValue) + activeDeliveryArea.price;
+  }, [cartTotal, discountAmount, pointsDiscountValue, activeDeliveryArea]);
+
   const qrSrc = useMemo(() => {
     return "https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=8&data=" + encodeURIComponent(menuUrl);
   }, [menuUrl]);
@@ -264,9 +278,11 @@ export default function RestaurantMenu() {
           const savedName = localStorage.getItem("customer-name-cache");
           const savedPhone = localStorage.getItem("customer-phone-cache");
           const savedAddress = localStorage.getItem("customer-address-cache");
+          const savedPoints = localStorage.getItem("customer-points-loyalty");
           if (savedName) setCustomerName(savedName);
           if (savedPhone) setCustomerPhone(savedPhone);
           if (savedAddress) setCustomerAddress(savedAddress);
+          if (savedPoints) setUserPoints(Number(savedPoints));
         }
       } catch (e) {
         console.error("Storage error", e);
@@ -291,20 +307,17 @@ export default function RestaurantMenu() {
     }, 500);
   }, [items, restaurantName, tagline, address, menuUrl, whatsappNumber, vodafoneCash, instapay, adminPin, deliveryAreas, promoCodes, theme, loaded]);
 
-  const handleLogoClick = () => {
-    if (isAdmin) return;
-    setLogoClicks((prev) => {
-      const next = prev + 1;
-      if (next >= 5) {
-        setPinModalOpen(true);
-        setEnteredPin("");
-        setPinError("");
-        return 0;
-      }
-      return next;
-    });
-    clearTimeout(window.logoClickTimeout);
-    window.logoClickTimeout = setTimeout(() => { setLogoClicks(0); }, 2500);
+  const handleVerifyPin = (e) => {
+    e.preventDefault();
+    if (enteredPin === adminPin) {
+      setIsAdmin(true);
+      setPinModalOpen(false);
+      setPinError("");
+      setEnteredPin("");
+    } else {
+      setPinError("رمز الأمان PIN غير صحيح! يرجى إعادة المحاولة.");
+      setEnteredPin("");
+    }
   };
 
   const categories = useMemo(() => ["الكل", ...new Set(items.map((i) => i.cat))], [items]);
@@ -387,18 +400,38 @@ export default function RestaurantMenu() {
       setValidationError("برجاء اختيار منطقة التوصيل لحساب إجمالي الأوردر بدقة!");
       return;
     }
+    if (scheduleType === "later" && !scheduleTime) {
+      setValidationError("برجاء اختيار وقت وموعد التوصيل المطلق!");
+      return;
+    }
     setValidationError("");
+
+    // حساب النقاط الجديدة المكتسبة من هذا الطلب (نقطة لكل 10 جنيه)
+    const newlyEarnedPoints = Math.floor(cartTotal / 10);
+    let updatedPoints = userPoints;
+
+    // خصم النقاط المستخدمة وإضافة النقاط الجديدة للمحفظة
+    if (redeemPoints) {
+      updatedPoints = Math.max(0, userPoints - pointsDiscountValue);
+    }
+    updatedPoints += newlyEarnedPoints;
 
     if (typeof window !== "undefined" && window.localStorage) {
       localStorage.setItem("customer-name-cache", customerName.trim());
       localStorage.setItem("customer-phone-cache", customerPhone.trim());
       localStorage.setItem("customer-address-cache", customerAddress.trim());
+      localStorage.setItem("customer-points-loyalty", updatedPoints.toString());
     }
 
     const lines = cartList.map((cartItem) => "• " + cartItem.label + " x" + cartItem.qty + " — " + money(cartItem.price * cartItem.qty));
+    
+    // إعداد تفاصيل وقت التوصيل المجدول
+    const deliveryTimeText = scheduleType === "now" ? "⚡ توصيل فوري (الآن)" : "🕒 مجدول للموعد: " + scheduleTime;
+
     let text = "طلب جديد من منيو " + restaurantName + " 🍽️\n\n" + 
                "👤 اسم العميل: " + customerName + "\n" +
                "📱 تليفون العميل: " + customerPhone + "\n" +
+               "📅 موعد التوصيل: " + deliveryTimeText + "\n" +
                "📍 المنطقة: " + activeDeliveryArea.name + "\n" +
                "🏠 العنوان بالتفصيل: " + customerAddress + "\n";
                
@@ -416,19 +449,26 @@ export default function RestaurantMenu() {
       text += "🏷️ كود الخصم المطبق: " + enteredPromo.toUpperCase() + " (-" + appliedDiscountPercent + "%)\n" +
               "📉 قيمة الخصم: " + money(discountAmount) + "\n";
     }
-            
-    text += "🛵 مصاريف التوصيل: " + money(activeDeliveryArea.price) + "\n" +
+
+    if (redeemPoints && pointsDiscountValue > 0) {
+      text += "🪙 خصم نقاط محفظة الولاء: -" + money(pointsDiscountValue) + " (تم خصم " + pointsDiscountValue + " نقطة)\n";
+    }
+
+    text += "✨ نقاط مستحقة من هذا الأوردر: +" + newlyEarnedPoints + " نقطة ذهبية\n" +
+            "🛵 مصاريف التوصيل: " + money(activeDeliveryArea.price) + "\n" +
             "💰 الإجمالي النهائي المطلوب: " + money(finalTotal);
                  
     const phone = whatsappNumber.replace(/[^\d+]/g, "");
     window.open("https://wa.me/" + phone + "?text=" + encodeURIComponent(text), "_blank");
 
+    setUserPoints(updatedPoints);
     setCartOpen(false);
     setCart({});
     setOrderSuccess(true);
     setAppliedDiscountPercent(0);
     setEnteredPromo("");
     setGeoLink("");
+    setRedeemPoints(false);
   };
 
   const copyText = (label, value) => {
@@ -446,13 +486,17 @@ export default function RestaurantMenu() {
     setShowResetConfirm(false);
   };
 
+  const handleLogoClickLocal = () => {
+    handleLogoClick();
+  };
+
   return (
     <div dir="rtl" className="min-h-screen w-full transition-colors duration-500 pb-28" style={{ background: theme.bg, color: theme.text, fontFamily: "'Tajawal', sans-serif" }}>
       {/* ===================== HEADER ===================== */}
       <header className="sticky top-0 z-30 backdrop-blur-md border-b" style={{ background: theme.bg + "D9", borderColor: (theme.muted || "#B3A18C") + "20" }}>
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
-            <div onClick={handleLogoClick} className="cursor-pointer active:scale-95 transition-transform shrink-0 relative">
+            <div onClick={handleLogoClickLocal} className="cursor-pointer active:scale-95 transition-transform shrink-0 relative">
               <img src={LOGO_SRC} alt={restaurantName + " logo"} className="w-11 h-11 rounded-full object-contain border border-white/10 animate-pulse" style={{ padding: 1, animationDuration: '3s' }} />
               {logoClicks > 0 && <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-600 text-white rounded-full flex items-center justify-center text-[9px] font-bold animate-ping">{logoClicks}</span>}
             </div>
@@ -606,7 +650,7 @@ export default function RestaurantMenu() {
           <Sheet theme={theme} title="سلة المشتريات" onClose={() => setCartOpen(false)}>
             {cartList.length === 0 ? <p className="text-center py-8" style={{ color: theme.muted }}>العربة فارغة حالياً</p> : (
               <>
-                <div className="space-y-3 max-h-[18vh] overflow-y-auto pr-1">
+                <div className="space-y-3 max-h-[15vh] overflow-y-auto pr-1">
                   {cartList.map((cartItem) => (
                     <div key={cartItem.key} className="flex items-center justify-between gap-2 border-b pb-2" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
                       <div className="min-w-0">
@@ -621,8 +665,28 @@ export default function RestaurantMenu() {
                     </div>
                   ))}
                 </div>
+
+                {/* نظام نقاط الولاء والمكافآت (Loyalty Points Box) */}
+                {userPoints > 0 && (
+                  <div className="mt-3 p-3 rounded-xl border border-dashed flex flex-col gap-2" style={{ borderColor: theme.accent + "40", background: theme.surface2 }}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-xs font-bold" style={{ color: theme.accent }}>
+                        <Award size={15} className="animate-bounce" />
+                        <span>محفظة النقاط الذهبية: لديك {userPoints} نقطة</span>
+                      </div>
+                      <span className="text-[10px] opacity-80" style={{ color: theme.muted }}>تساوي {money(userPoints)} خصم</span>
+                    </div>
+                    <button 
+                      onClick={() => setRedeemPoints(!redeemPoints)}
+                      className="w-full py-1.5 rounded-lg text-[11px] font-black transition-all active:scale-95 flex items-center justify-center gap-1"
+                      style={redeemPoints ? { background: "#15803d", color: "#fff" } : { background: theme.accent, color: theme.bg }}
+                    >
+                      {redeemPoints ? "✓ تم تطبيق خصم النقاط الذهبية" : "🪙 اضغط هنا لاستبدال النقاط بخصم فوري"}
+                    </button>
+                  </div>
+                )}
                 
-                <div className="space-y-1 pt-2 mt-1 border-t text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
+                <div className="space-y-1 pt-2 mt-2 border-t text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
                   <div className="flex items-center justify-between opacity-80">
                     <span>حساب المأكولات:</span>
                     <span>{money(cartTotal)}</span>
@@ -631,6 +695,12 @@ export default function RestaurantMenu() {
                     <div className="flex items-center justify-between text-green-500 font-medium">
                       <span>خصم الكوبون (-{appliedDiscountPercent}%):</span>
                       <span>-{money(discountAmount)}</span>
+                    </div>
+                  )}
+                  {redeemPoints && pointsDiscountValue > 0 && (
+                    <div className="flex items-center justify-between text-green-500 font-medium animate-pulse">
+                      <span>خصم استبدال النقاط:</span>
+                      <span>-{money(pointsDiscountValue)}</span>
                     </div>
                   )}
                   <div className="flex items-center justify-between opacity-80">
@@ -682,6 +752,46 @@ export default function RestaurantMenu() {
                       <ChevronDown size={14} className="absolute left-3 top-3.5 opacity-60" style={{ color: theme.text }} />
                     </div>
 
+                    {/* خيارات جدولة مواعيد التوصيل (Order Scheduling Box) */}
+                    <div className="p-3 rounded-xl border border-dotted space-y-2.5" style={{ borderColor: (theme.muted || "#B3A18C") + "30", background: theme.surface2 }}>
+                      <p className="text-[10px] font-bold opacity-80 flex items-center gap-1" style={{ color: theme.muted }}>
+                        <Calendar size={13} />
+                        <span>تحديد موعد التوصيل المطلق:</span>
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button 
+                          type="button" 
+                          onClick={() => setScheduleType("now")}
+                          className="py-1.5 rounded-lg text-[10px] font-bold border transition-all"
+                          style={scheduleType === "now" ? { background: theme.accent, color: theme.bg, borderColor: theme.accent } : { borderColor: theme.muted + "20" }}
+                        >
+                          ⚡ دليفري فوري (الآن)
+                        </button>
+                        <button 
+                          type="button" 
+                          onClick={() => setScheduleType("later")}
+                          className="py-1.5 rounded-lg text-[10px] font-bold border transition-all"
+                          style={scheduleType === "later" ? { background: theme.accent, color: theme.bg, borderColor: theme.accent } : { borderColor: theme.muted + "20" }}
+                        >
+                          🕒 توصيل مجدول لاحقاً
+                        </button>
+                      </div>
+
+                      {scheduleType === "later" && (
+                        <div className="relative animate-pulse">
+                          <input 
+                            type="text" 
+                            placeholder="اكتب الموعد المفضل (مثال: الساعة 9:30 مساءً)..." 
+                            value={scheduleTime} 
+                            onChange={(e) => setScheduleTime(e.target.value)} 
+                            className="w-full px-3 py-2 pr-8 rounded-lg text-[10px] border focus:outline-none" 
+                            style={{ background: theme.surface, borderColor: theme.accent + "40", color: theme.text }} 
+                          />
+                          <Calendar size={12} className="absolute right-2.5 top-2.5" style={{ color: theme.accent }} />
+                        </div>
+                      )}
+                    </div>
+
                     <div className="relative">
                       <input type="tel" placeholder="رقم تليفونك لتأكيد الطلب..." value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }} />
                       <Phone size={14} className="absolute right-3 top-3.5 opacity-60" style={{ color: theme.text }} />
@@ -719,7 +829,6 @@ export default function RestaurantMenu() {
         </Overlay>
       )}
 
-      {/* شاشة نجاح الأوردر */}
       {orderSuccess && (
         <Overlay onClose={() => setOrderSuccess(false)}>
           <Sheet theme={theme} title="تم إرسال طلبك بنجاح! 🎉" onClose={() => setOrderSuccess(false)}>
@@ -754,7 +863,7 @@ export default function RestaurantMenu() {
           <Sheet theme={theme} title="اختر هوية مطعمك البصرية" onClose={() => setThemePickerOpen(false)}>
             <div className="grid grid-cols-1 gap-2.5">
               {THEMES.map((t) => (
-                <button key={t.id} onClick={() => { setTheme(t); setThemePickerOpen(false); }} className="flex items-center gap-3 p-3 rounded-xl border text-right transition-colors hover:bg-black/5" style={{ borderColor: (theme.muted || "#B3A18C") + "30" , background: t.bg }}>
+                <button key={t.id} onClick={() => { setTheme(t); setThemePickerOpen(false); }} className="flex items-center gap-3 p-3 rounded-xl border text-right transition-colors hover:bg-black/5" style={{ borderColor: (theme.muted || "#B3A18C") + "30", background: t.bg }}>
                   <div className="flex gap-1 shrink-0"><span className="w-6 h-6 rounded-full border border-white/20" style={{ background: t.accent }} /><span className="w-6 h-6 rounded-full border border-white/20" style={{ background: t.accent2 }} /></div>
                   <span className="text-base font-bold" style={{ color: t.text }}>{t.name}</span>
                   {t.id === theme.id && <Check size={16} className="mr-auto" style={{ color: t.accent }} />}
@@ -768,7 +877,7 @@ export default function RestaurantMenu() {
       {pinModalOpen && (
         <Overlay onClose={() => setPinModalOpen(false)}>
           <Sheet theme={theme} title="التحقق من هوية المدير" onClose={() => setPinModalOpen(false)}>
-            <form onSubmit={(e) => { e.preventDefault(); if (enteredPin === adminPin) { setIsAdmin(true); setPinModalOpen(false); setPinError(""); setEnteredPin(""); } else { setPinError("رمز الأمان PIN غير صحيح!"); } }} className="space-y-4">
+            <form onSubmit={handleVerifyPin} className="space-y-4">
               <div className="flex flex-col items-center justify-center py-2"><KeyRound size={40} className="mb-2" style={{ color: theme.accent }} /><p className="text-xs text-center" style={{ color: theme.muted }}>هذه المنطقة مخصصة لإدارة المطعم فقط.</p></div>
               <label className="block text-sm space-y-1">
                 <span className="font-bold opacity-90" style={{ color: theme.muted }}>رمز الأمان الحالي</span>
@@ -896,7 +1005,7 @@ export default function RestaurantMenu() {
         <Overlay onClose={() => setShowResetConfirm(false)}>
           <Sheet theme={theme} title="تأكيد إعادة التعيين" onClose={() => setShowResetConfirm(false)}>
             <div className="space-y-4 text-center">
-              <p className="text-sm">هل أنت متأكد من رغبتك في استعادة منيو دريم كورنر الأصلي?</p>
+              <p className="text-sm">هل أنت متأكد من رغبتك في استعادة منيو دريم كورنر الأصلي؟</p>
               <div className="flex gap-2 justify-center">
                 <button onClick={handleResetMenu} className="px-4 py-2 bg-red-600 text-white rounded-lg text-xs font-bold">نعم</button>
                 <button onClick={() => setShowResetConfirm(false)} className="px-4 py-2 border rounded-lg text-xs font-bold" style={{ borderColor: theme.muted + "40" }}>إلغاء</button>
