@@ -83,7 +83,7 @@ const DEFAULT_MENU = [
   { id: "p4", cat: "البيتزا", name: "هوت دوج", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 100 }, { label: "صغير", price: 70 }] },
   { id: "p5", cat: "البيتزا", name: "سجق", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 100 }, { label: "صغير", price: 70 }] },
   { id: "p6", cat: "البيتزا", name: "لحمة مفرومة", sizes: [{ label: "كبير", price: 145 }, { label: "وسط", price: 110 }, { label: "صغير", price: 75 }] },
-  { id: "p7", cat: "البيتزا", name: "بيروني", sizes: [{ label: "كبير", price: 110 }, { label: "وسط", price: 90 }, { label: "صغير", price: 70 }] },
+  { id: "p7", cat: "البيتزا", name: "بيبروني", sizes: [{ label: "كبير", price: 110 }, { label: "وسط", price: 90 }, { label: "صغير", price: 70 }] },
   { id: "p8", cat: "البيتزا", name: "سلامي", sizes: [{ label: "كبير", price: 110 }, { label: "وسط", price: 90 }, { label: "صغير", price: 70 }] },
   { id: "p9", cat: "البيتزا", name: "شاورما دجاج", sizes: [{ label: "كبير", price: 155 }, { label: "وسط", price: 120 }, { label: "صغير", price: 80 }] },
   { id: "p10", cat: "البيتزا", name: "دجاج رانش", sizes: [{ label: "كبير", price: 155 }, { label: "وسط", price: 120 }, { label: "صغير", price: 80 }] },
@@ -126,7 +126,7 @@ const DEFAULT_MENU = [
   { id: "d4", cat: "المشروبات", name: "مياة معدنية صغيرة", price: 6 }
 ];
 
-const money = (n) => Number(n).toLocaleString("ar-EG") + " ج.م";
+const money = (n) => Number(n).toLocaleString("en-US") + " جنيه";
 
 const safeStorage = {
   get: async (key) => {
