@@ -401,6 +401,8 @@ export default function RestaurantMenu() {
     setShowResetConfirm(false);
   };
 
+  const qrSrc = "https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=8&data=" + encodeURIComponent(menuUrl);
+
   return (
     <div dir="rtl" className="min-h-screen w-full transition-colors duration-500 pb-28" style={{ background: theme.bg, color: theme.text, fontFamily: "'Tajawal', sans-serif" }}>
       {/* ===================== HEADER ===================== */}
@@ -431,7 +433,7 @@ export default function RestaurantMenu() {
         </div>
       </header>
 
-      {/* ===================== CATEGORIES BAR (Fixed Horizontal Menu4U Style) ===================== */}
+      {/* ===================== CATEGORIES BAR ===================== */}
       <div className="sticky top-[77px] z-20 backdrop-blur-md border-b py-3 shadow-sm" style={{ background: theme.bg + "F2", borderColor: (theme.muted || "#B3A18C") + "15" }}>
         <div className="max-w-3xl mx-auto px-4 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
           {categories.map((c) => (
@@ -456,7 +458,7 @@ export default function RestaurantMenu() {
         </div>
       </div>
 
-      {/* ===================== MENU ITEMS (Grid Style Layout) ===================== */}
+      {/* ===================== MENU ITEMS (Grid Layout) ===================== */}
       <main className="max-w-3xl mx-auto px-4 pb-32 pt-5 space-y-8">
         {groups.map((group) => {
           const subcat = group[0];
@@ -469,7 +471,6 @@ export default function RestaurantMenu() {
                   {subcat}
                 </h2>
               )}
-              {/* شبكة المنتجات المتجاورة: كرتين في الموبايل */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {list.map((item) => (
                   <div key={item.id} className="rounded-2xl p-3.5 border transition-all duration-300 flex flex-col justify-between hover:shadow-lg shadow-sm" style={{ background: theme.surface, borderColor: (theme.muted || "#B3A18C") + "15" }}>
@@ -536,7 +537,7 @@ export default function RestaurantMenu() {
         <span className="flex items-center gap-1 truncate"><MapPin size={13} className="shrink-0" /> <span className="truncate">{address}</span></span>
       </div>
 
-      {/* ===================== FLOATING CART BUTTON (Menu4U Full Style) ===================== */}
+      {/* ===================== FLOATING CART BUTTON ===================== */}
       {cartCount > 0 && (
         <button onClick={() => setCartOpen(true)} className="fixed bottom-14 left-1/2 -translate-x-1/2 z-35 flex items-center justify-between gap-6 px-6 py-3.5 rounded-full shadow-2xl font-bold text-sm active:scale-95 transition-all" style={{ background: theme.accent, color: theme.bg, width: "90%", maxWidth: "450px" }}>
           <div className="flex items-center gap-2">
@@ -644,7 +645,6 @@ export default function RestaurantMenu() {
         </Overlay>
       )}
 
-      {/* باقي الـ Modals الـ QR والـ Theme والإدارة بتفضل شغالة تمام */}
       {qrOpen && (
         <Overlay onClose={() => setQrOpen(false)}>
           <Sheet theme={theme} title="بار كود المنيو للعملاء" onClose={() => setQrOpen(false)}>
@@ -784,8 +784,47 @@ export default function RestaurantMenu() {
 function Overlay({ children, onClose }) {
   return (
     <div className="fixed inset-0 z-40 flex items-end md:items-center justify-center p-0 md:p-4">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
       {children}
+    </div>
+  );
+}
+
+function Sheet({ theme, title, onClose, children }) {
+  return (
+    <div className="relative z-10 w-full md:max-w-md max-h-[85vh] rounded-t-3xl md:rounded-3xl p-5 overflow-y-auto" style={{ background: theme.bg, color: theme.text, border: "1px solid " + (theme.muted || "#B3A18C") + "30" }} dir="rtl">
+      <div className="flex items-center justify-between mb-4 pb-2 border-b" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
+        <h2 className="text-lg font-black" style={{ color: theme.accent }}>{title}</h2>
+        <button onClick={onClose} className="p-1.5 rounded-full border" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }}><X size={15} /></button>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Field({ label, value, onChange, theme, dir = "rtl", hint }) {
+  return (
+    <label className="block text-sm space-y-1">
+      <span className="font-bold opacity-90" style={{ color: theme.muted }}>{label}</span>
+      <input value={value} onChange={(e) => onChange(e.target.value)} dir={dir} className="w-full px-3 py-2 rounded-lg border bg-transparent" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
+      {hint && <span className="block mt-1 text-xs opacity-70" style={{ color: theme.muted }}>{hint}</span>}
+    </label>
+  );
+}
+
+function PayRow({ icon, label, value, theme, onCopy, copied }) {
+  return (
+    <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg" style={{ background: theme.surface2 }}>
+      <div className="flex items-center gap-2 min-w-0">
+        <span style={{ color: theme.accent }}>{icon}</span>
+        <div className="min-w-0">
+          <p className="text-xs" style={{ color: theme.muted }}>{label}</p>
+          <p className="text-sm font-bold truncate" dir="ltr">{value}</p>
+        </div>
+      </div>
+      <button onClick={() => onCopy(label, value)} className="p-1.5 rounded-full border shrink-0 transition-transform active:scale-95" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }}>
+        {copied === label ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
+      </button>
     </div>
   );
 }
