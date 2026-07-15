@@ -531,11 +531,29 @@ export default function RestaurantMenu() {
         )}
       </main>
 
-      {/* ===================== FOOTER INFO STRIP ===================== */}
-      <div className="fixed bottom-0 inset-x-0 z-20 border-t px-4 py-3.5 flex items-center justify-center gap-5 text-xs font-semibold shadow-inner" style={{ background: theme.bg + "F2", borderColor: (theme.muted || "#B3A18C") + "20" , color: theme.muted, backdropFilter: "blur(8px)" }}>
-        <a href={"tel:" + whatsappNumber} className="flex items-center gap-1 hover:underline"><Phone size={13} /> {whatsappNumber}</a>
-        <span className="flex items-center gap-1 truncate"><MapPin size={13} className="shrink-0" /> <span className="truncate">{address}</span></span>
+                  {/* ===================== FOOTER INFO STRIP ===================== */}
+      <div className="fixed bottom-0 inset-x-0 z-20 border-t px-4 py-3.5 flex items-center justify-center gap-4 text-xs font-semibold shadow-inner" style={{ background: theme.bg + "F2", borderColor: (theme.muted || "#B3A18C") + "20" , color: theme.muted, backdropFilter: "blur(8px)" }}>
+        {/* تحويل الاسم لرابط تفاعلي يحول لصفحتك على فيسبوك عند الضغط عليه */}
+        <a 
+          href="https://fb.com/mr.3abkarino" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="flex items-center gap-1 font-bold tracking-wide shrink-0 cursor-pointer hover:underline"
+          style={{ color: theme.accent }}
+        >
+          Mr3abkarino© <span className="text-red-500 text-sm animate-pulse">❤️</span>
+        </a>
+        
+        <span className="opacity-40 shrink-0">|</span>
+        
+        {/* العنوان كما هو */}
+        <span className="flex items-center gap-1 truncate min-w-0">
+          <MapPin size={13} className="shrink-0" /> 
+          <span className="truncate opacity-90">{address}</span>
+        </span>
       </div>
+
+
 
       {/* ===================== FLOATING CART BUTTON ===================== */}
       {cartCount > 0 && (
