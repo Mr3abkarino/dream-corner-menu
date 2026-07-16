@@ -702,9 +702,9 @@ export default function RestaurantMenu() {
       </main>
 
       {/* ===================== FOOTER INFO STRIP ===================== */}
-      <div className="fixed bottom-0 inset-x-0 z-20 border-t px-4 py-3.5 flex items-center justify-center gap-4 text-xs font-semibold shadow-inner" style={{ background: theme.bg + "F2", borderColor: (theme.muted || "#B3A18C") + "20" , color: theme.muted, backdropFilter: "blur(8px)" }}>
+<div className="fixed bottom-0 inset-x-0 z-20 border-t px-4 py-3.5 flex items-center justify-center gap-4 text-xs font-semibold shadow-inner" style={{ background: theme.bg + "F2", borderColor: (theme.muted || "#B3A18C") + "20" , color: theme.muted, backdropFilter: "blur(8px)" }}>
         <a href="https://fb.com/mr.3abkarino" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 font-bold tracking-wide shrink-0 cursor-pointer hover:underline" style={{ color: theme.accent }}>
-          Mr3abkarino© <span className="text-red-500 text-sm animate-pulse">??</span>
+          Mr3abkarino© <span className="text-red-500 text-sm animate-pulse">❤️</span>
         </a>
         <span className="opacity-40 shrink-0">|</span>
         <span className="flex items-center gap-1 truncate min-w-0">
@@ -712,7 +712,6 @@ export default function RestaurantMenu() {
           <span className="truncate opacity-90">{address}</span>
         </span>
       </div>
-
       {/* ===================== FLOATING CART BUTTON ===================== */}
       {cartCount > 0 && (
         <button onClick={() => setCartOpen(true)} className="fixed bottom-14 left-1/2 -translate-x-1/2 z-35 flex items-center justify-between gap-6 px-6 py-3.5 rounded-full shadow-2xl font-bold text-sm active:scale-95 transition-all" style={{ background: theme.accent, color: theme.bg, width: "90%", maxWidth: "450px" }}>
