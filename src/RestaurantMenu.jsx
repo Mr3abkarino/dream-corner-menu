@@ -763,7 +763,7 @@ export default function RestaurantMenu() {
                       className="w-full py-1.5 rounded-lg text-[11px] font-black transition-all active:scale-95 flex items-center justify-center gap-1"
                       style={redeemPoints ? { background: "#15803d", color: "#fff" } : { background: theme.accent, color: theme.bg }}
                     >
-                      {redeemPoints ? "? تم تطبيق خصم النقاط الذهبية" : "?? اضغط هنا لاستبدال النقاط بخصم فوري"}
+                      {redeemPoints ? "✓ تم تطبيق خصم النقاط الذهبية" : "🪙 اضغط هنا لاستبدال النقاط بخصم فوري"}
                     </button>
                   </div>
                 )}
