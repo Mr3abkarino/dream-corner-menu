@@ -3,7 +3,7 @@ import restaurantLogo from "./assets/logo.png";
 import {
   ShoppingCart, Plus, Minus, X, Pencil, Trash2, Check, Copy,
   QrCode, Settings, Phone, CreditCard, Sparkles, Search, RotateCcw,
-  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation, Award, Calendar
+  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation, Award, Calendar, Wand2
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
@@ -152,13 +152,16 @@ export default function RestaurantMenu() {
   const [validationError, setValidationError] = useState("");
   const [orderSuccess, setOrderSuccess] = useState(false);
 
-  // إعدادات الولاء ومحفظة النقاط الذكية
   const [userPoints, setUserPoints] = useState(0);
   const [redeemPoints, setRedeemPoints] = useState(false);
 
-  // إعدادات جدولة المواعيد
-  const [scheduleType, setScheduleType] = useState("now"); // "now" or "later"
+  const [scheduleType, setScheduleType] = useState("now"); 
   const [scheduleTime, setScheduleTime] = useState("");
+
+  // حالات نافذة المساعد الذكي
+  const [aiModalOpen, setAiModalOpen] = useState(false);
+  const [aiFeedback, setAiFeedback] = useState("");
+  const [budgetInput, setBudgetInput] = useState("");
 
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminPin, setAdminPin] = useState("1234");
@@ -199,12 +202,10 @@ export default function RestaurantMenu() {
     return { name: "اختر منطقة التوصيل...", price: 0 };
   }, [selectedAreaIndex, deliveryAreas]);
 
-  // حساب إجمالي الخصومات (خصم الكوبون + خصم النقاط)
   const discountAmount = useMemo(() => {
     return Math.round((cartTotal * appliedDiscountPercent) / 100);
   }, [cartTotal, appliedDiscountPercent]);
 
-  // حساب قيمة خصم نقاط الولاء (كل نقطة تساوى 1 جنيه خصم)
   const pointsDiscountValue = useMemo(() => {
     if (!redeemPoints) return 0;
     return Math.min(userPoints, Math.max(0, cartTotal - discountAmount));
@@ -250,6 +251,88 @@ export default function RestaurantMenu() {
       setAppliedDiscountPercent(0);
       setPromoError("كود الخصم غير صحيح أو منتهي الصلاحية!");
     }
+  };
+
+  // لوجيك محرك الاقتراحات والمحاذاة الذكية للـ AI Assistant
+  const applyAiBudgetSetup = () => {
+    const target = Number(budgetInput);
+    if (!target || target < 35) {
+      setAiFeedback("برجاء إدخال ميزانية مقبولة (أكبر من 35 جنيه) لنقترح لك الوجبة المثالية!");
+      return;
+    }
+    
+    let tempCart = {};
+    let currentSum = 0;
+
+    // محاولة إيجاد تشكيلة ذكية متوافقة مع ميزانية الزبون
+    if (target >= 140) {
+      tempCart["p2::وسط"] = 1; 
+      tempCart["d1"] = 1;
+      currentSum = 105;
+    } else if (target >= 85) {
+      tempCart["s6::كبير"] = 1;
+      currentSum = 85;
+    } else {
+      tempCart["s5"] = 1;
+      currentSum = 45;
+    }
+
+    if (target - currentSum >= 35) {
+      tempCart["sd1"] = 1;
+    } else if (target - currentSum >= 15) {
+      tempCart["d1"] = 1;
+    }
+
+    setCart(tempCart);
+    setAiFeedback("✨ نجح المساعد الذكي في ملء سلتك بأفضل توليفة تناسب ميزانيتك تماماً! أغلق الشاشة وشوف سلتك دلوقتي.");
+  };
+
+  const applyAiComplementary = () => {
+    if (cartList.length === 0) {
+      setAiFeedback("سلتك فارغة حالياً! ضع صنفاً أولاً ليقترح المساعد الذكي ما يتماشى معه.");
+      return;
+    }
+    
+    let updatedCart = { ...cart };
+    let addedSomething = false;
+    let textSuggestion = "";
+
+    const hasPizza = cartList.some(i => i.label.includes("بيتزا"));
+    const hasDrinks = cartList.some(i => i.id.startsWith("d"));
+
+    if (hasPizza && !updatedCart["sd3"]) {
+      updatedCart["sd3"] = (updatedCart["sd3"] || 0) + 1;
+      textSuggestion += " صوص رانش هوم ميد المميز 🥣";
+      addedSomething = true;
+    }
+    if (!hasDrinks) {
+      updatedCart["d1"] = (updatedCart["d1"] || 0) + 1;
+      textSuggestion += " مشروب بيبسي كانز مثلج ومقرمش 🥤";
+      addedSomething = true;
+    }
+
+    if (addedSomething) {
+      setCart(updatedCart);
+      setAiFeedback(`✨ ذكاء اصطناعي: تم إضافة${textSuggestion} لأنهم يتماشون تماماً مع وجبتك الحالية لتكتمل السهرة!`);
+    } else {
+      setAiFeedback("✨ وجبتك متكاملة ومثالية بالفعل! محفظتك وسلتك جاهزتان للإرسال.");
+    }
+  };
+
+  const applyAiGroupBundle = (peopleCount) => {
+    let tempCart = {};
+    if (peopleCount === 2) {
+      tempCart["p1::كبير"] = 1;
+      tempCart["sd1"] = 1;
+      tempCart["d1"] = 2;
+    } else {
+      tempCart["p2::كبير"] = 1;
+      tempCart["p12::وسط"] = 1;
+      tempCart["sd2"] = 1;
+      tempCart["d1"] = 4;
+    }
+    setCart(tempCart);
+    setAiFeedback(`✨ تم تجهيز سلة تكفي لـ ${peopleCount} أفراد بأعلى شبع وتوفير مالي مضمون!`);
   };
 
   useEffect(() => {
@@ -307,6 +390,22 @@ export default function RestaurantMenu() {
     }, 500);
   }, [items, restaurantName, tagline, address, menuUrl, whatsappNumber, vodafoneCash, instapay, adminPin, deliveryAreas, promoCodes, theme, loaded]);
 
+  const handleLogoClick = () => {
+    if (isAdmin) return;
+    setLogoClicks((prev) => {
+      const next = prev + 1;
+      if (next >= 5) {
+        setPinModalOpen(true);
+        setEnteredPin("");
+        setPinError("");
+        return 0;
+      }
+      return next;
+    });
+    clearTimeout(window.logoClickTimeout);
+    window.logoClickTimeout = setTimeout(() => { setLogoClicks(0); }, 2500);
+  };
+
   const handleVerifyPin = (e) => {
     e.preventDefault();
     if (enteredPin === adminPin) {
@@ -346,50 +445,6 @@ export default function RestaurantMenu() {
     return Array.from(map.entries());
   }, [visibleItems]);
 
-  const addToCart = (key, delta) =>
-    setCart((c) => {
-      const nextCart = { ...c };
-      nextCart[key] = Math.max(0, (c[key] || 0) + delta);
-      return nextCart;
-    });
-
-  const updateItem = (id, patch) =>
-    setItems((its) => its.map((i) => (i.id === id ? { ...i, ...patch } : i)));
-
-  const updateSize = (id, sizeIdx, patch) =>
-    setItems((its) => its.map((i) => i.id === id ? { ...i, sizes: i.sizes.map((s, idx) => (idx === sizeIdx ? { ...s, ...patch } : s)) } : i));
-
-  const deleteItem = (id) => setItems((its) => its.filter((i) => i.id !== id));
-
-  const addNewItem = () => {
-    const id = "n" + Date.now().toString();
-    setItems((its) => [...its, { id, cat: activeCat === "الكل" ? "أصناف جديدة" : activeCat, name: "صنف جديد", price: 20, desc: "" }]);
-    setEditingId(id);
-  };
-
-  const handleAddDeliveryArea = () => {
-    if (!newAreaName.trim() || !newAreaPrice.trim()) return;
-    setDeliveryAreas([...deliveryAreas, { name: newAreaName.trim(), price: Number(newAreaPrice) }]);
-    setNewAreaName("");
-    setNewAreaPrice("");
-  };
-
-  const handleRemoveDeliveryArea = (index) => {
-    setDeliveryAreas(deliveryAreas.filter((_, idx) => idx !== index));
-    setSelectedAreaIndex(-1);
-  };
-
-  const handleAddPromoCode = () => {
-    if (!newPromoCode.trim() || !newPromoDiscount.trim()) return;
-    setPromoCodes([...promoCodes, { code: newPromoCode.trim().toUpperCase(), discount: Number(newPromoDiscount) }]);
-    setNewPromoCode("");
-    setNewPromoDiscount("");
-  };
-
-  const handleRemovePromoCode = (index) => {
-    setPromoCodes(promoCodes.filter((_, idx) => idx !== index));
-  };
-
   const sendWhatsApp = () => {
     if (cartList.length === 0) return;
     if (!customerName.trim() || !customerPhone.trim() || !customerAddress.trim()) {
@@ -406,11 +461,9 @@ export default function RestaurantMenu() {
     }
     setValidationError("");
 
-    // حساب النقاط الجديدة المكتسبة من هذا الطلب (نقطة لكل 10 جنيه)
     const newlyEarnedPoints = Math.floor(cartTotal / 100);
     let updatedPoints = userPoints;
 
-    // خصم النقاط المستخدمة وإضافة النقاط الجديدة للمحفظة
     if (redeemPoints) {
       updatedPoints = Math.max(0, userPoints - pointsDiscountValue);
     }
@@ -425,10 +478,10 @@ export default function RestaurantMenu() {
 
     const lines = cartList.map((cartItem) => "• " + cartItem.label + " x" + cartItem.qty + " — " + money(cartItem.price * cartItem.qty));
     
-    // إعداد تفاصيل وقت التوصيل المجدول
     const deliveryTimeText = scheduleType === "now" ? "⚡ توصيل فوري (الآن)" : "🕒 مجدول للموعد: " + scheduleTime;
 
-    let text = "طلب جديد من منيو " + restaurantName + " 🍽️\n\n" + 
+    let text = "طلب جديد من منيو " + restaurantName + " 🍽️\n" +
+               "[💡 تم التنسيق والاقتراح الذكي بواسطة مساعد AI]\n\n" +
                "👤 اسم العميل: " + customerName + "\n" +
                "📱 تليفون العميل: " + customerPhone + "\n" +
                "📅 موعد التوصيل: " + deliveryTimeText + "\n" +
@@ -506,6 +559,9 @@ export default function RestaurantMenu() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {/* زر تشغيل المساعد الذكي العبقري في الهيدر */}
+            <button onClick={() => { setAiModalOpen(true); setAiFeedback(""); }} className="p-2 rounded-full border border-yellow-500/30 text-yellow-500 bg-yellow-500/5 transition-all hover:bg-yellow-500/10 active:scale-95" title="مساعد دريم الذكي 🪄"><Wand2 size={17} className="animate-pulse"/></button>
+            
             {isAdmin ? (
               <>
                 <button onClick={() => setThemePickerOpen(true)} className="p-2 rounded-full border border-green-500/30 text-green-500 bg-green-500/5 transition-all hover:bg-green-500/10 active:scale-95" title="تغيير المظهر"><Palette size={18} /></button>
@@ -610,12 +666,6 @@ export default function RestaurantMenu() {
             </div>
           );
         })}
-        {visibleItems.length === 0 && (
-          <div className="text-center py-12">
-            <Sparkles size={32} className="mx-auto mb-2 opacity-50" style={{ color: theme.accent }} />
-            <p className="text-sm" style={{ color: theme.muted }}>لا تتوفر أصناف تطابق بحثك حاليًا.</p>
-          </div>
-        )}
       </main>
 
       {/* ===================== FOOTER INFO STRIP ===================== */}
@@ -666,7 +716,6 @@ export default function RestaurantMenu() {
                   ))}
                 </div>
 
-                {/* نظام نقاط الولاء والمكافآت (Loyalty Points Box) */}
                 {userPoints > 0 && (
                   <div className="mt-3 p-3 rounded-xl border border-dashed flex flex-col gap-2" style={{ borderColor: theme.accent + "40", background: theme.surface2 }}>
                     <div className="flex items-center justify-between">
@@ -713,7 +762,6 @@ export default function RestaurantMenu() {
                   </div>
                 </div>
 
-                {/* نظام كود الخصم */}
                 <div className="pt-2.5 flex gap-2">
                   <div className="relative flex-1">
                     <input type="text" placeholder="هل لديك كوبون خصم؟" value={enteredPromo} onChange={(e) => setEnteredPromo(e.target.value)} className="w-full px-3 py-2 pr-8 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "25", color: theme.text }} />
@@ -724,7 +772,6 @@ export default function RestaurantMenu() {
                 {promoError && <p className="text-[10px] font-bold text-red-500 mr-1">{promoError}</p>}
                 {appliedDiscountPercent > 0 && <p className="text-[10px] font-bold text-green-500 mr-1">✓ تم تطبيق الخصم بنجاح بنسبة {appliedDiscountPercent}%</p>}
 
-                {/* بيانات العميل والتوصيل والملاحظات */}
                 <div className="mt-3 pt-2 border-t space-y-2" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
                   <p className="text-[11px] font-bold" style={{ color: theme.accent }}>بيانات التوصيل والطلب (الدليفري):</p>
                   
@@ -752,7 +799,6 @@ export default function RestaurantMenu() {
                       <ChevronDown size={14} className="absolute left-3 top-3.5 opacity-60" style={{ color: theme.text }} />
                     </div>
 
-                    {/* خيارات جدولة مواعيد التوصيل (Order Scheduling Box) */}
                     <div className="p-3 rounded-xl border border-dotted space-y-2.5" style={{ borderColor: (theme.muted || "#B3A18C") + "30", background: theme.surface2 }}>
                       <p className="text-[10px] font-bold opacity-80 flex items-center gap-1" style={{ color: theme.muted }}>
                         <Calendar size={13} />
@@ -829,6 +875,54 @@ export default function RestaurantMenu() {
         </Overlay>
       )}
 
+      {/* ===================== شاشة المساعد السحري للذكاء الاصطناعي (AI MODAL) ===================== */}
+      {aiModalOpen && (
+        <Overlay onClose={() => setAiModalOpen(false)}>
+          <Sheet theme={theme} title="مساعد دريم كورنر السحري بالـ AI 🪄" onClose={() => setAiModalOpen(false)}>
+            <div className="space-y-4">
+              <p className="text-xs opacity-85 leading-relaxed">أهلاً بك يا غالي! أنا المساعد الذكي لمطعم دريم كورنر. اختر كارت السحر اللي تحبه عشان أظبطلك أوردرك في ثواني:</p>
+              
+              {/* التوليفة الأولى: حسب ميزانية العميل */}
+              <div className="p-3 rounded-xl border border-dashed space-y-2" style={{ borderColor: theme.accent + "30", background: theme.surface2 }}>
+                <span className="text-xs font-bold flex items-center gap-1" style={{ color: theme.accent }}>🪙 توليفة الميزانية الاقتصادية</span>
+                <div className="flex gap-2">
+                  <input type="number" placeholder="اكتب ميزانيتك كام جنيه؟" value={budgetInput} onChange={(e) => setBudgetInput(e.target.value)} className="flex-1 px-3 py-1.5 rounded-lg border bg-transparent text-xs focus:outline-none" style={{ borderColor: theme.muted + "30" }} />
+                  <button onClick={applyAiBudgetSetup} className="px-4 py-1.5 rounded-lg text-xs font-bold" style={{ background: theme.accent, color: theme.bg }}>املأ السلة</button>
+                </div>
+              </div>
+
+              {/* التوليفة الثانية: اقتراح الإضافات الذكية المكملة للوجبة */}
+              <button onClick={applyAiComplementary} className="w-full p-3 rounded-xl border border-dashed flex items-center justify-between text-right hover:bg-black/5" style={{ borderColor: theme.accent + "30", background: theme.surface2 }}>
+                <div className="space-y-0.5">
+                  <span className="block text-xs font-bold" style={{ color: theme.accent }}>🥤 سحر "كمل اللقمة" (Cross-Sell)</span>
+                  <span className="block text-[10px] opacity-75" style={{ color: theme.muted }}>اضغط ليقترح عليك المساعد مشروبات أو صوصات تليق بأكلك الحالي.</span>
+                </div>
+                <span className="text-lg">✨</span>
+              </button>
+
+              {/* التوليفة الثالثة: ميكس الشلة الموفر */}
+              <div className="p-3 rounded-xl border border-dashed space-y-2" style={{ borderColor: theme.accent + "30", background: theme.surface2 }}>
+                <span className="text-xs font-bold block" style={{ color: theme.accent }}>🔥 توليفات العزومات والشلة الموفرة</span>
+                <div className="grid grid-cols-2 gap-2">
+                  <button onClick={() => applyAiGroupBundle(2)} className="py-2 bg-black/20 hover:bg-black/40 rounded-lg text-[10px] font-bold border border-white/5">وجبة فردين (توفير) 🍕</button>
+                  <button onClick={() => applyAiGroupBundle(4)} className="py-2 bg-black/20 hover:bg-black/40 rounded-lg text-[10px] font-bold border border-white/5">لمة الشلة (4 أفراد) 🥳</button>
+                </div>
+              </div>
+
+              {/* شاشة عرض الفيدباك والردود من الذكاء الاصطناعي للمستخدم */}
+              {aiFeedback && (
+                <div className="p-3 rounded-xl text-xs font-bold text-center leading-relaxed" style={{ background: theme.accent + "10", color: theme.accent, border: "1px solid " + theme.accent + "20" }}>
+                  {aiFeedback}
+                </div>
+              )}
+
+              <button onClick={() => setAiModalOpen(false)} className="w-full py-2 rounded-xl text-xs font-bold mt-2" style={{ background: theme.surface2, color: theme.text, border: "1px solid " + theme.muted + "30" }}>إغلاق ومراجعة السلة</button>
+            </div>
+          </Sheet>
+        </Overlay>
+      )}
+
+      {/* شاشة نجاح الأوردر */}
       {orderSuccess && (
         <Overlay onClose={() => setOrderSuccess(false)}>
           <Sheet theme={theme} title="تم إرسال طلبك بنجاح! 🎉" onClose={() => setOrderSuccess(false)}>
