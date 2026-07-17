@@ -3,7 +3,9 @@ import restaurantLogo from "./assets/logo.png";
 import {
   ShoppingCart, Plus, Minus, X, Pencil, Trash2, Check, Copy,
   QrCode, Settings, Phone, CreditCard, Sparkles, Search, RotateCcw,
-  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation, Award, Calendar, Download
+  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, 
+  FileText, ChevronDown, User, Tag, Navigation, Award, Calendar, Download,
+  Coins, Gem, TrendingUp, Percent
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
@@ -27,8 +29,8 @@ const DEFAULT_DELIVERY_AREAS = [
 ];
 
 const DEFAULT_PROMO_CODES = [
-  { code: "OFF10", discount: 10 },
-  { code: "DREAM", discount: 15 }
+  { code: "OFF10", discount: 10, limit: 100, used: 0 },
+  { code: "DREAM", discount: 15, limit: 50, used: 0 }
 ];
 
 const DEFAULT_MENU = [
@@ -38,34 +40,9 @@ const DEFAULT_MENU = [
   { id: "p4", cat: "البيتزا", name: "بيتزا هوت دوج", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 100 }, { label: "صغير", price: 70 }] },
   { id: "p5", cat: "البيتزا", name: "بيتزا سجق", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 100 }, { label: "صغير", price: 70 }] },
   { id: "p6", cat: "البيتزا", name: "بيتزا لحمة مفرومة", sizes: [{ label: "كبير", price: 145 }, { label: "وسط", price: 110 }, { label: "صغير", price: 75 }] },
-  { id: "p7", cat: "البيتزا", name: "بيتزا بيروني", sizes: [{ label: "كبير", price: 110 }, { label: "وسط", price: 90 }, { label: "صغير", price: 70 }] },
-  { id: "p8", cat: "البيتزا", name: "بيتزا سلامي", sizes: [{ label: "كبير", price: 110 }, { label: "وسط", price: 90 }, { label: "صغير", price: 70 }] },
-  { id: "p9", cat: "البيتزا", name: "بيتزا شاورما دجاج", sizes: [{ label: "كبير", price: 155 }, { label: "وسط", price: 120 }, { label: "صغير", price: 80 }] },
-  { id: "p10", cat: "البيتزا", name: "بيتزا دجاج رانش", sizes: [{ label: "كبير", price: 155 }, { label: "وسط", price: 120 }, { label: "صغير", price: 80 }] },
-  { id: "p11", cat: "البيتزا", name: "بيتزا دريم كورنر سبيشال", desc: "خلطة البيت الخاصة المميزة", sizes: [{ label: "كبير", price: 170 }, { label: "وسط", price: 130 }, { label: "صغير", price: 90 }] },
-  { id: "p12", cat: "البيتزا", name: "بيتزا كرانشي (حار أو بارد)", sizes: [{ label: "كبير", price: 130 }, { label: "وسط", price: 100 }, { label: "صغير", price: 80 }] },
-  { id: "p13", cat: "البيتزا", name: "بيتزا ميكس دجاج", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 105 }, { label: "صغير", price: 85 }] },
-  { id: "p14", cat: "البيتزا", name: "حشو الأطراف", desc: "إضافة أطراف محشوة لأي بيتزا", sizes: [{ label: "كبير", price: 35 }, { label: "وسط", price: 30 }, { label: "صغير", price: 25 }] },
   { id: "s1", cat: "السندوتشات", subcat: "اللحوم", name: "كفتة مشوية", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
-  { id: "s2", cat: "السندوتشات", subcat: "اللحوم", name: "سجق مشوي", sizes: [{ label: "كبير", price: 70 }, { label: "وسط", price: 60 }] },
-  { id: "s3", cat: "السندوتشات", subcat: "اللحوم", name: "كبدة إسكندراني", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
-  { id: "s4", cat: "السندوتشات", subcat: "اللحوم", name: "ميكس لحوم (سجق+كبدة)", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
   { id: "s5", cat: "السندوتشات", subcat: "اللحوم", name: "حواوشي دبل طعم", price: 45 },
-  { id: "s6", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "تشكن بانية", sizes: [{ label: "كبير", price: 85 }, { label: "وسط", price: 70 }] },
-  { id: "s7", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "زنجر سوبريم", sizes: [{ label: "كبير", price: 95 }, { label: "وسط", price: 80 }] },
-  { id: "s8", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "سوبر كرانشي", sizes: [{ label: "كبير", price: 95 }, { label: "وسط", price: 80 }] },
-  { id: "s9", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "شيش طاووق", sizes: [{ label: "كبير", price: 90 }, { label: "وسط", price: 75 }] },
-  { id: "s10", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "تشكن رانش", sizes: [{ label: "كبير", price: 90 }, { label: "وسط", price: 75 }] },
-  { id: "s11", cat: "السندوتشات", subcat: "البرجر", name: "كلاسيك برجر", sizes: [{ label: "كبير", price: 65 }, { label: "وسط", price: 55 }] },
-  { id: "s12", cat: "السندوتشات", subcat: "البرجر", name: "تشيز برجر ليدر", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
-  { id: "s13", cat: "السندوتشات", subcat: "البرجر", name: "تشكن برجر مقرمش", sizes: [{ label: "كبير", price: 65 }, { label: "وسط", price: 50 }] },
-  { id: "s14", cat: "السندوتشات", subcat: "التوست", name: "ميكس توست جبن", price: 60 },
-  { id: "sd1", cat: "الأصناف الجانبية", name: "بطاطس مقلية ذهبية", price: 35 },
-  { id: "sd2", cat: "الأصناف الجانبية", name: "بطاطس بالجبنة الشيدر", price: 45 },
-  { id: "sd3", cat: "الأصناف الجانبية", name: "صوص رانش هوم ميد", price: 10 },
   { id: "d1", cat: "المشروبات", name: "بيبسي كانز", price: 15 },
-  { id: "d2", cat: "المشروبات", name: "سفن أب كانز", price: 15 },
-  { id: "d3", cat: "المشروبات", name: "ميرندا برتقال كانز", price: 15 },
   { id: "d4", cat: "المشروبات", name: "مياة معدنية صغيرة", price: 6 }
 ];
 
@@ -136,6 +113,7 @@ export default function RestaurantMenu() {
   const [promoCodes, setPromoCodes] = useState(DEFAULT_PROMO_CODES);
   const [newPromoCode, setNewPromoCode] = useState("");
   const [newPromoDiscount, setNewPromoDiscount] = useState("");
+  const [newPromoLimit, setNewPromoLimit] = useState("50");
 
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -152,16 +130,13 @@ export default function RestaurantMenu() {
   const [validationError, setValidationError] = useState("");
   const [orderSuccess, setOrderSuccess] = useState(false);
 
-  // إعدادات الولاء ومحفظة النقاط الذكية
   const [userPoints, setUserPoints] = useState(0);
   const [redeemPoints, setRedeemPoints] = useState(false);
   
-  // إعدادات ديناميكية للتحكم بالنقاط من الإدارة (مع قيم افتراضية)
-  const [pointsEarnRate, setPointsEarnRate] = useState(100); // كم جنيه يعطي نقطة؟ (الافتراضي 100)
-  const [pointValueInMoney, setPointValueInMoney] = useState(1); // كم جنيه قيمة النقطة الواحدة؟ (الافتراضي 1)
+  const [pointsEarnRate, setPointsEarnRate] = useState(100); 
+  const [pointValueInMoney, setPointValueInMoney] = useState(1); 
 
-  // إعدادات جدولة المواعيد
-  const [scheduleType, setScheduleType] = useState("now"); // "now" or "later"
+  const [scheduleType, setScheduleType] = useState("now"); 
   const [scheduleTime, setScheduleTime] = useState("");
 
   const [isAdmin, setIsAdmin] = useState(false);
@@ -171,7 +146,6 @@ export default function RestaurantMenu() {
   const [pinError, setPinError] = useState("");
   const [logoClicks, setLogoClicks] = useState(0);
 
-  // تخزين حدث التثبيت للـ PWA
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   
@@ -207,15 +181,12 @@ export default function RestaurantMenu() {
     return { name: "اختر منطقة التوصيل...", price: 0 };
   }, [selectedAreaIndex, deliveryAreas]);
 
-  // حساب إجمالي الخصومات (خصم الكوبون + خصم النقاط)
   const discountAmount = useMemo(() => {
     return Math.round((cartTotal * appliedDiscountPercent) / 100);
   }, [cartTotal, appliedDiscountPercent]);
 
-  // حساب قيمة خصم نقاط الولاء بشكل ديناميكي بناءً على إعدادات المدير
   const pointsDiscountValue = useMemo(() => {
     if (!redeemPoints) return 0;
-    // إجمالي قيمة الخصم المتاحة بالجنيه = عدد النقاط × قيمة النقطة بالجنيه
     const potentialDiscount = userPoints * pointValueInMoney;
     return Math.min(potentialDiscount, Math.max(0, cartTotal - discountAmount));
   }, [redeemPoints, userPoints, cartTotal, discountAmount, pointValueInMoney]);
@@ -228,22 +199,16 @@ export default function RestaurantMenu() {
     return "https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=8&data=" + encodeURIComponent(menuUrl);
   }, [menuUrl]);
 
-  // تفعيل الاستماع لحدث تثبيت الـ PWA
   useEffect(() => {
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      // إظهار البانر إذا لم يقم المستخدم بالتثبيت مسبقاً
       setShowInstallBanner(true);
     };
-
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-
-    // التحقق مما إذا كان التطبيق مثبتاً بالفعل
     if (window.matchMedia("(display-mode: standalone)").matches) {
       setShowInstallBanner(false);
     }
-
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     };
@@ -255,8 +220,6 @@ export default function RestaurantMenu() {
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === "accepted") {
       console.log("User accepted the install prompt");
-    } else {
-      console.log("User dismissed the install prompt");
     }
     setDeferredPrompt(null);
     setShowInstallBanner(false);
@@ -273,7 +236,7 @@ export default function RestaurantMenu() {
         const lat = position.coords.latitude;
         const lon = position.coords.longitude;
         setGeoLink("http://maps.google.com/?q=" + lat + "," + lon);
-        setCustomerAddress(prev => prev + " [تم تحديد اللوكيشن بـ GPS ??]");
+        setCustomerAddress(prev => prev + " [تم تحديد اللوكيشن بـ GPS 📍]");
         setGeoLinkLoading(false);
       },
       () => {
@@ -288,6 +251,14 @@ export default function RestaurantMenu() {
     if (!codeClean) return;
     const match = promoCodes.find(p => p.code.toUpperCase() === codeClean);
     if (match) {
+      const currentLimit = match.limit !== undefined ? match.limit : 9999;
+      const currentUsed = match.used !== undefined ? match.used : 0;
+      
+      if (currentUsed >= currentLimit) {
+        setAppliedDiscountPercent(0);
+        setPromoError("عذراً، هذا الكوبون استنفد الحد الأقصى للمرات المتاحة له!");
+        return;
+      }
       setAppliedDiscountPercent(match.discount);
       setPromoError("");
     } else {
@@ -429,9 +400,16 @@ export default function RestaurantMenu() {
 
   const handleAddPromoCode = () => {
     if (!newPromoCode.trim() || !newPromoDiscount.trim()) return;
-    setPromoCodes([...promoCodes, { code: newPromoCode.trim().toUpperCase(), discount: Number(newPromoDiscount) }]);
+    const finalLimit = newPromoLimit.trim() ? Number(newPromoLimit) : 9999;
+    setPromoCodes([...promoCodes, { 
+      code: newPromoCode.trim().toUpperCase(), 
+      discount: Number(newPromoDiscount),
+      limit: finalLimit,
+      used: 0
+    }]);
     setNewPromoCode("");
     setNewPromoDiscount("");
+    setNewPromoLimit("50");
   };
 
   const handleRemovePromoCode = (index) => {
@@ -454,13 +432,23 @@ export default function RestaurantMenu() {
     }
     setValidationError("");
 
-    // حساب النقاط الجديدة بناءً على معدل الكسب المحدد ديناميكياً من الإدارة
+    let updatedPromoCodes = promoCodes;
+    if (appliedDiscountPercent > 0) {
+      const codeClean = enteredPromo.trim().toUpperCase();
+      updatedPromoCodes = promoCodes.map(p => {
+        if (p.code.toUpperCase() === codeClean) {
+          const currentUsed = p.used !== undefined ? p.used : 0;
+          return { ...p, used: currentUsed + 1 };
+        }
+        return p;
+      });
+      setPromoCodes(updatedPromoCodes);
+    }
+
     const newlyEarnedPoints = Math.floor(cartTotal / pointsEarnRate);
     let updatedPoints = userPoints;
 
-    // خصم النقاط المستخدمة وإضافة النقاط الجديدة للمحفظة
     if (redeemPoints) {
-      // كم عدد النقاط الحقيقي المستهلك في الخصم؟
       const pointsUsed = Math.ceil(pointsDiscountValue / pointValueInMoney);
       updatedPoints = Math.max(0, userPoints - pointsUsed);
     }
@@ -474,40 +462,38 @@ export default function RestaurantMenu() {
     }
 
     const lines = cartList.map((cartItem) => "• " + cartItem.label + " x" + cartItem.qty + " — " + money(cartItem.price * cartItem.qty));
-    
-    // إعداد تفاصيل وقت التوصيل المجدول
-    const deliveryTimeText = scheduleType === "now" ? "? توصيل فوري (الآن)" : "?? مجدول للموعد: " + scheduleTime;
+    const deliveryTimeText = scheduleType === "now" ? "⚡ توصيل فوري (الآن)" : "🕒 مجدول للموعد: " + scheduleTime;
 
-    let text = "طلب جديد من منيو " + restaurantName + " ???\n\n" + 
-               "?? اسم العميل: " + customerName + "\n" +
-               "?? تليفون العميل: " + customerPhone + "\n" +
-               "?? موعد التوصيل: " + deliveryTimeText + "\n" +
-               "?? المنطقة: " + activeDeliveryArea.name + "\n" +
-               "?? العنوان بالتفصيل: " + customerAddress + "\n";
+    let text = "طلب جديد من منيو " + restaurantName + " 🍽️\n\n" + 
+               "👤 اسم العميل: " + customerName + "\n" +
+               "📱 تليفون العميل: " + customerPhone + "\n" +
+               "📅 موعد التوصيل: " + deliveryTimeText + "\n" +
+               "📍 المنطقة: " + activeDeliveryArea.name + "\n" +
+               "🏠 العنوان بالتفصيل: " + customerAddress + "\n";
                
     if (geoLink) {
-      text += "?? لوكيشن خريطة العميل: " + geoLink + "\n";
+      text += "📍 لوكيشن خريطة العميل: " + geoLink + "\n";
     }
     if (customerNotes.trim()) {
-      text += "?? ملاحظات العميل: " + customerNotes.trim() + "\n";
+      text += "📝 ملاحظات العميل: " + customerNotes.trim() + "\n";
     }
     
     text += "\nالطلبات:\n" + lines.join("\n") + "\n\n" +
-            "?? حساب الأكل الأصلي: " + money(cartTotal) + "\n";
+            "💵 حساب الأكل الأصلي: " + money(cartTotal) + "\n";
             
     if (discountAmount > 0) {
-      text += "??? كود الخصم المطبق: " + enteredPromo.toUpperCase() + " (-" + appliedDiscountPercent + "%)\n" +
-              "?? قيمة الخصم: " + money(discountAmount) + "\n";
+      text += "🏷️ كود الخصم المطبق: " + enteredPromo.toUpperCase() + " (-" + appliedDiscountPercent + "%)\n" +
+              "📉 قيمة الخصم: " + money(discountAmount) + "\n";
     }
 
     if (redeemPoints && pointsDiscountValue > 0) {
       const pointsUsed = Math.ceil(pointsDiscountValue / pointValueInMoney);
-      text += "?? خصم نقاط محفظة الولاء: -" + money(pointsDiscountValue) + " (تم خصم " + pointsUsed + " نقطة)\n";
+      text += "🪙 خصم نقاط محفظة الولاء: -" + money(pointsDiscountValue) + " (تم خصم " + pointsUsed + " نقطة)\n";
     }
 
-    text += "? نقاط مستحقة من هذا الأوردر: +" + newlyEarnedPoints + " نقطة ذهبية\n" +
-            "?? مصاريف التوصيل: " + money(activeDeliveryArea.price) + "\n" +
-            "?? الإجمالي النهائي المطلوب: " + money(finalTotal);
+    text += "✨ نقاط مستحقة من هذا الأوردر: +" + newlyEarnedPoints + " نقطة ذهبية\n" +
+            "🛵 مصاريف التوصيل: " + money(activeDeliveryArea.price) + "\n" +
+            "💰 الإجمالي النهائي المطلوب: " + money(finalTotal);
                  
     const phone = whatsappNumber.replace(/[^\d+]/g, "");
     window.open("https://wa.me/" + phone + "?text=" + encodeURIComponent(text), "_blank");
@@ -539,7 +525,6 @@ export default function RestaurantMenu() {
     setShowResetConfirm(false);
   };
 
-  // معالجة النقر على الشعار: عند النقر 5 مرات متتالية تفتح نافذة الإدارة
   const handleLogoClickLocal = () => {
     setLogoClicks((prev) => {
       const nextClicks = prev + 1;
@@ -556,7 +541,7 @@ export default function RestaurantMenu() {
       
       {/* ===================== PWA INSTALLATION BANNER ===================== */}
       {showInstallBanner && (
-        <div className="fixed bottom-16 inset-x-0 z-50 px-4 py-3 mx-4 my-2 rounded-2xl flex items-center justify-between border shadow-2xl transition-all duration-500 animate-bounce" style={{ background: theme.surface, borderColor: theme.accent + "30" }}>
+        <div className="fixed bottom-16 inset-x-0 z-50 px-4 py-3 mx-4 my-2 rounded-2xl flex items-center justify-between border shadow-2xl transition-all duration-500" style={{ background: theme.surface, borderColor: theme.accent + "30" }}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl overflow-hidden bg-white flex items-center justify-center shrink-0">
               <img src={LOGO_SRC} alt="logo" className="w-8 h-8 object-contain" />
@@ -702,7 +687,7 @@ export default function RestaurantMenu() {
       </main>
 
       {/* ===================== FOOTER INFO STRIP ===================== */}
-<div className="fixed bottom-0 inset-x-0 z-20 border-t px-4 py-3.5 flex items-center justify-center gap-4 text-xs font-semibold shadow-inner" style={{ background: theme.bg + "F2", borderColor: (theme.muted || "#B3A18C") + "20" , color: theme.muted, backdropFilter: "blur(8px)" }}>
+      <div className="fixed bottom-0 inset-x-0 z-20 border-t px-4 py-3.5 flex items-center justify-center gap-4 text-xs font-semibold shadow-inner" style={{ background: theme.bg + "F2", borderColor: (theme.muted || "#B3A18C") + "20" , color: theme.muted, backdropFilter: "blur(8px)" }}>
         <a href="https://fb.com/mr.3abkarino" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 font-bold tracking-wide shrink-0 cursor-pointer hover:underline" style={{ color: theme.accent }}>
           Mr3abkarino© <span className="text-red-500 text-sm animate-pulse">❤️</span>
         </a>
@@ -712,9 +697,10 @@ export default function RestaurantMenu() {
           <span className="truncate opacity-90">{address}</span>
         </span>
       </div>
+
       {/* ===================== FLOATING CART BUTTON ===================== */}
       {cartCount > 0 && (
-        <button onClick={() => setCartOpen(true)} className="fixed bottom-14 left-1/2 -translate-x-1/2 z-35 flex items-center justify-between gap-6 px-6 py-3.5 rounded-full shadow-2xl font-bold text-sm active:scale-95 transition-all" style={{ background: theme.accent, color: theme.bg, width: "90%", maxWidth: "450px" }}>
+        <button onClick={() => setCartOpen(true)} className="fixed bottom-14 left-1/2 -translate-x-1/2 z-35 flex items-center justify-between gap-6 px-6 py-3.5 rounded-full shadow-2xl font-bold text-sm active:scale-95 transition-all hover:scale-[1.01]" style={{ background: theme.accent, color: theme.bg, width: "90%", maxWidth: "450px" }}>
           <div className="flex items-center gap-2">
             <div className="relative">
               <ShoppingCart size={18} />
@@ -753,17 +739,20 @@ export default function RestaurantMenu() {
                   <div className="mt-3 p-3 rounded-xl border border-dashed flex flex-col gap-2" style={{ borderColor: theme.accent + "40", background: theme.surface2 }}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5 text-xs font-bold" style={{ color: theme.accent }}>
-                        <Award size={15} className="animate-bounce" />
+                        <Coins size={15} className="animate-pulse" />
                         <span>محفظة النقاط الذهبية: لديك {userPoints} نقطة</span>
                       </div>
-                      <span className="text-[10px] opacity-80" style={{ color: theme.muted }}>تساوي {money(userPoints * pointValueInMoney)} خصم</span>
+                      <span className="text-[10px] opacity-80 flex items-center gap-1" style={{ color: theme.muted }}>
+                        <Gem size={12} className="text-green-500" /> تساوي {money(userPoints * pointValueInMoney)} خصم
+                      </span>
                     </div>
                     <button 
                       onClick={() => setRedeemPoints(!redeemPoints)}
-                      className="w-full py-1.5 rounded-lg text-[11px] font-black transition-all active:scale-95 flex items-center justify-center gap-1"
+                      className="w-full py-2 rounded-lg text-[11px] font-black transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow-sm"
                       style={redeemPoints ? { background: "#15803d", color: "#fff" } : { background: theme.accent, color: theme.bg }}
                     >
-                      {redeemPoints ? "✓ تم تطبيق خصم النقاط الذهبية" : "🪙 اضغط هنا لاستبدال النقاط بخصم فوري"}
+                      {redeemPoints ? <Check size={13} /> : <Coins size={13} />}
+                      {redeemPoints ? "تم تطبيق خصم النقاط الذهبية بنجاح" : "اضغط هنا لاستبدال النقاط بخصم فوري كاش"}
                     </button>
                   </div>
                 )}
@@ -798,13 +787,15 @@ export default function RestaurantMenu() {
                 {/* نظام كود الخصم */}
                 <div className="pt-2.5 flex gap-2">
                   <div className="relative flex-1">
-                    <input type="text" placeholder="هل لديك كوبون خصم؟" value={enteredPromo} onChange={(e) => setEnteredPromo(e.target.value)} className="w-full px-3 py-2 pr-8 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "25", color: theme.text }} />
+                    <input type="text" value={enteredPromo} onChange={(e) => setEnteredPromo(e.target.value)} placeholder="هل لديك كوبون خصم؟" className="w-full px-3 py-2 pr-8 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "25", color: theme.text }} />
                     <Tag size={13} className="absolute right-2.5 top-2.5 opacity-60" style={{ color: theme.text }} />
                   </div>
-                  <button onClick={handleApplyPromo} className="px-4 py-2 rounded-xl font-bold text-xs shadow-sm" style={{ background: theme.surface2, color: theme.accent, border: "1px solid " + theme.accent + "40" }}>تطبيق</button>
+                  <button onClick={handleApplyPromo} className="px-4 py-2 rounded-xl font-bold text-xs shadow-sm flex items-center gap-1 border transition-colors" style={{ background: theme.surface2, color: theme.accent, borderColor: theme.accent + "40" }}>
+                    <Percent size={12} /> تطبيق
+                  </button>
                 </div>
                 {promoError && <p className="text-[10px] font-bold text-red-500 mr-1">{promoError}</p>}
-                {appliedDiscountPercent > 0 && <p className="text-[10px] font-bold text-green-500 mr-1">? تم تطبيق الخصم بنجاح بنسبة {appliedDiscountPercent}%</p>}
+                {appliedDiscountPercent > 0 && <p className="text-[10px] font-bold text-green-500 mr-1">✓ تم تطبيق الخصم بنجاح بنسبة {appliedDiscountPercent}%</p>}
 
                 {/* بيانات العميل والتوصيل والملاحظات */}
                 <div className="mt-3 pt-2 border-t space-y-2" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
@@ -834,7 +825,7 @@ export default function RestaurantMenu() {
                       <ChevronDown size={14} className="absolute left-3 top-3.5 opacity-60" style={{ color: theme.text }} />
                     </div>
 
-                    {/* خيارات جدولة مواعيد التوصيل (Order Scheduling Box) */}
+                    {/* خيارات جدولة مواعيد التوصيل */}
                     <div className="p-3 rounded-xl border border-dotted space-y-2.5" style={{ borderColor: (theme.muted || "#B3A18C") + "30", background: theme.surface2 }}>
                       <p className="text-[10px] font-bold opacity-80 flex items-center gap-1" style={{ color: theme.muted }}>
                         <Calendar size={13} />
@@ -847,7 +838,7 @@ export default function RestaurantMenu() {
                           className="py-1.5 rounded-lg text-[10px] font-bold border transition-all"
                           style={scheduleType === "now" ? { background: theme.accent, color: theme.bg, borderColor: theme.accent } : { borderColor: theme.muted + "20" }}
                         >
-                          ? دليفري فوري (الآن)
+                          ⚡ دليفري فوري (الآن)
                         </button>
                         <button 
                           type="button" 
@@ -855,7 +846,7 @@ export default function RestaurantMenu() {
                           className="py-1.5 rounded-lg text-[10px] font-bold border transition-all"
                           style={scheduleType === "later" ? { background: theme.accent, color: theme.bg, borderColor: theme.accent } : { borderColor: theme.muted + "20" }}
                         >
-                          ?? توصيل مجدول لاحقاً
+                          🕒 توصيل مجدول لاحقاً
                         </button>
                       </div>
 
@@ -881,7 +872,7 @@ export default function RestaurantMenu() {
 
                     <div className="flex gap-2">
                       <div className="relative flex-1">
-                        <input type="text" placeholder="العنوان بالتفصيل (البيت، الشارع)..." value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }} />
+                        <input type="text" placeholder="العنوان بالتفصيل (البيت, الشارع)..." value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }} />
                         <MapPin size={14} className="absolute right-3 top-3.5 opacity-60" style={{ color: theme.text }} />
                       </div>
                       <button type="button" onClick={handleGetLocation} className="px-3 rounded-xl border font-bold text-xs flex items-center justify-center bg-black/10 transition-transform active:scale-95 shrink-0" style={{ borderColor: theme.accent, color: theme.accent }}>
@@ -913,9 +904,9 @@ export default function RestaurantMenu() {
 
       {orderSuccess && (
         <Overlay onClose={() => setOrderSuccess(false)}>
-          <Sheet theme={theme} title="تم إرسال طلبك بنجاح! ??" onClose={() => setOrderSuccess(false)}>
+          <Sheet theme={theme} title="تم إرسال طلبك بنجاح! 🎉" onClose={() => setOrderSuccess(false)}>
             <div className="text-center py-6 space-y-4">
-              <div className="w-16 h-16 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto text-3xl animate-bounce">?</div>
+              <div className="w-16 h-16 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto text-3xl animate-bounce">✓</div>
               <p className="text-sm font-bold leading-relaxed">
                 تم تجهيز الأوردر وتصفير السلة بنجاح. <br/>
                 جاري الآن تحويلك إلى تطبيق واتساب لإرسال الفاتورة وتأكيد التوصيل مع الكابتن!
@@ -986,23 +977,26 @@ export default function RestaurantMenu() {
 
               {/* قسم التحكم الذكي بالنقاط ونظام الولاء من لوحة الإدارة */}
               <div className="pt-4 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
-                <p className="font-bold text-sm mb-2 flex items-center gap-1 text-green-500">
-                  <Award size={16} /> إعدادات نقاط الولاء الذهبية
+                <p className="font-bold text-sm mb-2 flex items-center gap-1.5 text-yellow-500">
+                  <Coins size={16} /> إعدادات نقاط الولاء الذهبية (DCGC)
                 </p>
                 <div className="grid grid-cols-2 gap-3 bg-black/20 p-3 rounded-xl border border-[#1F1F1F]">
                   <label className="block text-xs space-y-1">
-                    <span className="opacity-90 font-medium">معدل الكسب (كل كم جنييه يعطي 1 نقطة؟)</span>
+                    <span className="opacity-90 font-medium flex items-center gap-1"><TrendingUp size={12} /> معدل كسب النقاط</span>
                     <input type="number" value={pointsEarnRate} onChange={(e) => setPointsEarnRate(Math.max(1, Number(e.target.value)))} className="w-full px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
+                    <span className="text-[9px] opacity-60 block">كل كم جنيه صرف يعطي 1 نقطة؟</span>
                   </label>
                   <label className="block text-xs space-y-1">
-                    <span className="opacity-90 font-medium">قيمة الاستبدال (قيمة النقطة الواحدة بالجنيه)</span>
+                    <span className="opacity-90 font-medium flex items-center gap-1"><Gem size={12} /> قيمة استبدال النقطة</span>
                     <input type="number" step="0.1" value={pointValueInMoney} onChange={(e) => setPointValueInMoney(Math.max(0.1, Number(e.target.value)))} className="w-full px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
+                    <span className="text-[9px] opacity-60 block">النقطة الواحدة تساوي كم جنيه خصم؟</span>
                   </label>
                 </div>
               </div>
 
+              {/* إدارة مناطق الدليفرى */}
               <div className="pt-4 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
-                <p className="font-bold text-sm mb-2">إدارة قرى ومناطق التوصيل (الدليفري)</p>
+                <p className="font-bold text-sm mb-2 flex items-center gap-1"><MapPin size={15} /> إدارة مناطق وقرى التوصيل</p>
                 <div className="bg-black/20 p-3 rounded-xl border border-[#1F1F1F] space-y-2 mb-3">
                   <div className="grid grid-cols-2 gap-2">
                     <input type="text" placeholder="اسم القرية" value={newAreaName} onChange={(e) => setNewAreaName(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
@@ -1020,29 +1014,44 @@ export default function RestaurantMenu() {
                 </div>
               </div>
 
+              {/* لوحة التحكم الاحترافية في الكوبونات بحدود الاستخدام */}
               <div className="pt-4 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
-                <p className="font-bold text-sm mb-2">إدارة كوبونات الخصم (Promo Codes)</p>
+                <p className="font-bold text-sm mb-2 flex items-center gap-1 text-green-500">
+                  <Tag size={15} /> إدارة كوبونات الخصم والـ Promo Codes
+                </p>
                 <div className="bg-black/20 p-3 rounded-xl border border-[#1F1F1F] space-y-2 mb-3">
-                  <div className="grid grid-cols-2 gap-2">
-                    <input type="text" placeholder="الكود" value={newPromoCode} onChange={(e) => setNewPromoCode(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs uppercase" style={{ borderColor: theme.muted + "40", color: theme.text }} />
+                  <div className="grid grid-cols-3 gap-2">
+                    <input type="text" placeholder="الكود" value={newPromoCode} onChange={(e) => setNewPromoCode(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs uppercase font-bold" style={{ borderColor: theme.muted + "40", color: theme.text }} />
                     <input type="number" placeholder="الخصم %" value={newPromoDiscount} onChange={(e) => setNewPromoDiscount(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
+                    <input type="number" placeholder="حد الاستخدام" value={newPromoLimit} onChange={(e) => setNewPromoLimit(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
                   </div>
-                  <button onClick={handleAddPromoCode} className="w-full py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><PlusCircle size={13}/>إضافة الكود</button>
+                  <button onClick={handleAddPromoCode} className="w-full py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><PlusCircle size={13}/>إضافة الكود بالحد الأقصى للمرات</button>
                 </div>
                 <div className="space-y-1.5 max-h-[15vh] overflow-y-auto pr-1">
-                  {promoCodes.map((promo, idx) => (
-                    <div key={idx} className="flex items-center justify-between text-xs p-2 rounded-lg bg-black/10 border border-[#1F1F1F]">
-                      <span className="font-bold text-green-500">{promo.code} · <span className="font-medium text-white">خصم {promo.discount}%</span></span>
-                      <button onClick={() => handleRemovePromoCode(idx)} className="p-1 rounded-full text-red-500 border border-red-500/20 bg-red-500/5"><Trash2 size={12}/></button>
-                    </div>
-                  ))}
+                  {promoCodes.map((promo, idx) => {
+                    const currentLimit = promo.limit !== undefined ? promo.limit : 9999;
+                    const currentUsed = promo.used !== undefined ? promo.used : 0;
+                    const remaining = Math.max(0, currentLimit - currentUsed);
+                    return (
+                      <div key={idx} className="flex items-center justify-between text-xs p-2 rounded-lg bg-black/10 border border-[#1F1F1F]">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="font-bold text-green-500 flex items-center gap-1"><Tag size={11} /> {promo.code} · <span className="font-medium text-white">خصم {promo.discount}%</span></span>
+                          <span className="text-[10px]" style={{ color: theme.muted }}>
+                            الاستخدام الحالي: {currentUsed} من أصل {currentLimit === 9999 ? "∞" : currentLimit} مرة ({currentLimit === 9999 ? "مفتوح للأبد" : `${remaining} متبقي للعملاء`})
+                          </span>
+                        </div>
+                        <button onClick={() => handleRemovePromoCode(idx)} className="p-1 rounded-full text-red-500 border border-red-500/20 bg-red-500/5"><Trash2 size={12}/></button>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
+              {/* إدارة قائمة المأكولات والأصناف */}
               <div className="pt-4 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
                 <div className="flex items-center justify-between mb-3">
                   <p className="font-bold text-sm">قائمة المأكولات والأصناف</p>
-                  <button onClick={addNewItem} className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full" style={{ background: theme.accent, color: theme.bg }}><PlusCircle size={14} /> إضافة صنف</button>
+                  <button onClick={addNewItem} className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full" style={{ background: theme.accent, color: theme.bg }}><PlusCircle size={14} /> إضافة صنف للمنيو</button>
                 </div>
                 <div className="space-y-3">
                   {items.map((item) => (
@@ -1092,7 +1101,8 @@ export default function RestaurantMenu() {
                   ))}
                 </div>
               </div>
-              <div className="pt-4 mt-2 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
+              
+              <div className="pt-4 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
                 <button onClick={() => setShowResetConfirm(true)} className="w-full py-2.5 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 text-red-500 border-red-500/30"><RotateCcw size={14} /> إعادة تعيين منيو دريم كورنر الافتراضي</button>
               </div>
             </div>
