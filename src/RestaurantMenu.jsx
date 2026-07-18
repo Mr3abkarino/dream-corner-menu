@@ -32,13 +32,42 @@ const DEFAULT_PROMO_CODES = [
   { code: "DREAM", discount: 15, limit: 50, used: 0 }
 ];
 
+// مصفوفة الأصناف الكاملة والمكتملة لـ دريم كورنر 100%
 const DEFAULT_MENU = [
   { id: "p1", cat: "البيتزا", name: "بيتزا مارجريتا", sizes: [{ label: "كبير", price: 90 }, { label: "وسط", price: 70 }, { label: "صغير", price: 45 }] },
   { id: "p2", cat: "البيتزا", name: "بيتزا ميكس جبنة", sizes: [{ label: "كبير", price: 120 }, { label: "وسط", price: 90 }, { label: "صغير", price: 60 }] },
   { id: "p3", cat: "البيتزا", name: "بيتزا خضار", sizes: [{ label: "كبير", price: 120 }, { label: "وسط", price: 90 }, { label: "صغير", price: 60 }] },
+  { id: "p4", cat: "البيتزا", name: "بيتزا هوت دوج", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 100 }, { label: "صغير", price: 70 }] },
+  { id: "p5", cat: "البيتزا", name: "بيتزا سجق", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 100 }, { label: "صغير", price: 70 }] },
+  { id: "p6", cat: "البيتزا", name: "بيتزا لحمة مفرومة", sizes: [{ label: "كبير", price: 145 }, { label: "وسط", price: 110 }, { label: "صغير", price: 75 }] },
+  { id: "p7", cat: "البيتزا", name: "بيتزا بيروني", sizes: [{ label: "كبير", price: 110 }, { label: "وسط", price: 90 }, { label: "صغير", price: 70 }] },
+  { id: "p8", cat: "البيتزا", name: "بيتزا سلامي", sizes: [{ label: "كبير", price: 110 }, { label: "وسط", price: 90 }, { label: "صغير", price: 70 }] },
+  { id: "p9", cat: "البيتزا", name: "بيتزا شاورما دجاج", sizes: [{ label: "كبير", price: 155 }, { label: "وسط", price: 120 }, { label: "صغير", price: 80 }] },
+  { id: "p10", cat: "البيتزا", name: "بيتزا دجاج رانش", sizes: [{ label: "كبير", price: 155 }, { label: "وسط", price: 120 }, { label: "صغير", price: 80 }] },
+  { id: "p11", cat: "البيتزا", name: "بيتزا دريم كورنر سبيشال", desc: "خلطة البيت الخاصة المميزة", sizes: [{ label: "كبير", price: 170 }, { label: "وسط", price: 130 }, { label: "صغير", price: 90 }] },
+  { id: "p12", cat: "البيتزا", name: "بيتزا كرانشي (حار أو بارد)", sizes: [{ label: "كبير", price: 130 }, { label: "وسط", price: 100 }, { label: "صغير", price: 80 }] },
+  { id: "p13", cat: "البيتزا", name: "بيتزا ميكس دجاج", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 105 }, { label: "صغير", price: 85 }] },
+  { id: "p14", cat: "البيتزا", name: "حشو الأطراف", desc: "إضافة أطراف محشوة لأي بيتزا", sizes: [{ label: "كبير", price: 35 }, { label: "وسط", price: 30 }, { label: "صغير", price: 25 }] },
   { id: "s1", cat: "السندوتشات", subcat: "اللحوم", name: "كفتة مشوية", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
+  { id: "s2", cat: "السندوتشات", subcat: "اللحوم", name: "سجق مشوي", sizes: [{ label: "كبير", price: 70 }, { label: "وسط", price: 60 }] },
+  { id: "s3", cat: "السندوتشات", subcat: "اللحوم", name: "كبدة إسكندراني", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
+  { id: "s4", cat: "السندوتشات", subcat: "اللحوم", name: "ميكس لحوم (سجق+كبدة)", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
   { id: "s5", cat: "السندوتشات", subcat: "اللحوم", name: "حواوشي دبل طعم", price: 45 },
+  { id: "s6", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "تشكن بانية", sizes: [{ label: "كبير", price: 85 }, { label: "وسط", price: 70 }] },
+  { id: "s7", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "زنجر سوبريم", sizes: [{ label: "كبير", price: 95 }, { label: "وسط", price: 80 }] },
+  { id: "s8", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "سوبر كرانشي", sizes: [{ label: "كبير", price: 95 }, { label: "وسط", price: 80 }] },
+  { id: "s9", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "شيش طاووق", sizes: [{ label: "كبير", price: 90 }, { label: "وسط", price: 75 }] },
+  { id: "s10", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "تشكن رانش", sizes: [{ label: "كبير", price: 90 }, { label: "وسط", price: 75 }] },
+  { id: "s11", cat: "السندوتشات", subcat: "البرجر", name: "كلاسيك برجر", sizes: [{ label: "كبير", price: 65 }, { label: "وسط", price: 55 }] },
+  { id: "s12", cat: "السندوتشات", subcat: "البرجر", name: "تشيز برجر ليدر", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
+  { id: "s13", cat: "السندوتشات", subcat: "البرجر", name: "تشكن برجر مقرمش", sizes: [{ label: "كبير", price: 65 }, { label: "وسط", price: 50 }] },
+  { id: "s14", cat: "السندوتشات", subcat: "التوست", name: "ميكس توست جبن", price: 60 },
+  { id: "sd1", cat: "الأصناف الجانبية", name: "بطاطس مقلية ذهبية", price: 35 },
+  { id: "sd2", cat: "الأصناف الجانبية", name: "بطاطس بالجبنة الشيدر", price: 45 },
+  { id: "sd3", cat: "الأصناف الجانبية", name: "صوص رانش هوم ميد", price: 10 },
   { id: "d1", cat: "المشروبات", name: "بيبسي كانز", price: 15 },
+  { id: "d2", cat: "المشروبات", name: "سفن أب كانز", price: 15 },
+  { id: "d3", cat: "المشروبات", name: "ميرندا برتقال كانز", price: 15 },
   { id: "d4", cat: "المشروبات", name: "مياة معدنية صغيرة", price: 6 }
 ];
 
@@ -354,6 +383,7 @@ export default function RestaurantMenu() {
     e.preventDefault();
     if (enteredPin === adminPin) {
       setIsAdmin(true);
+      setAdminOpen(true);
       setPinModalOpen(false);
       setPinError("");
       setEnteredPin("");
@@ -641,12 +671,12 @@ export default function RestaurantMenu() {
         {/* البحث السريع */}
         <div className="max-w-3xl mx-auto px-4 pb-3">
           <div className="relative">
-            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="ابحث عن برجر، بيتزا، مشروبات الفريش..." className="w-full px-4 py-2 pr-9 rounded-full text-xs border focus:outline-none transition-all shadow-sm" style={{ background: theme.surface, borderColor: theme.accent + "20", color: theme.text }} />
+            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="ابحث عن برجر، بيتزا، سندوتش كفتة، كنز..." className="w-full px-4 py-2 pr-9 rounded-full text-xs border focus:outline-none transition-all shadow-sm" style={{ background: theme.surface, borderColor: theme.accent + "20", color: theme.text }} />
             <Search size={14} className="absolute right-3.5 top-3 opacity-60" />
           </div>
         </div>
 
-        {/* شريط الفئات والأقسام الجديد (الكبسولات التفاعلية المضيئة) */}
+        {/* شريط الفئات والأقسام */}
         <div className="max-w-3xl mx-auto px-4 pb-3 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
           {categories.map((c) => (
             <button 
@@ -663,16 +693,16 @@ export default function RestaurantMenu() {
       </header>
 
       {/* ===================== HERO SIZZLE BANNER ===================== */}
-      <section class="max-w-3xl mx-auto px-4 pt-4">
-        <div class="rounded-2xl text-white p-5 relative overflow-hidden shadow-md bg-gradient-to-br from-red-600 to-amber-600">
-          <div class="absolute -left-4 -bottom-6 text-7xl opacity-20 select-none">🍔</div>
-          <p class="uppercase tracking-widest text-[10px] font-black text-amber-300 mb-1">اطلب خلال ثوانٍ معدودة</p>
-          <h2 class="text-lg font-black max-w-md leading-tight">جهّز طلبك على طريقتك، واستلمه فريش وطازج</h2>
-          <div class="w-12 h-1 bg-amber-400 rounded-full mt-2"></div>
+      <section className="max-w-3xl mx-auto px-4 pt-4">
+        <div className="rounded-2xl text-white p-5 relative overflow-hidden shadow-md bg-gradient-to-br from-red-600 to-amber-600">
+          <div className="absolute -left-4 -bottom-6 text-7xl opacity-20 select-none">🍔</div>
+          <p className="uppercase tracking-widest text-[10px] font-black text-amber-300 mb-1">اطلب خلال ثوانٍ معدودة</p>
+          <h2 className="text-lg font-black max-w-md leading-tight">جهّز طلبك على طريقتك، واستلمه فريش وطازج من المطبخ</h2>
+          <div className="w-12 h-1 bg-amber-400 rounded-full mt-2"></div>
         </div>
       </section>
 
-      {/* ===================== MENU ITEMS LIST STYLE ===================== */}
+      {/* ===================== MENU ITEMS ROW UI ===================== */}
       <main className="max-w-3xl mx-auto px-4 pb-32 pt-5 space-y-6">
         {groups.map((group) => {
           const subcat = group[0];
@@ -793,7 +823,6 @@ export default function RestaurantMenu() {
           <Sheet theme={theme} title="إيصال سلة المشتريات" onClose={() => setCartOpen(false)}>
             {cartList.length === 0 ? <p className="text-center py-8" style={{ color: theme.muted }}>العربة فارغة حالياً</p> : (
               <>
-                {/* شكل الإيصال المقطع دبل داش المقتبس من الكود المدمج */}
                 <div className="border-2 border-dashed p-3 rounded-xl bg-white dark:bg-zinc-900 shadow-inner max-h-[25vh] overflow-y-auto space-y-2.5" style={{ borderColor: theme.accent + "30" }}>
                   {cartList.map((cartItem) => (
                     <div key={cartItem.key} className="flex items-center justify-between gap-2 border-b border-dashed pb-2 text-xs" style={{ borderColor: theme.accent + "15" }}>
@@ -810,7 +839,7 @@ export default function RestaurantMenu() {
                   ))}
                 </div>
 
-                {/* محفظة النقاط الذهبية */}
+                {/* نظام النقاط الذكي */}
                 {userPoints > 0 && (
                   <div className="mt-3 p-3 rounded-xl border border-dashed flex flex-col gap-2" style={{ borderColor: theme.accent + "40", background: theme.surface2 }}>
                     <div className="flex items-center justify-between">
@@ -828,7 +857,7 @@ export default function RestaurantMenu() {
                       style={redeemPoints ? { background: "#15803d" } : { background: theme.accent }}
                     >
                       {redeemPoints ? <Check size={13} /> : <Coins size={13} />}
-                      {redeemPoints ? "تم تطبيق خصم النقاط الذهبية بنجاح" : "اضغط هنا لاستبدال النقاط بخصم كاش"}
+                      {redeemPoints ? "تم تطبيق خصم النقاط الذهبية بنجاح" : "اضغط هنا لاستبدال النقاط بخصم فوري كاش"}
                     </button>
                   </div>
                 )}
@@ -860,7 +889,7 @@ export default function RestaurantMenu() {
                   </div>
                 </div>
 
-                {/* كود الخصم */}
+                {/* نظام كود الخصم */}
                 <div className="pt-2 flex gap-2">
                   <div className="relative flex-1">
                     <input type="text" value={enteredPromo} onChange={(e) => setEnteredPromo(e.target.value)} placeholder="هل لديك كوبون خصم؟" className="w-full px-3 py-2 pr-8 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: theme.accent + "25", color: theme.text }} />
@@ -872,7 +901,7 @@ export default function RestaurantMenu() {
                 </div>
                 {promoError && <p className="text-[10px] font-bold text-red-500 bg-black/5 dark:bg-white/5 p-1.5 rounded mr-1 mt-1">{promoError}</p>}
 
-                {/* بيانات الدليفري الحرة للعميل */}
+                {/* بيانات الدليفري */}
                 <div className="mt-3 pt-2 border-t border-dashed space-y-2" style={{ borderColor: theme.accent + "30" }}>
                   <p className="text-[11px] font-bold" style={{ color: theme.accent }}>بيانات التوصيل والدليفري المطلوبة:</p>
                   <div className="space-y-2">
@@ -924,7 +953,7 @@ export default function RestaurantMenu() {
         </Overlay>
       )}
 
-      {/* بوب أب التحقق العكسي لمنع الهكر والتلاعب بالنقاط */}
+      {/* بوب أب التحقق العكسي لمنع الهكر وتلاعب النقاط */}
       {orderSuccess && (
         <Overlay onClose={() => setOrderSuccess(false)}>
           <Sheet theme={theme} title="جاري تأكيد طلبك... 🕒" onClose={() => setOrderSuccess(false)}>
@@ -962,7 +991,7 @@ export default function RestaurantMenu() {
         </Overlay>
       )}
 
-      {/* بوب أب التحقق من الـ PIN للإدارة السرية */}
+      {/* بوب أب الـ PIN للإدارة */}
       {pinModalOpen && (
         <Overlay onClose={() => setPinModalOpen(false)}>
           <Sheet theme={theme} title="التحقق من هوية المدير" onClose={() => setPinModalOpen(false)}>
@@ -979,7 +1008,7 @@ export default function RestaurantMenu() {
         </Overlay>
       )}
 
-      {/* ===================== لوحة التحكم الشاملة للمدير ===================== */}
+      {/* لوحة التحكم الكاملة للمدير وسجل الأوردرات */}
       {adminOpen && (
         <Overlay onClose={() => setAdminOpen(false)}>
           <Sheet theme={theme} title="لوحة كاشير وإدارة الطلبات والأسعار" onClose={() => setAdminOpen(false)}>
@@ -993,7 +1022,7 @@ export default function RestaurantMenu() {
                 </p>
 
                 {savedOrders.length === 0 ? (
-                  <p className="text-xs text-center text-gray-500 py-4">لا توجد طلبات مسجلة بعد. أي طلب هيعمله الزبون هيتحفظ هنا بالكامل!</p>
+                  <p className="text-xs text-center text-gray-500 py-4">لا توجد طلبات مسجلة بعد.</p>
                 ) : (
                   <div className="space-y-2">
                     <button onClick={exportOrdersToCSV} className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-md">
@@ -1002,7 +1031,7 @@ export default function RestaurantMenu() {
 
                     <div className="space-y-2 max-h-[25vh] overflow-y-auto mt-2 pr-1">
                       {savedOrders.map((order, idx) => (
-                        <div key={idx} className="p-2.5 rounded-xl border text-[11px] bg-black/10 space-y-1 relative" style={{ borderColor: theme.accent + "20" }}>
+                        <div key={idx} className="p-2.5 rounded-xl border text-[11px] bg-black/10 dark:bg-white/5 border-dashed relative" style={{ borderColor: theme.accent + "20" }}>
                           <button onClick={() => deleteSavedOrder(idx)} className="absolute top-2 left-2 text-red-400 p-1"><Trash2 size={12} /></button>
                           <p className="font-bold text-xs" style={{ color: theme.accent }}>👤 {order.name} ({order.phone})</p>
                           <p className="opacity-80">📍 {order.area} - {order.address}</p>
@@ -1026,7 +1055,7 @@ export default function RestaurantMenu() {
               <Field label="حساب InstaPay المباشر" value={instapay} onChange={setInstapay} theme={theme} dir="ltr" />
               <Field label="رمز الأمان لفتح الإدارة (PIN)" value={adminPin} onChange={setAdminPin} theme={theme} dir="ltr" />
 
-              {/* لوحة إلغاء وسحب النقاط العكسية لمنع تلاعب المرتجعات */}
+              {/* لوحة إلغاء وسحب النقاط العكسية */}
               <div className="pt-4 border-t" style={{ borderColor: theme.accent + "20" }}>
                 <p className="font-bold text-sm mb-1.5 flex items-center gap-1.5 text-red-500">
                   <RotateCcw size={16} /> لوحة إلغاء وسحب النقاط (ثغرة الإلغاء)
@@ -1039,14 +1068,14 @@ export default function RestaurantMenu() {
                   <button onClick={handleGenerateBurnCodeAction} className="w-full py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-1 shadow"><PlusCircle size={13} /> توليد كود سحب وإلغاء النقاط فوراً</button>
                   {generatedBurnCode && (
                     <div className="p-2 bg-black/10 dark:bg-white/5 rounded border border-red-500/30 text-center select-all">
-                      <p className="text-[10px] opacity-75">انسخ الكود وأرسله للشخص في محادثة الواتساب ليتصفر السيستم عنده:</p>
+                      <p className="text-[10px] opacity-75">انسخ الكود وأرسله للشخص في محادثة الواتساب:</p>
                       <p className="text-xs font-black tracking-widest text-red-500 mt-1">{generatedBurnCode}</p>
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* التحكم في معدلات النقاط */}
+              {/* إعدادات النقاط */}
               <div className="pt-4 border-t" style={{ borderColor: theme.accent + "20" }}>
                 <p className="font-bold text-sm mb-2 flex items-center gap-1.5 text-amber-500">
                   <Coins size={16} /> إعدادات نقاط الولاء الذهبية (DCGC)
@@ -1063,7 +1092,7 @@ export default function RestaurantMenu() {
                 </div>
               </div>
 
-              {/* إدارة مناطق الدليفري قرايا وبنادر */}
+              {/* إدارة مناطق الدليفري */}
               <div className="pt-4 border-t" style={{ borderColor: theme.accent + "20" }}>
                 <p className="font-bold text-sm mb-2 flex items-center gap-1"><MapPin size={15} /> إدارة مناطق وقرى خطوط التوصيل</p>
                 <div className="bg-black/5 dark:bg-white/5 p-3 rounded-xl border border-dashed space-y-2 mb-3" style={{ borderColor: theme.accent + "30" }}>
@@ -1073,17 +1102,9 @@ export default function RestaurantMenu() {
                   </div>
                   <button onClick={handleAddDeliveryArea} className="w-full py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><PlusCircle size={13}/>إضافة خط المنطقة</button>
                 </div>
-                <div className="space-y-1.5 max-h-[15vh] overflow-y-auto pr-1">
-                  {deliveryAreas.map((area, idx) => (
-                    <div key={idx} className="flex items-center justify-between text-xs p-2 rounded-lg bg-black/10 dark:bg-white/5 border border-dashed" style={{ borderColor: theme.accent + "15" }}>
-                      <span className="font-medium">{area.name} · <span style={{ color: theme.accent }}>{money(area.price)}</span></span>
-                      <button onClick={() => handleRemoveDeliveryArea(idx)} className="p-1 rounded-full text-red-500 border border-red-500/20 bg-red-500/5"><Trash2 size={12}/></button>
-                    </div>
-                  ))}
-                </div>
               </div>
 
-              {/* إدارة كوبونات الخصم */}
+              {/* إدارة الكوبونات */}
               <div className="pt-4 border-t" style={{ borderColor: theme.accent + "20" }}>
                 <p className="font-bold text-sm mb-2 flex items-center gap-1 text-green-500"><Tag size={15} /> إدارة الكوبونات الفعالة</p>
                 <div className="bg-black/5 dark:bg-white/5 p-3 rounded-xl border border-dashed space-y-2 mb-3" style={{ borderColor: theme.accent + "30" }}>
@@ -1094,21 +1115,6 @@ export default function RestaurantMenu() {
                   </div>
                   <button onClick={handleAddPromoCode} className="w-full py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><PlusCircle size={13}/>حفظ وإدراج الكود في السيستم</button>
                 </div>
-                <div className="space-y-1.5 max-h-[15vh] overflow-y-auto pr-1">
-                  {promoCodes.map((promo, idx) => {
-                    const currentLimit = promo.limit !== undefined ? promo.limit : 9999;
-                    const currentUsed = promo.used !== undefined ? promo.used : 0;
-                    return (
-                      <div key={idx} className="flex items-center justify-between text-xs p-2 rounded-lg bg-black/10 dark:bg-white/5 border border-dashed" style={{ borderColor: theme.accent + "15" }}>
-                        <div className="flex flex-col gap-0.5">
-                          <span className="font-bold text-green-500 flex items-center gap-1"><Tag size={11} /> {promo.code} · <span className="font-medium text-white">خصم {promo.discount}%</span></span>
-                          <span className="text-[10px]" style={{ color: theme.muted }}>الاستخدام الحالي: {currentUsed} من أصل {currentLimit} مرة</span>
-                        </div>
-                        <button onClick={() => handleRemovePromoCode(idx)} className="p-1 rounded-full text-red-500 border border-red-500/20 bg-red-500/5"><Trash2 size={12}/></button>
-                      </div>
-                    );
-                  })}
-                </div>
               </div>
 
             </div>
@@ -1116,14 +1122,12 @@ export default function RestaurantMenu() {
         </Overlay>
       )}
 
-      {/* إشعار التنبيه العائم السريع */}
       <div id="toast" className="fixed z-[60] left-1/2 -translate-x-1/2 bottom-24 bg-zinc-900 text-white dark:bg-white dark:text-black px-4 py-2 rounded-full text-xs font-semibold shadow-md opacity-0 pointer-events-none transition-opacity duration-300"></div>
 
     </div>
   );
 }
 
-// المكونات المساعدة
 function Overlay({ children, onClose }) { return <div className="fixed inset-0 z-40 flex items-end md:items-center justify-center p-0 md:p-4"><div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />{children}</div>; }
 function Sheet({ theme, title, onClose, children }) { return <div className="relative z-10 w-full md:max-w-md max-h-[85vh] rounded-t-3xl md:rounded-3xl p-5 overflow-y-auto" style={{ background: theme.bg, color: theme.text, border: "1px solid " + theme.accent + "20" }} dir="rtl"><div className="flex items-center justify-between mb-4 pb-2 border-b border-dashed" style={{ borderColor: theme.accent + "40" }}><h2 className="text-sm font-black" style={{ color: theme.accent }}>{title}</h2><button onClick={onClose} className="p-1.5 rounded-full border" style={{ borderColor: theme.accent + "30" }}><X size={13} /></button></div>{children}</div>; }
 function Field({ label, value, onChange, theme, dir = "rtl", hint }) { return <label className="block text-xs space-y-1"><span className="font-bold opacity-90" style={{ color: theme.muted }}>{label}</span><input value={value} onChange={(e) => onChange(e.target.value)} dir={dir} className="w-full px-3 py-2 rounded-lg border bg-transparent font-medium" style={{ borderColor: theme.accent + "40", color: theme.text }} />{hint && <span className="block mt-1 text-[10px] opacity-70" style={{ color: theme.muted }}>{hint}</span>}</label>; }
