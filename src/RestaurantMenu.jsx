@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "2.1"; // تحديث الإصدار لضمان شحن الهيكل الجديد للكوبونات عند الزبائن
+const MENU_VERSION = "2.2"; // تحديث الإصدار لشحن شريط السوشيال ميديا الجديد بالمنتصف ومنع الكاش
 
 const THEMES = [
   { id: "brand", name: "هوية دريم كورنر", bg: "#0A0A0A", surface: "#141414", surface2: "#1F1F1F", accent: "#D4AF37", accent2: "#8B1E1E", text: "#F3E9D8", muted: "#A3A3A3", display: "'Tajawal', sans-serif" },
@@ -27,7 +27,6 @@ const DEFAULT_DELIVERY_AREAS = [
   { name: "شربين", price: 80 }
 ];
 
-// إضافة حد الاستخدام (limit) والعدد المستخدم حالياً (used)
 const DEFAULT_PROMO_CODES = [
   { code: "OFF10", discount: 10, limit: 50, used: 0 },
   { code: "DREAM", discount: 15, limit: 100, used: 0 }
@@ -138,7 +137,7 @@ export default function RestaurantMenu() {
   const [promoCodes, setPromoCodes] = useState(DEFAULT_PROMO_CODES);
   const [newPromoCode, setNewPromoCode] = useState("");
   const [newPromoDiscount, setNewPromoDiscount] = useState("");
-  const [newPromoLimit, setNewPromoLimit] = useState(""); // حقل لعدد المرات بصفحة الإدارة
+  const [newPromoLimit, setNewPromoLimit] = useState("");
 
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -254,7 +253,6 @@ export default function RestaurantMenu() {
     if (!codeClean) return;
     const match = promoCodes.find(p => p.code.toUpperCase() === codeClean);
     if (match) {
-      // التحقق من تخطي حد الاستخدام المطلوب والمعد من لوحة الإدارة
       if (match.used >= match.limit) {
         setAppliedDiscountPercent(0);
         setPromoError("عذراً، تم استهلاك الحد الأقصى لاستخدام هذا الكوبون!");
@@ -441,7 +439,6 @@ export default function RestaurantMenu() {
     }
     setValidationError("");
 
-    // تحديث عدد مرات استهلاك البرومو كود في الـ State والـ Storage فور الإرسال للواتساب
     if (appliedDiscountPercent > 0 && enteredPromo.trim()) {
       const codeClean = enteredPromo.trim().toUpperCase();
       setPromoCodes(prevCodes => prevCodes.map(p => {
@@ -471,7 +468,7 @@ export default function RestaurantMenu() {
     
     const deliveryTimeText = scheduleType === "now" ? "⚡ توصيل فوري (الآن)" : "🕒 مجدول للموعد: " + scheduleTime;
 
-    let text = "طلب جديد من منيو " + restaurantName + " 🍽️\n\n" + 
+    let text = "طلب جديد من منيو " + restaurantName + " 🍽\n\n" + 
                "👤 اسم العميل: " + customerName + "\n" +
                "📱 تليفون العميل: " + customerPhone + "\n" +
                "📅 موعد التوصيل: " + deliveryTimeText + "\n" +
@@ -489,7 +486,7 @@ export default function RestaurantMenu() {
             "💵 حساب الأكل الأصلي: " + money(cartTotal) + "\n";
             
     if (discountAmount > 0) {
-      text += "🏷️ كود الخصم المطبق: " + enteredPromo.toUpperCase() + " (-" + appliedDiscountPercent + "%)\n" +
+      text += "🏷 كود الخصم المطبق: " + enteredPromo.toUpperCase() + " (-" + appliedDiscountPercent + "%)\n" +
               "📉 قيمة الخصم: " + money(discountAmount) + "\n";
     }
 
@@ -536,7 +533,7 @@ export default function RestaurantMenu() {
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
             <div onClick={handleLogoClickLocal} className="cursor-pointer active:scale-95 transition-transform shrink-0 relative">
-              <img src={LOGO_SRC} alt={restaurantName + " logo"} className="w-11 h-11 rounded-full object-contain border border-white/10 animate-pulse" style={{ padding: 1, animationDuration: '3s' }} />
+              <img src={LOGO_SRC} alt={restaurantName + " logo"} className="w-11 h-11 rounded-full object-contain border border-white/10" style={{ padding: 1 }} />
               {logoClicks > 0 && <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-600 text-white rounded-full flex items-center justify-center text-[9px] font-bold animate-ping">{logoClicks}</span>}
             </div>
             <div className="min-w-0">
@@ -545,22 +542,77 @@ export default function RestaurantMenu() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            {isAdmin ? (
+            {isAdmin && (
               <>
                 <button onClick={() => setThemePickerOpen(true)} className="p-2 rounded-full border border-green-500/30 text-green-500 bg-green-500/5 transition-all hover:bg-green-500/10 active:scale-95" title="تغيير المظهر"><Palette size={18} /></button>
                 <button onClick={() => setQrOpen(true)} className="p-2 rounded-full border border-green-500/30 text-green-500 bg-green-500/5 transition-all hover:bg-green-500/10 active:scale-95" title="عرض QR"><QrCode size={18} /></button>
                 <button onClick={() => setAdminOpen(true)} className="p-2 rounded-full border border-green-500/50 text-green-500 bg-green-500/10 transition-all hover:bg-green-500/20 active:scale-95 animate-pulse" title="إعدادات المنيو والأسعار"><Settings size={18} /></button>
                 <button onClick={() => setIsAdmin(false)} className="p-2 rounded-full border border-red-500/30 text-red-500 bg-red-500/5 transition-all hover:bg-red-500/10 active:scale-95" title="خروج من وضع الإدارة"><LogOut size={16} /></button>
               </>
-            ) : (
-              <a href={"tel:" + whatsappNumber} className="p-2 rounded-full border transition-transform active:scale-95" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }} aria-label="اتصل بنا"><Phone size={17} /></a>
             )}
           </div>
         </div>
       </header>
 
-      {/* ===================== CATEGORIES BAR ===================== */}
-      <div className="sticky top-[77px] z-20 backdrop-blur-md border-b py-3 shadow-sm" style={{ background: theme.bg + "F2", borderColor: (theme.muted || "#B3A18C") + "15" }}>
+      {/* ===================== NEW: SOCIAL MEDIA BAR IN MIDDLE ===================== */}
+      <div className="w-full flex justify-center items-center py-3 border-b sticky top-[77px] z-20 backdrop-blur-md" style={{ background: theme.bg + "D9", borderColor: (theme.muted || "#B3A18C") + "15" }}>
+        <div className="flex items-center gap-4 px-4 py-1.5 rounded-full shadow-inner border" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "20" }}>
+          
+          {/* 1. زر الاتصال الهاتفي السريع */}
+          <a
+            href={"tel:" + whatsappNumber}
+            className="inline-flex items-center justify-center p-2.5 rounded-full transition-all duration-200 active:scale-95 shadow-md group"
+            style={{ background: theme.accent, color: theme.bg }}
+            aria-label="اتصل بنا هاتفياً"
+          >
+            <Phone size={15} className="group-hover:scale-110 transition-transform" />
+          </a>
+
+          {/* خط فاصل صغير */}
+          <span className="h-4 w-[1px]" style={{ background: (theme.muted || "#B3A18C") + "30" }} />
+
+          {/* 2. زر الواتساب */}
+          <a
+            href={"https://wa.me/" + whatsappNumber.replace(/[^\d+]/g, "")}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center p-2.5 rounded-full bg-[#25D366] text-white hover:bg-[#20ba5a] transition-all duration-200 active:scale-95 shadow-md group"
+            aria-label="تواصل معنا عبر واتساب"
+          >
+            <MessageCircle size={15} className="group-hover:scale-110 transition-transform" />
+          </a>
+
+          {/* 3. زر الفيسبوك المباشر لـ دريم كورنر */}
+          <a 
+            href="https://www.facebook.com/profile.php?id=61571431350616" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center p-2.5 rounded-full bg-[#1877F2] text-white hover:bg-[#166FE5] transition-all duration-200 active:scale-95 shadow-md group"
+            aria-label="تابعنا على فيسبوك"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current group-hover:scale-110 transition-transform">
+              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+            </svg>
+          </a>
+
+          {/* 4. زر التيك توك المباشر لـ دريم كورنر */}
+          <a 
+            href="https://www.tiktok.com/@dream_corner1" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center p-2.5 rounded-full bg-[#000000] text-white hover:bg-neutral-900 border border-neutral-800 transition-all duration-200 active:scale-95 shadow-md group"
+            aria-label="تابعنا على تيك توك"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 group-hover:scale-110 transition-transform">
+              <path d="M12.525.02c1.31.01 2.61.03 3.91.05.08 1.53.64 2.93 1.66 4.02.97.97 2.24 1.57 3.63 1.69v3.91c-1.6-.05-3.11-.64-4.32-1.64-.1-.08-.19-.17-.28-.26v6.2c-.06 4.67-3.81 8.28-8.42 8.01-3.69-.21-6.72-3.14-7.06-6.82-.44-4.78 3.32-8.91 8.11-8.52v3.96c-2.15-.22-4.11 1.29-4.44 3.44-.4 2.58 1.56 4.88 4.15 4.96 2.43.08 4.5-1.74 4.66-4.16.03-.43.02-.87.02-1.3V0z"/>
+            </svg>
+          </a>
+
+        </div>
+      </div>
+
+      {/* ===================== CATEGORIES BAR (SHIFTED TOP POSITION) ===================== */}
+      <div className="sticky top-[138px] z-10 backdrop-blur-md border-b py-3 shadow-sm" style={{ background: theme.bg + "F2", borderColor: (theme.muted || "#B3A18C") + "15" }}>
         <div className="max-w-3xl mx-auto px-4 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
           {categories.map((c) => (
             <button 
@@ -659,9 +711,9 @@ export default function RestaurantMenu() {
 
       {/* ===================== FOOTER INFO STRIP ===================== */}
       <div className="fixed bottom-0 inset-x-0 z-20 border-t px-4 py-3.5 flex items-center justify-center gap-4 text-xs font-semibold shadow-inner" style={{ background: theme.bg + "F2", borderColor: (theme.muted || "#B3A18C") + "20" , color: theme.muted, backdropFilter: "blur(8px)" }}>
-        <a href="https://fb.com/mr.3abkarino" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 font-bold tracking-wide shrink-0 cursor-pointer hover:underline" style={{ color: theme.accent }}>
-          Mr3abkarino© <span className="text-red-500 text-sm animate-pulse">❤️</span>
-        </a>
+        <div onClick={handleLogoClickLocal} className="flex items-center gap-1 font-bold tracking-wide shrink-0 cursor-pointer hover:underline" style={{ color: theme.accent }}>
+          دريم كورنر © <span className="text-red-500 text-sm animate-pulse">❤️</span>
+        </div>
         <span className="opacity-40 shrink-0">|</span>
         <span className="flex items-center gap-1 truncate min-w-0">
           <MapPin size={13} className="shrink-0" /> 
@@ -864,6 +916,7 @@ export default function RestaurantMenu() {
         </Overlay>
       )}
 
+      {/* ===================== MODALS & SHEETS ===================== */}
       {orderSuccess && (
         <Overlay onClose={() => setOrderSuccess(false)}>
           <Sheet theme={theme} title="تم إرسال طلبك بنجاح! 🎉" onClose={() => setOrderSuccess(false)}>
@@ -956,7 +1009,6 @@ export default function RestaurantMenu() {
                 </div>
               </div>
 
-              {/* قسم تعديل الكوبونات مع ميزة تتبع عدد مرات الاستخدام والحد الأقصى المتبقي */}
               <div className="pt-4 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
                 <p className="font-bold text-sm mb-2">إدارة كوبونات الخصم والكمية (Promo Codes)</p>
                 <div className="bg-black/20 p-3 rounded-xl border border-[#1F1F1F] space-y-2 mb-3">
