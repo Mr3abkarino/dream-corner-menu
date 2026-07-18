@@ -32,7 +32,6 @@ const DEFAULT_PROMO_CODES = [
   { code: "DREAM", discount: 15, limit: 50, used: 0 }
 ];
 
-// مصفوفة الأصناف الكاملة والمكتملة لـ دريم كورنر 100%
 const DEFAULT_MENU = [
   { id: "p1", cat: "البيتزا", name: "بيتزا مارجريتا", sizes: [{ label: "كبير", price: 90 }, { label: "وسط", price: 70 }, { label: "صغير", price: 45 }] },
   { id: "p2", cat: "البيتزا", name: "بيتزا ميكس جبنة", sizes: [{ label: "كبير", price: 120 }, { label: "وسط", price: 90 }, { label: "صغير", price: 60 }] },
@@ -427,159 +426,38 @@ export default function RestaurantMenu() {
     document.body.removeChild(link);
   };
 
-  const handleAddPromoCode = () => {
-    if (!newPromoCode.trim() || !newPromoDiscount.trim()) return;
-    const finalLimit = newPromoLimit.trim() ? Number(newPromoLimit) : 9999;
-    setPromoCodes([...promoCodes, { 
-      code: newPromoCode.trim().toUpperCase(), 
-      discount: Number(newPromoDiscount),
-      limit: finalLimit,
-      used: 0
-    }]);
-    setNewPromoCode("");
-    setNewPromoDiscount("");
-    setNewPromoLimit("50");
+  const addToCart = (key, delta) =>
+    setCart((c) => {
+      const nextCart = { ...c };
+      nextCart[key] = Math.max(0, (c[key] || 0) + delta);
+      return nextCart;
+    });
+
+  const updateItem = (id, patch) =>
+    setItems((its) => its.map((i) => (i.id === id ? { ...i, ...patch } : i)));
+
+  const updateSize = (id, sizeIdx, patch) =>
+    setItems((its) => its.map((i) => i.id === id ? { ...i, sizes: i.sizes.map((s, idx) => (idx === sizeIdx ? { ...s, ...patch } : s)) } : i));
+
+  const deleteItem = (id) => setItems((its) => its.filter((i) => i.id !== id));
+
+  const addNewItem = () => {
+    const id = "n" + Date.now().toString();
+    // جعل المولد الافتراضي يطابق الهيكل الجديد مع مصفوفة sizes فارغة بدلاً من تدمير الـ JSX
+    setItems((its) => [...its, { id, cat: activeCat === "الكل" ? "بيتزا جديدة" : activeCat, name: "صنف جديد", price: 50, desc: "" }]);
+    setEditingId(id);
   };
 
-  const handleRemovePromoCode = (index) => {
-    setPromoCodes(promoCodes.filter((_, idx) => idx !== index));
+  const handleAddDeliveryArea = () => {
+    if (!newAreaName.trim() || !newAreaPrice.trim()) return;
+    setDeliveryAreas([...deliveryAreas, { name: newAreaName.trim(), price: Number(newAreaPrice) }]);
+    setNewAreaName("");
+    setNewAreaPrice("");
   };
 
-  const handleGenerateBurnCodeAction = () => {
-    const randomSecret = Math.floor(1000 + Math.random() * 9000);
-    setGeneratedBurnCode(`BURN-${burnPointsAmount}-${randomSecret}`);
-  };
-
-  const handleClaimPointsWithCode = () => {
-    if (userEnteredClaimCode.trim() === generatedClaimCode) {
-      let updatedPoints = userPoints + pointsToEarnPending;
-      setUserPoints(updatedPoints);
-      if (typeof window !== "undefined" && window.localStorage) {
-        localStorage.setItem("customer-points-loyalty", updatedPoints.toString());
-      }
-      setClaimCodeSuccess(true);
-      setClaimCodeError("");
-      setPointsToEarnPending(0);
-    } else {
-      setClaimCodeError("كود الهدية غير صحيح! يرجى نسخه بالكامل من نهاية رسالة الواتساب.");
-      setClaimCodeSuccess(false);
-    }
-  };
-
-  const sendWhatsApp = () => {
-    if (cartList.length === 0) return;
-    if (!customerName.trim() || !customerPhone.trim() || !customerAddress.trim()) {
-      setValidationError("برجاء كتابة الاسم، ورقم الهاتف، وعنوان التوصيل أولاً لتأكيد طلبك!");
-      return;
-    }
-    if (selectedAreaIndex === -1) {
-      setValidationError("برجاء اختيار منطقة التوصيل لحساب إجمالي الأوردر بدقة!");
-      return;
-    }
-    setValidationError("");
-
-    const randomSecret = Math.floor(1000 + Math.random() * 9000);
-    const secretCode = `DCGC-${randomSecret}`;
-    setGeneratedClaimCode(secretCode);
-    setClaimCodeSuccess(false);
-    setClaimCodeError("");
-
-    const newlyEarnedPoints = Math.floor(cartTotal / pointsEarnRate);
-    setPointsToEarnPending(newlyEarnedPoints);
-
-    const itemsSummary = cartList.map(i => `${i.label} (x${i.qty})`).join(" | ");
-    const newOrderRecord = {
-      date: new Date().toLocaleString("ar-EG"),
-      name: customerName.trim(),
-      phone: customerPhone.trim(),
-      area: activeDeliveryArea.name,
-      address: customerAddress.trim(),
-      itemsDescription: itemsSummary,
-      total: finalTotal
-    };
-    setSavedOrders((prev) => [newOrderRecord, ...prev]);
-
-    let updatedPromoCodes = promoCodes;
-    if (appliedDiscountPercent > 0) {
-      const codeClean = enteredPromo.trim().toUpperCase();
-      updatedPromoCodes = promoCodes.map(p => {
-        if (p.code.toUpperCase() === codeClean) {
-          const currentUsed = p.used !== undefined ? p.used : 0;
-          return { ...p, used: currentUsed + 1 };
-        }
-        return p;
-      });
-      setPromoCodes(updatedPromoCodes);
-    }
-
-    let updatedPoints = userPoints;
-    if (redeemPoints) {
-      const pointsUsed = Math.ceil(pointsDiscountValue / pointValueInMoney);
-      updatedPoints = Math.max(0, userPoints - pointsUsed);
-    }
-
-    if (typeof window !== "undefined" && window.localStorage) {
-      localStorage.setItem("customer-name-cache", customerName.trim());
-      localStorage.setItem("customer-phone-cache", customerPhone.trim());
-      localStorage.setItem("customer-address-cache", customerAddress.trim());
-      localStorage.setItem("customer-points-loyalty", updatedPoints.toString());
-    }
-
-    const lines = cartList.map((cartItem) => "• " + cartItem.label + " x" + cartItem.qty + " — " + money(cartItem.price * cartItem.qty));
-    const deliveryTimeText = scheduleType === "now" ? "⚡ توصيل فوري (الآن)" : "🕒 مجدول للموعد: " + scheduleTime;
-
-    let text = `🔥 *طلب جديد — ${restaurantName}* \n\n` + 
-               `👤 اسم العميل: ${customerName}\n` +
-               `📱 تليفون العميل: ${customerPhone}\n` +
-               `📅 موعد التوصيل: ${deliveryTimeText}\n` +
-               `📍 المنطقة: ${activeDeliveryArea.name}\n` +
-               `🏠 العنوان بالتفصيل: ${customerAddress}\n`;
-               
-    if (geoLink) text += `📍 لوكيشن GPS: ${geoLink}\n`;
-    if (customerNotes.trim()) text += `📝 ملاحظات العميل: ${customerNotes.trim()}\n`;
-    
-    text += `\nالطلبات:\n${lines.join("\n")}\n\n` + `💵 حساب الأصناف: ${money(cartTotal)}\n`;
-            
-    if (discountAmount > 0) {
-      text += `🏷️ كود الخصم: ${enteredPromo.toUpperCase()} (-${appliedDiscountPercent}%)\n📉 قيمة الخصم: ${money(discountAmount)}\n`;
-    }
-    if (redeemPoints && pointsDiscountValue > 0) {
-      const pointsUsed = Math.ceil(pointsDiscountValue / pointValueInMoney);
-      text += `🪙 خصم نقاط محفظة الولاء: -${money(pointsDiscountValue)} (تم خصم ${pointsUsed} نقطة)\n`;
-    }
-
-    text += `✨ نقاط مستحقة: +${newlyEarnedPoints} نقطة\n🛵 مصاريف التوصيل: ${money(activeDeliveryArea.price)}\n💰 *الإجمالي النهائي المطلوب: ${money(finalTotal)}*\n\n🔑 كود تفعيل هدية النقاط (انسخه وضعه في المنيو): ${secretCode}`;
-                 
-    const phone = whatsappNumber.replace(/[^\d+]/g, "");
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, "_blank");
-
-    setUserPoints(updatedPoints);
-    setCartOpen(false);
-    setCart({});
-    setOrderSuccess(true); 
-    setAppliedDiscountPercent(0);
-    setEnteredPromo("");
-    setGeoLink("");
-    setRedeemPoints(false);
-  };
-
-  const copyText = (label, value) => {
-    const ok = copyTextToClipboard(value);
-    if (ok) {
-      setCopied(label);
-      setTimeout(() => setCopied(""), 1500);
-    }
-  };
-
-  const handleResetMenu = () => {
-    setItems(DEFAULT_MENU);
-    setDeliveryAreas(DEFAULT_DELIVERY_AREAS);
-    setPromoCodes(DEFAULT_PROMO_CODES);
-    setPointsEarnRate(100);
-    setPointValueInMoney(1);
-    setGeneratedBurnCode("");
-    setSavedOrders([]);
-    setShowResetConfirm(false);
+  const handleRemoveDeliveryArea = (index) => {
+    setDeliveryAreas(deliveryAreas.filter((_, idx) => idx !== index));
+    setSelectedAreaIndex(-1);
   };
 
   const handleLogoClickLocal = () => {
@@ -660,10 +538,7 @@ export default function RestaurantMenu() {
                 <button onClick={() => setIsAdmin(false)} className="p-2 rounded-full border text-red-500 bg-red-500/5"><LogOut size={14} /></button>
               </>
             ) : (
-              <button onClick={() => setCartOpen(true)} className="relative p-2.5 rounded-full text-white shadow-md bg-gradient-to-r from-red-500 to-red-600">
-                <ShoppingCart size={16} />
-                {cartCount > 0 && <span className="absolute -top-1 -right-1 min-w-[18px] h-4 px-1 bg-amber-500 text-black text-[10px] font-bold rounded-full flex items-center justify-center">{cartCount}</span>}
-              </button>
+              <button onClick={() => setPinModalOpen(true)} className="p-2.5 rounded-full border border-[#1F1F1F] text-xs font-bold transition-all hover:bg-black/10">⚙️ لوحة الإدارة</button>
             )}
           </div>
         </div>
@@ -766,20 +641,26 @@ export default function RestaurantMenu() {
                           );
                         })()
                       ) : (
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs font-black" style={{ color: theme.accent }}>{money(item.price)}</span>
-                          {cart[item.id] > 0 ? (
-                            <div className="flex items-center gap-1.5 rounded-lg p-0.5 border" style={{ borderColor: theme.accent + "30", background: theme.surface2 }}>
-                              <button onClick={() => addToCart(item.id, -1)} className="w-6 h-6 rounded-md flex items-center justify-center border" style={{ borderColor: theme.accent }}><Minus size={10} /></button>
-                              <span className="w-3 text-center text-xs font-black">{cart[item.id]}</span>
-                              <button onClick={() => addToCart(item.id, 1)} className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: theme.accent, color: "#fff" }}><Plus size={10} /></button>
+                        (() => {
+                          const key = `${item.id}::موحد`; // فرض الكي بالشكل الموحد لحل مشكلة الإضافة
+                          const qty = cart[key] || 0;
+                          return (
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs font-black" style={{ color: theme.accent }}>{money(item.price)}</span>
+                              {qty > 0 ? (
+                                <div className="flex items-center gap-1.5 rounded-lg p-0.5 border" style={{ borderColor: theme.accent + "30", background: theme.surface2 }}>
+                                  <button onClick={() => addToCart(key, -1)} className="w-6 h-6 rounded-md flex items-center justify-center border" style={{ borderColor: theme.accent }}><Minus size={10} /></button>
+                                  <span className="w-3 text-center text-xs font-black">{qty}</span>
+                                  <button onClick={() => addToCart(key, 1)} className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: theme.accent, color: "#fff" }}><Plus size={10} /></button>
+                                </div>
+                              ) : (
+                                <button onClick={() => addToCart(key, 1)} className="w-7 h-7 rounded-lg flex items-center justify-center text-white active:scale-95" style={{ background: theme.accent }}>
+                                  <Plus size={12} />
+                                </button>
+                              )}
                             </div>
-                          ) : (
-                            <button onClick={() => addToCart(item.id, 1)} className="w-7 h-7 rounded-lg flex items-center justify-center text-white active:scale-95" style={{ background: theme.accent }}>
-                              <Plus size={12} />
-                            </button>
-                          )}
-                        </div>
+                          );
+                        })()
                       )}
                     </div>
 
@@ -889,7 +770,7 @@ export default function RestaurantMenu() {
                   </div>
                 </div>
 
-                {/* نظام كود الخصم */}
+                {/* كود الخصم */}
                 <div className="pt-2 flex gap-2">
                   <div className="relative flex-1">
                     <input type="text" value={enteredPromo} onChange={(e) => setEnteredPromo(e.target.value)} placeholder="هل لديك كوبون خصم؟" className="w-full px-3 py-2 pr-8 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: theme.accent + "25", color: theme.text }} />
@@ -953,7 +834,7 @@ export default function RestaurantMenu() {
         </Overlay>
       )}
 
-      {/* بوب أب التحقق العكسي لمنع الهكر وتلاعب النقاط */}
+      {/* بوب أب التحقق العكسي لمنع الهكر */}
       {orderSuccess && (
         <Overlay onClose={() => setOrderSuccess(false)}>
           <Sheet theme={theme} title="جاري تأكيد طلبك... 🕒" onClose={() => setOrderSuccess(false)}>
@@ -1008,7 +889,7 @@ export default function RestaurantMenu() {
         </Overlay>
       )}
 
-      {/* لوحة التحكم الكاملة للمدير وسجل الأوردرات */}
+      {/* ===================== لوحة التحكم الشاملة للمدير ===================== */}
       {adminOpen && (
         <Overlay onClose={() => setAdminOpen(false)}>
           <Sheet theme={theme} title="لوحة كاشير وإدارة الطلبات والأسعار" onClose={() => setAdminOpen(false)}>
@@ -1022,7 +903,7 @@ export default function RestaurantMenu() {
                 </p>
 
                 {savedOrders.length === 0 ? (
-                  <p className="text-xs text-center text-gray-500 py-4">لا توجد طلبات مسجلة بعد.</p>
+                  <p className="text-xs text-center text-gray-500 py-4">لا توجد طلبات مسجلة بعد. أي طلب هيعمله الزبون هيتحفظ هنا بالكامل!</p>
                 ) : (
                   <div className="space-y-2">
                     <button onClick={exportOrdersToCSV} className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-md">
@@ -1047,6 +928,41 @@ export default function RestaurantMenu() {
                 )}
               </div>
 
+              {/* قسم إضافة الأصناف وتعديل المنيو بدون كراش */}
+              <div className="pt-2 border-b pb-4" style={{ borderColor: theme.accent + "20" }}>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="font-bold text-sm text-amber-500 flex items-center gap-1"><Utensils size={15} /> قائمة المأكولات والأصناف</p>
+                  <button onClick={addNewItem} className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full text-white bg-green-600"><PlusCircle size={14} /> إضافة صنف للمنيو</button>
+                </div>
+                <div className="space-y-2 max-h-[25vh] overflow-y-auto pr-1">
+                  {items.map((item) => (
+                    <div key={item.id} className="p-2 rounded-xl border text-xs flex items-center justify-between" style={{ background: theme.surface, borderColor: theme.accent + "20" }}>
+                      {editingId === item.id ? (
+                        <div className="w-full space-y-2">
+                          <input value={item.name} onChange={(e) => updateItem(item.id, { name: e.target.value })} className="w-full p-1 border rounded bg-transparent font-bold" />
+                          <div className="grid grid-cols-2 gap-1">
+                            <input value={item.cat} onChange={(e) => updateItem(item.id, { cat: e.target.value })} className="p-1 border rounded bg-transparent" placeholder="القسم" />
+                            <input type="number" value={item.price || ""} onChange={(e) => updateItem(item.id, { price: Number(e.target.value) })} className="p-1 border rounded bg-transparent" placeholder="السعر" />
+                          </div>
+                          <button onClick={() => setEditingId(null)} className="w-full py-1 bg-green-600 text-white rounded font-bold">حفظ الكارت</button>
+                        </div>
+                      ) : (
+                        <>
+                          <div>
+                            <p className="font-bold">{item.name}</p>
+                            <p className="opacity-70 text-[10px]">{item.cat} · {item.sizes ? "أحجام متعددة" : `${item.price} ج`}</p>
+                          </div>
+                          <div className="flex gap-1">
+                            <button onClick={() => setEditingId(item.id)} className="p-1.5 border rounded-full"><Pencil size={11} /></button>
+                            <button onClick={() => deleteItem(item.id)} className="p-1.5 border rounded-full text-red-500"><Trash2 size={11} /></button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <Field label="اسم البراند الحالي" value={restaurantName} onChange={setRestaurantName} theme={theme} />
               <Field label="الشعار الفرعي للمنيو" value={tagline} onChange={setTagline} theme={theme} />
               <Field label="العنوان الجغرافي للمحل" value={address} onChange={setAddress} theme={theme} />
@@ -1069,7 +985,7 @@ export default function RestaurantMenu() {
                   {generatedBurnCode && (
                     <div className="p-2 bg-black/10 dark:bg-white/5 rounded border border-red-500/30 text-center select-all">
                       <p className="text-[10px] opacity-75">انسخ الكود وأرسله للشخص في محادثة الواتساب:</p>
-                      <p className="text-xs font-black tracking-widest text-red-500 mt-1">{generatedBurnCode}</p>
+                      <p className="text-xs font-black tracking-widest text-red-400 mt-1">{generatedBurnCode}</p>
                     </div>
                   )}
                 </div>
