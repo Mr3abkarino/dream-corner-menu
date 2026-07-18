@@ -10,9 +10,7 @@ import {
 
 const LOGO_SRC = restaurantLogo;
 
-// 🔥🔥🔥 سحر حل المشكلة هنا: رقم إصدار المنيو الحالي 🔥🔥🔥
-// كل ما تعدل أسعار أو تضيف أصناف في الكود، غير الرقم ده (مثلاً خليه "1.1" أو "1.2") 
-// المتصفح عند العميل هيمسح القديم فوراً ويقرأ الجديد أوتوماتيك كأنه أول مرة يدخل!
+// رقم إصدار المنيو للتحديث التلقائي لكاش الزبون
 const MENU_VERSION = "1.0.1";
 
 const THEMES = [
@@ -47,7 +45,7 @@ const DEFAULT_MENU = [
   { id: "p7", cat: "البيتزا", name: "بيتزا بيروني", sizes: [{ label: "كبير", price: 110 }, { label: "وسط", price: 90 }, { label: "صغير", price: 70 }] },
   { id: "p8", cat: "البيتزا", name: "بيتزا سلامي", sizes: [{ label: "كبير", price: 110 }, { label: "وسط", price: 90 }, { label: "صغير", price: 70 }] },
   { id: "p9", cat: "البيتزا", name: "بيتزا شاورما دجاج", sizes: [{ label: "كبير", price: 155 }, { label: "وسط", price: 120 }, { label: "صغير", price: 80 }] },
-  { id: "p10", cat: "البيتزا", name: "بيتزا دجاج رانش", sizes: [{ label: "كبير", price: 155 }, { label: "وسط", price: 120 }, { color: "#fff" }, { label: "صغير", price: 80 }] },
+  { id: "p10", cat: "البيتزا", name: "بيتزا دجاج رانش", sizes: [{ label: "كبير", price: 155 }, { label: "وسط", price: 120 }, { label: "صغير", price: 80 }] },
   { id: "p11", cat: "البيتزا", name: "بيتزا دريم كورنر سبيشال", desc: "خلطة البيت الخاصة المميزة", sizes: [{ label: "كبير", price: 170 }, { label: "وسط", price: 130 }, { label: "صغير", price: 90 }] },
   { id: "p12", cat: "البيتزا", name: "بيتزا كرانشي (حار أو بارد)", sizes: [{ label: "كبير", price: 130 }, { label: "وسط", price: 100 }, { label: "صغير", price: 80 }] },
   { id: "p13", cat: "البيتزا", name: "بيتزا ميكس دجاج", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 105 }, { label: "صغير", price: 85 }] },
@@ -146,7 +144,7 @@ export default function RestaurantMenu() {
   const [customerAddress, setCustomerAddress] = useState("");
   const [customerNotes, setCustomerNotes] = useState("");
   const [geoLink, setGeoLink] = useState("");
-  const [geoLoading, setGeoLinkLoading] = useState(false);
+  const [geoLinkLoading, setGeoLinkLoading] = useState(false);
   
   const [enteredPromo, setEnteredPromo] = useState("");
   const [appliedDiscountPercent, setAppliedDiscountPercent] = useState(0);
@@ -233,31 +231,24 @@ export default function RestaurantMenu() {
     return "https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=8&data=" + encodeURIComponent(menuUrl);
   }, [menuUrl]);
 
-  // 🔥 تأثير فحص رقم الإصدار وتصفير الكاش القديم أوتوماتيكياً 🔥
   useEffect(() => {
     (async () => {
       try {
         if (typeof window !== "undefined" && window.localStorage) {
           const savedVersion = localStorage.getItem("dream-corner-version");
-          
-          // لو الزبون عنده كاش قديم أو رقم إصدار مختلف عن الكود الجديد
           if (savedVersion !== MENU_VERSION) {
-            // نحتفظ فقط بنقاط العميل واسمه وتليفونه عشان رصيده ميضيعش
             const pts = localStorage.getItem("customer-points-loyalty");
             const name = localStorage.getItem("customer-name-cache");
             const phone = localStorage.getItem("customer-phone-cache");
             const addr = localStorage.getItem("customer-address-cache");
 
-            // تصفير الكاش بالكامل أوتوماتيكياً لضمان نزول المنيو والأسعار الجديدة
             localStorage.clear();
 
-            // إعادة زرع بيانات العميل الأساسية للمحفظة
             if (pts) localStorage.setItem("customer-points-loyalty", pts);
             if (name) localStorage.setItem("customer-name-cache", name);
             if (phone) localStorage.setItem("customer-phone-cache", phone);
             if (addr) localStorage.setItem("customer-address-cache", addr);
 
-            // حفظ رقم الإصدار الجديد كـ صمام أمان
             localStorage.setItem("dream-corner-version", MENU_VERSION);
           }
         }
@@ -432,12 +423,10 @@ export default function RestaurantMenu() {
     }
 
     const lines = cartList.map((cartItem) => "• " + cartItem.label + " x" + cartItem.qty + " — " + money(cartItem.price * cartItem.qty));
-    const deliveryTimeText = scheduleType === "now" ? "⚡ توصيل فوري (الآن)" : "🕒 مجدول للموعد: " + scheduleTime;
 
     let text = `🔥 *طلب جديد — ${restaurantName}* \n\n` + 
                `👤 اسم العميل: ${customerName}\n` +
                `📱 تليفون العميل: ${customerPhone}\n` +
-               `📅 موعد التوصيل: ${deliveryTimeText}\n` +
                `📍 المنطقة: ${activeDeliveryArea.name}\n` +
                `🏠 العنوان بالتفصيل: ${customerAddress}\n`;
                
@@ -492,6 +481,17 @@ export default function RestaurantMenu() {
     });
     return Array.from(map.entries());
   }, [visibleItems]);
+
+  const handleLogoClickLocal = () => {
+    setLogoClicks((prev) => {
+      const nextClicks = prev + 1;
+      if (nextClicks >= 5) {
+        setPinModalOpen(true);
+        return 0;
+      }
+      return nextClicks;
+    });
+  };
 
   const handleVerifyPin = (e) => {
     e.preventDefault();
@@ -827,7 +827,7 @@ export default function RestaurantMenu() {
                         <MapPin size={14} className="absolute right-3 top-2.5 opacity-60" style={{ color: theme.text }} />
                       </div>
                       <button type="button" onClick={handleGetLocation} className="px-3 rounded-xl border font-bold text-xs flex items-center justify-center bg-black/10 transition-transform active:scale-95 shrink-0" style={{ borderColor: theme.accent, color: theme.accent }}>
-                        {geoLoading ? "..." : <Navigation size={14} className="animate-pulse" />}
+                        {geoLinkLoading ? "..." : <Navigation size={14} className="animate-pulse" />}
                       </button>
                     </div>
 
@@ -875,7 +875,7 @@ export default function RestaurantMenu() {
               ) : (
                 <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-xl text-xs font-bold text-green-500 space-y-1">
                   <p className="text-sm">✓ تم تفعيل الهدية بنجاح! 🎉</p>
-                  <p>نزلت النقاط الذهبية الجديدة في محفظتك أوتوماتيكياً.</p>
+                  <p>نزلت النقاط الذهبية الجديدة in محفظتك أوتوماتيكياً.</p>
                 </div>
               )}
               <button onClick={() => setOrderSuccess(false)} className="w-full py-2 border rounded-xl text-xs font-bold mt-2" style={{ borderColor: theme.accent + "30" }}>إغلاق النافذة</button>
@@ -954,6 +954,7 @@ export default function RestaurantMenu() {
                           <input value={item.name} onChange={(e) => updateItem(item.id, { name: e.target.value })} className="w-full p-1 border rounded bg-transparent font-bold" />
                           <div className="grid grid-cols-2 gap-1">
                             <input value={item.cat} onChange={(e) => updateItem(item.id, { cat: e.target.value })} className="w-full p-1 border rounded bg-transparent" placeholder="القسم" />
+                            {/* تعديل سعر ذكي ومحمي بالكامل في لوحة الإدارة */}
                             <input type="number" value={item.price || item.sizes?.[0]?.price || ""} onChange={(e) => updateItem(item.id, item.sizes ? { sizes: item.sizes.map((s, idx) => idx === 0 ? { ...s, price: Number(e.target.value) } : s) } : { price: Number(e.target.value) })} className="w-full p-1 border rounded bg-transparent" placeholder="السعر" />
                           </div>
                           <button onClick={() => setEditingId(null)} className="w-full py-1 bg-green-600 text-white rounded font-bold">حفظ الكارت</button>
