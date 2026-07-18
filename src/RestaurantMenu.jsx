@@ -5,17 +5,21 @@ import {
   QrCode, Settings, Phone, CreditCard, Sparkles, Search, RotateCcw,
   Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, 
   FileText, ChevronDown, User, Tag, Navigation, Award, Calendar, Download,
-  Coins, Gem, TrendingUp, Percent
+  Coins, Gem, TrendingUp, Percent, Utensils, Pizza, Coffee, Flame, Heart
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
 
-const THEMES = [
-  { id: "brand", name: "هوية دريم كورنر", bg: "#0A0A0A", surface: "#141414", surface2: "#1F1F1F", accent: "#D4AF37", accent2: "#8B1E1E", text: "#F3E9D8", muted: "#A3A3A3", display: "'Tajawal', sans-serif" },
-  { id: "night", name: "ليلي فاخر", bg: "#120E0D", surface: "#1E1816", surface2: "#2A211E", accent: "#D4A24C", accent2: "#A63D2F", text: "#F3E9D8", muted: "#B3A18C", display: "'Tajawal', sans-serif" },
-  { id: "emerald", name: "شرقي فاخر", bg: "#081410", surface: "#10221C", surface2: "#19322A", accent: "#C9A24B", accent2: "#2F6E52", text: "#EFEAD9", muted: "#9DB0A6", display: "'Tajawal', sans-serif" },
-  { id: "cafe", name: "كافيه دافئ", bg: "#F7F5F0", surface: "#FFFFFF", surface2: "#F0EAE1", accent: "#B5622E", accent2: "#6B4226", text: "#2B2118", muted: "#8A7A66", display: "'Tajawal', sans-serif", light: true }
-];
+// التصميم الجديد يعتمد على تباين لوني عصري ومريح للعين يحاكي الموقع المستهدف
+const THEME = {
+  bg: "#0B0F19",       // خلفية داكنة فاخرة وعميقة
+  surface: "#111827",  // أسطح الكروت والقوائم
+  surface2: "#1F2937", // أسطح الإدخال والتقسيمات الفرعية
+  accent: "#F59E0B",   // اللون الذهبي/البرتقالي الجاذب للشهية
+  accent2: "#EF4444",  // اللون الأحمر التنبيهي
+  text: "#F9FAFB",     // النصوص الأساسية بيضاء ناصعة
+  muted: "#9CA3AF"     // النصوص الثانوية الرمادية
+};
 
 const DEFAULT_DELIVERY_AREAS = [
   { name: "البرامون (داخل البلد)", price: 10 },
@@ -34,16 +38,13 @@ const DEFAULT_PROMO_CODES = [
 ];
 
 const DEFAULT_MENU = [
-  { id: "p1", cat: "البيتزا", name: "بيتزا مارجريتا", sizes: [{ label: "كبير", price: 90 }, { label: "وسط", price: 70 }, { label: "صغير", price: 45 }] },
-  { id: "p2", cat: "البيتزا", name: "بيتزا ميكس جبنة", sizes: [{ label: "كبير", price: 120 }, { label: "وسط", price: 90 }, { label: "صغير", price: 60 }] },
-  { id: "p3", cat: "البيتزا", name: "بيتزا خضار", sizes: [{ label: "كبير", price: 120 }, { label: "وسط", price: 90 }, { label: "صغير", price: 60 }] },
-  { id: "p4", cat: "البيتزا", name: "بيتزا هوت دوج", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 100 }, { label: "صغير", price: 70 }] },
-  { id: "p5", cat: "البيتزا", name: "بيتزا سجق", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 100 }, { label: "صغير", price: 70 }] },
-  { id: "p6", cat: "البيتزا", name: "بيتزا لحمة مفرومة", sizes: [{ label: "كبير", price: 145 }, { label: "وسط", price: 110 }, { label: "صغير", price: 75 }] },
-  { id: "s1", cat: "السندوتشات", subcat: "اللحوم", name: "كفتة مشوية", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
-  { id: "s5", cat: "السندوتشات", subcat: "اللحوم", name: "حواوشي دبل طعم", price: 45 },
-  { id: "d1", cat: "المشروبات", name: "بيبسي كانز", price: 15 },
-  { id: "d4", cat: "المشروبات", name: "مياة معدنية صغيرة", price: 6 }
+  { id: "p1", cat: "البيتزا", name: "بيتزا مارجريتا", image: "https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?w=500&q=80", desc: "صلصة طماطم غنية، جبنة موتزاريلّا فاخرة، وأوراق ريحان طازجة زيت زيتون.", sizes: [{ label: "كبير", price: 90 }, { label: "وسط", price: 70 }, { label: "صغير", price: 45 }] },
+  { id: "p2", cat: "البيتزا", name: "بيتزا ميكس جبنة", image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500&q=80", desc: "تشكيلة غنية من الموتزاريلّا، الشيدر، الرومي، والجبنة الأزرق لطلب مميز.", sizes: [{ label: "كبير", price: 120 }, { label: "وسط", price: 90 }, { label: "صغير", price: 60 }] },
+  { id: "p3", cat: "البيتزا", name: "بيتزا خضار", image: "https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?w=500&q=80", desc: "فلفل ألوان، زيتون أسود، طماطم، عش الغراب، مع طبقة موتزاريلّا.", sizes: [{ label: "كبير", price: 120 }, { label: "وسط", price: 90 }, { label: "صغير", price: 60 }] },
+  { id: "s1", cat: "السندوتشات", subcat: "اللحوم", name: "سندوتش كفتة مشوية", image: "https://images.unsplash.com/photo-1603052875302-d376b7c0638a?w=500&q=80", desc: "كفتة بلدي مشوية على الفحم مع طحينة وخضار فريش في خبز طازج.", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
+  { id: "s5", cat: "السندوتشات", subcat: "اللحوم", name: "حواوشي دبل طعم", image: "https://images.unsplash.com/photo-1628102476625-88c4493cd351?w=500&q=80", desc: "لحم مفروم متبل بخلطة دريم السحرية داخل خبز بلدي مقرمش.", price: 45 },
+  { id: "d1", cat: "المشروبات", name: "بيبسي كانز", image: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500&q=80", price: 15 },
+  { id: "d4", cat: "المشروبات", name: "مياة معدنية صغيرة", image: "https://images.unsplash.com/photo-1608885898957-a599fb1b468b?w=500&q=80", price: 6 }
 ];
 
 const money = (n) => Number(n).toLocaleString("en-US") + " جنيه";
@@ -84,7 +85,6 @@ const copyTextToClipboard = (text) => {
 };
 
 export default function RestaurantMenu() {
-  const [theme, setTheme] = useState(THEMES[0]);
   const [restaurantName, setRestaurantName] = useState("دريم كورنر");
   const [tagline, setTagline] = useState("PIZZA & SANDWICHES — طعم يفرق .. جودة تليق بك");
   const [address, setAddress] = useState("البرامون، بجوار عيادة الدكتورة إلهام العشري");
@@ -100,7 +100,6 @@ export default function RestaurantMenu() {
   const [cartOpen, setCartOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
-  const [themePickerOpen, setThemePickerOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [copied, setCopied] = useState("");
   const [loaded, setLoaded] = useState(false);
@@ -199,6 +198,16 @@ export default function RestaurantMenu() {
     return "https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=8&data=" + encodeURIComponent(menuUrl);
   }, [menuUrl]);
 
+  // دالة مساعدة لربط كل قسم بأيقونة معبرة مثل الموقع المستهدف
+  const getCategoryIcon = (catName) => {
+    switch (catName) {
+      case "البيتزا": return <Pizza size={16} />;
+      case "السندوتشات": return <Utensils size={16} />;
+      case "المشروبات": return <Coffee size={16} />;
+      default: return <Flame size={16} />;
+    }
+  };
+
   useEffect(() => {
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
@@ -218,9 +227,6 @@ export default function RestaurantMenu() {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === "accepted") {
-      console.log("User accepted the install prompt");
-    }
     setDeferredPrompt(null);
     setShowInstallBanner(false);
   };
@@ -286,10 +292,6 @@ export default function RestaurantMenu() {
           if (d.promoCodes) setPromoCodes(d.promoCodes);
           if (d.pointsEarnRate !== undefined) setPointsEarnRate(Number(d.pointsEarnRate));
           if (d.pointValueInMoney !== undefined) setPointValueInMoney(Number(d.pointValueInMoney));
-          if (d.themeId) {
-            const t = THEMES.find((themeItem) => themeItem.id === d.themeId);
-            if (t) setTheme(t);
-          }
         }
         if (typeof window !== "undefined" && window.localStorage) {
           const savedName = localStorage.getItem("customer-name-cache");
@@ -317,13 +319,13 @@ export default function RestaurantMenu() {
         await safeStorage.set("dream-corner-menu", JSON.stringify({
           items, restaurantName, tagline, address, menuUrl, whatsappNumber,
           vodafoneCash, instapay, adminPin, deliveryAreas, promoCodes, 
-          pointsEarnRate, pointValueInMoney, themeId: theme.id,
+          pointsEarnRate, pointValueInMoney
         }));
       } catch (e) {
         console.error("Auto-save failed", e);
       }
     }, 500);
-  }, [items, restaurantName, tagline, address, menuUrl, whatsappNumber, vodafoneCash, instapay, adminPin, deliveryAreas, promoCodes, pointsEarnRate, pointValueInMoney, theme, loaded]);
+  }, [items, restaurantName, tagline, address, menuUrl, whatsappNumber, vodafoneCash, instapay, adminPin, deliveryAreas, promoCodes, pointsEarnRate, pointValueInMoney, loaded]);
 
   const handleVerifyPin = (e) => {
     e.preventDefault();
@@ -382,7 +384,7 @@ export default function RestaurantMenu() {
 
   const addNewItem = () => {
     const id = "n" + Date.now().toString();
-    setItems((its) => [...its, { id, cat: activeCat === "الكل" ? "أصناف جديدة" : activeCat, name: "صنف جديد", price: 20, desc: "" }]);
+    setItems((its) => [...its, { id, cat: activeCat === "الكل" ? "أصناف جديدة" : activeCat, name: "صنف جديد", price: 20, desc: "", image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&q=80" }]);
     setEditingId(id);
   };
 
@@ -537,140 +539,158 @@ export default function RestaurantMenu() {
   };
 
   return (
-    <div dir="rtl" className="min-h-screen w-full transition-colors duration-500 pb-28" style={{ background: theme.bg, color: theme.text, fontFamily: "'Tajawal', sans-serif" }}>
+    <div dir="rtl" className="min-h-screen w-full transition-colors duration-500 pb-28 select-none" style={{ background: THEME.bg, color: THEME.text, fontFamily: "'Tajawal', sans-serif" }}>
       
       {/* ===================== PWA INSTALLATION BANNER ===================== */}
       {showInstallBanner && (
-        <div className="fixed bottom-16 inset-x-0 z-50 px-4 py-3 mx-4 my-2 rounded-2xl flex items-center justify-between border shadow-2xl transition-all duration-500" style={{ background: theme.surface, borderColor: theme.accent + "30" }}>
+        <div className="fixed bottom-20 inset-x-0 z-50 px-4 py-3 mx-4 rounded-2xl flex items-center justify-between border shadow-2xl transition-all duration-500 animate-slide-up" style={{ background: THEME.surface, borderColor: THEME.accent + "30" }}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl overflow-hidden bg-white flex items-center justify-center shrink-0">
               <img src={LOGO_SRC} alt="logo" className="w-8 h-8 object-contain" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-bold leading-tight" style={{ color: theme.accent }}>ثبت منيو {restaurantName}</p>
-              <p className="text-[10px] opacity-75 mt-0.5" style={{ color: theme.muted }}>تصفح المنيو بدون إنترنت كأنه تطبيق موبايل!</p>
+              <p className="text-xs font-bold leading-tight" style={{ color: THEME.accent }}>ثبت منيو {restaurantName}</p>
+              <p className="text-[10px] opacity-75 mt-0.5" style={{ color: THEME.muted }}>تصفح المنيو بدون إنترنت كأنه تطبيق موبايل!</p>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <button onClick={handleInstallApp} className="px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1" style={{ background: theme.accent, color: theme.bg }}>
+            <button onClick={handleInstallApp} className="px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1" style={{ background: THEME.accent, color: THEME.bg }}>
               <Download size={12} /> تثبيت
             </button>
-            <button onClick={() => setShowInstallBanner(false)} className="p-1 rounded-full border border-dashed opacity-50" style={{ borderColor: theme.muted }}><X size={12} /></button>
+            <button onClick={() => setShowInstallBanner(false)} className="p-1 rounded-full border border-dashed opacity-50" style={{ borderColor: THEME.muted }}><X size={12} /></button>
           </div>
         </div>
       )}
 
-      {/* ===================== HEADER ===================== */}
-      <header className="sticky top-0 z-30 backdrop-blur-md border-b" style={{ background: theme.bg + "D9", borderColor: (theme.muted || "#B3A18C") + "20" }}>
-        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+      {/* ===================== HEADER (تصميم انسيابي يحاكي هيدر الموقع المستهدف) ===================== */}
+      <header className="sticky top-0 z-30 backdrop-blur-md border-b" style={{ background: THEME.bg + "D9", borderColor: THEME.surface2 }}>
+        <div className="max-w-3xl mx-auto px-4 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
-            <div onClick={handleLogoClickLocal} className="cursor-pointer active:scale-95 transition-transform shrink-0 relative">
-              <img src={LOGO_SRC} alt={restaurantName + " logo"} className="w-11 h-11 rounded-full object-contain border border-white/10 animate-pulse" style={{ padding: 1, animationDuration: '3s' }} />
-              {logoClicks > 0 && <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-600 text-white rounded-full flex items-center justify-center text-[9px] font-bold animate-ping">{logoClicks}</span>}
+            <div onClick={handleLogoClickLocal} className="cursor-pointer active:scale-95 transition-transform shrink-0 relative group">
+              <img src={LOGO_SRC} alt={restaurantName + " logo"} className="w-12 h-12 rounded-full object-contain border-2 border-amber-500/20 p-0.5" />
+              {logoClicks > 0 && <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-600 text-white rounded-full flex items-center justify-center text-[9px] font-bold">{logoClicks}</span>}
             </div>
             <div className="min-w-0">
-              <h1 className="text-xl md:text-2xl font-black truncate leading-tight" style={{ color: theme.accent }}>{restaurantName}</h1>
-              <p className="text-[11px] truncate opacity-75 mt-0.5" style={{ color: theme.muted }}>{tagline}</p>
+              <h1 className="text-lg md:text-xl font-black truncate flex items-center gap-1.5" style={{ color: THEME.text }}>
+                {restaurantName}
+                <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-ping" />
+              </h1>
+              <p className="text-[11px] truncate opacity-80 mt-0.5 font-medium" style={{ color: THEME.muted }}>{tagline}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {isAdmin ? (
               <>
-                <button onClick={() => setThemePickerOpen(true)} className="p-2 rounded-full border border-green-500/30 text-green-500 bg-green-500/5 transition-all hover:bg-green-500/10 active:scale-95" title="تغيير المظهر"><Palette size={18} /></button>
-                <button onClick={() => setQrOpen(true)} className="p-2 rounded-full border border-green-500/30 text-green-500 bg-green-500/5 transition-all hover:bg-green-500/10 active:scale-95" title="عرض QR"><QrCode size={18} /></button>
-                <button onClick={() => setAdminOpen(true)} className="p-2 rounded-full border border-green-500/50 text-green-500 bg-green-500/10 transition-all hover:bg-green-500/20 active:scale-95 animate-pulse" title="إعدادات المنيو والأسعار"><Settings size={18} /></button>
-                <button onClick={() => setIsAdmin(false)} className="p-2 rounded-full border border-red-500/30 text-red-500 bg-red-500/5 transition-all hover:bg-red-500/10 active:scale-95" title="خروج من وضع الإدارة"><LogOut size={16} /></button>
+                <button onClick={() => setQrOpen(true)} className="p-2 rounded-xl border transition-all bg-green-500/10 text-green-400 border-green-500/20" title="عرض QR"><QrCode size={17} /></button>
+                <button onClick={() => setAdminOpen(true)} className="p-2 rounded-xl border transition-all bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse" title="الإعدادات"><Settings size={17} /></button>
+                <button onClick={() => setIsAdmin(false)} className="p-2 rounded-xl border transition-all bg-red-500/10 text-red-400 border-red-500/20" title="خروج"><LogOut size={15} /></button>
               </>
             ) : (
-              <a href={"tel:" + whatsappNumber} className="p-2 rounded-full border transition-transform active:scale-95" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }} aria-label="اتصل بنا"><Phone size={17} /></a>
+              <a href={"tel:" + whatsappNumber} className="p-2.5 rounded-xl border transition-all bg-slate-800/40 border-slate-700 hover:border-amber-500 text-amber-400" aria-label="اتصل بنا"><Phone size={16} /></a>
             )}
           </div>
         </div>
       </header>
 
-      {/* ===================== CATEGORIES BAR ===================== */}
-      <div className="sticky top-[77px] z-20 backdrop-blur-md border-b py-3 shadow-sm" style={{ background: theme.bg + "F2", borderColor: (theme.muted || "#B3A18C") + "15" }}>
-        <div className="max-w-3xl mx-auto px-4 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+      {/* ===================== CATEGORIES BAR WITH ICONS (تصميم الأقسام الاحترافي بالأيقونات) ===================== */}
+      <div className="sticky top-[73px] z-20 backdrop-blur-md border-b py-3" style={{ background: THEME.bg + "F2", borderColor: THEME.surface2 }}>
+        <div className="max-w-3xl mx-auto px-4 flex gap-2.5 overflow-x-auto no-scrollbar" style={{ scrollbarWidth: "none" }}>
           {categories.map((c) => (
             <button 
               key={c} 
-              onClick={() => { setActiveCat(c); }} 
-              className="whitespace-nowrap px-5 py-2 rounded-full text-xs font-bold border transition-all duration-300" 
-              style={activeCat === c ? { background: theme.accent, color: theme.bg, borderColor: theme.accent, boxShadow: `0 4px 10px ${theme.accent}30` } : { borderColor: (theme.muted || "#B3A18C") + "20", color: theme.muted, background: theme.surface }}
+              onClick={() => setActiveCat(c)} 
+              className="whitespace-nowrap px-4 py-2.5 rounded-xl text-xs font-bold border flex items-center gap-2 transition-all duration-300" 
+              style={activeCat === c ? { background: THEME.accent, color: THEME.bg, borderColor: THEME.accent, boxShadow: `0 4px 12px ${THEME.accent}40` } : { borderColor: THEME.surface2, color: THEME.muted, background: THEME.surface }}
             >
+              <span className={activeCat === c ? "text-current" : "text-amber-500"}>
+                {c === "الكل" ? <Utensils size={15} /> : getCategoryIcon(c)}
+              </span>
               {c}
             </button>
           ))}
         </div>
       </div>
 
-      {/* ===================== SEARCH ===================== */}
-      <div className="max-w-3xl mx-auto px-4 pt-4">
+      {/* ===================== SEARCH BAR ===================== */}
+      <div className="max-w-3xl mx-auto px-4 pt-5">
         <div className="relative">
-          <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="ابحث عن بيتزا، سندوتش، مشروب..." className="w-full px-4 py-3 pr-10 rounded-2xl text-xs border focus:outline-none transition-all shadow-sm" style={{ background: theme.surface, borderColor: (theme.muted || "#B3A18C") + "25", color: theme.text }} />
-          <Search size={15} className="absolute right-3.5 top-3.5" style={{ color: theme.muted }} />
-          {searchQuery && <button onClick={() => setSearchQuery("")} className="absolute left-3 top-2.5 p-1 rounded-full hover:bg-black/10 transition-colors" style={{ color: theme.muted }}><X size={14} /></button>}
+          <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="ابحث عن وجبتك المفضلة الآن..." className="w-full px-4 py-3.5 pr-11 rounded-xl text-xs border focus:outline-none transition-all" style={{ background: THEME.surface, borderColor: THEME.surface2, color: THEME.text }} />
+          <Search size={16} className="absolute right-4 top-4" style={{ color: THEME.muted }} />
+          {searchQuery && <button onClick={() => setSearchQuery("")} className="absolute left-3 top-3.5 p-1 rounded-full bg-slate-800 text-slate-400"><X size={12} /></button>}
         </div>
       </div>
 
-      {/* ===================== MENU ITEMS ===================== */}
-      <main className="max-w-3xl mx-auto px-4 pb-32 pt-5 space-y-8">
+      {/* ===================== MENU ITEMS LAYOUT (تصميم الكروت العمودية الفاخرة بالموقع المستهدف) ===================== */}
+      <main className="max-w-3xl mx-auto px-4 pb-32 pt-6 space-y-8">
         {groups.map((group) => {
           const subcat = group[0];
           const list = group[1];
           return (
-            <div key={subcat || "main"}>
+            <div key={subcat || "main"} className="space-y-4">
               {subcat && (
-                <h2 className="text-xs font-black mb-4 px-1 tracking-wide uppercase flex items-center gap-2" style={{ color: theme.accent }}>
-                  <span className="w-1.5 h-3.5 rounded-full" style={{ background: theme.accent }} />
+                <h2 className="text-xs font-black px-1 tracking-wide uppercase flex items-center gap-2 text-amber-500">
+                  <span className="w-1 h-3 rounded-full bg-amber-500" />
                   {subcat}
                 </h2>
               )}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {list.map((item) => (
-                  <div key={item.id} className="rounded-2xl p-3.5 border transition-all duration-300 flex flex-col justify-between hover:shadow-lg shadow-sm" style={{ background: theme.surface, borderColor: (theme.muted || "#B3A18C") + "15" }}>
-                    <div className="space-y-1.5">
-                      <h3 className="font-bold text-sm leading-snug line-clamp-2">{item.name}</h3>
-                      {item.desc && <p className="text-[10px] opacity-75 line-clamp-3 leading-relaxed" style={{ color: theme.muted }}>{item.desc}</p>}
+                  <div key={item.id} className="rounded-2xl border overflow-hidden transition-all duration-300 flex flex-col justify-between hover:border-amber-500/40 bg-slate-900/40" style={{ background: THEME.surface, borderColor: THEME.surface2 }}>
+                    
+                    {/* صورة الوجبة البارزة والمساحة التعريفية */}
+                    <div className="relative w-full h-44 bg-slate-950 overflow-hidden group">
+                      <img src={item.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&q=80"} alt={item.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent" />
+                      <span className="absolute top-3 left-3 px-2 py-1 bg-slate-950/70 backdrop-blur-md text-[10px] rounded-lg border border-slate-800 text-amber-400 font-bold">{item.cat}</span>
                     </div>
 
-                    <div className="mt-4 pt-2 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "10" }}>
-                      {item.sizes ? (
-                        <div className="space-y-1.5">
-                          {item.sizes.map((sz) => {
-                            const key = item.id + "::" + sz.label;
-                            const qty = cart[key] || 0;
-                            return (
-                              <div key={sz.label} className="flex items-center justify-between gap-1 rounded-lg px-2 py-1 text-[10px]" style={{ background: theme.surface2 }}>
-                                <span className="font-bold opacity-80">{sz.label}</span>
-                                <span className="font-extrabold" style={{ color: theme.accent }}>{money(sz.price)}</span>
-                                {qty > 0 ? (
-                                  <div className="flex items-center gap-1">
-                                    <button onClick={() => addToCart(key, -1)} className="w-4 h-4 rounded-full flex items-center justify-center border" style={{ borderColor: theme.accent }}><Minus size={9} /></button>
-                                    <span className="w-2.5 text-center font-bold">{qty}</span>
-                                    <button onClick={() => addToCart(key, 1)} className="w-4 h-4 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: theme.bg }}><Plus size={9} /></button>
-                                  </div>
-                                ) : (
-                                  <button onClick={() => addToCart(key, 1)} className="w-4 h-4 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: theme.bg }}><Plus size={9} /></button>
-                                )}
+                    <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                      <div className="space-y-1">
+                        <h3 className="font-bold text-base tracking-wide text-slate-100">{item.name}</h3>
+                        {item.desc && <p className="text-xs opacity-80 leading-relaxed text-slate-400 line-clamp-2">{item.desc}</p>}
+                      </div>
+
+                      {/* قسم التحكم بالأسعار والأحجام المتعددة */}
+                      <div className="pt-3 border-t border-slate-800/60">
+                        {item.sizes ? (
+                          <div className="space-y-2">
+                            {item.sizes.map((sz) => {
+                              const key = item.id + "::" + sz.label;
+                              const qty = cart[key] || 0;
+                              return (
+                                <div key={sz.label} className="flex items-center justify-between gap-2 rounded-xl px-3 py-1.5 text-xs bg-slate-950/40 border border-slate-800/40">
+                                  <span className="font-bold text-slate-300">{sz.label}</span>
+                                  <span className="font-extrabold text-amber-400">{money(sz.price)}</span>
+                                  
+                                  {qty > 0 ? (
+                                    <div className="flex items-center gap-2">
+                                      <button onClick={() => addToCart(key, -1)} className="w-5 h-5 rounded-lg flex items-center justify-center border border-amber-500/30 bg-amber-500/10 text-amber-400"><Minus size={10} /></button>
+                                      <span className="w-3 text-center font-bold text-xs">{qty}</span>
+                                      <button onClick={() => addToCart(key, 1)} className="w-5 h-5 rounded-lg flex items-center justify-center bg-amber-500 text-slate-950"><Plus size={10} /></button>
+                                    </div>
+                                  ) : (
+                                    <button onClick={() => addToCart(key, 1)} className="w-5 h-5 rounded-lg flex items-center justify-center border border-slate-700 bg-slate-800 hover:border-amber-500 text-slate-200"><Plus size={10} /></button>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between">
+                            <span className="text-base font-black text-amber-400">{money(item.price)}</span>
+                            {cart[item.id] > 0 ? (
+                              <div className="flex items-center gap-2.5 rounded-xl px-2 py-1 bg-slate-950/40 border border-slate-800">
+                                <button onClick={() => addToCart(item.id, -1)} className="w-6 h-6 rounded-lg flex items-center justify-center border border-amber-500/30 bg-amber-500/10 text-amber-400"><Minus size={12} /></button>
+                                <span className="w-4 text-center font-bold text-xs text-slate-200">{cart[item.id]}</span>
+                                <button onClick={() => addToCart(item.id, 1)} className="w-6 h-6 rounded-lg flex items-center justify-center bg-amber-500 text-slate-950"><Plus size={12} /></button>
                               </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-black" style={{ color: theme.accent }}>{money(item.price)}</span>
-                          {cart[item.id] > 0 ? (
-                            <div className="flex items-center gap-1.5 rounded-full px-1.5 py-0.5" style={{ background: theme.surface2 }}>
-                              <button onClick={() => addToCart(item.id, -1)} className="w-5.5 h-5.5 rounded-full flex items-center justify-center border" style={{ borderColor: theme.accent }}><Minus size={10} /></button>
-                              <span className="w-3 text-center font-bold text-xs">{cart[item.id]}</span>
-                              <button onClick={() => addToCart(item.id, 1)} className="w-5.5 h-5.5 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: theme.bg }}><Plus size={10} /></button>
-                            </div>
-                          ) : (
-                            <button onClick={() => addToCart(item.id, 1)} className="w-6.5 h-6.5 rounded-full flex items-center justify-center transition-transform hover:scale-105 active:scale-95" style={{ background: theme.accent, color: theme.bg }}><Plus size={13} /></button>
-                          )}
-                        </div>
-                      )}
+                            ) : (
+                              <button onClick={() => addToCart(item.id, 1)} className="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 bg-amber-500 text-slate-950 transition-all active:scale-95"><ShoppingCart size={12} /> إضافة</button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
                     </div>
                   </div>
                 ))}
@@ -679,164 +699,162 @@ export default function RestaurantMenu() {
           );
         })}
         {visibleItems.length === 0 && (
-          <div className="text-center py-12">
-            <Sparkles size={32} className="mx-auto mb-2 opacity-50" style={{ color: theme.accent }} />
-            <p className="text-sm" style={{ color: theme.muted }}>لا تتوفر أصناف تطابق بحثك حاليًا.</p>
+          <div className="text-center py-16">
+            <Sparkles size={36} className="mx-auto mb-3 opacity-40 text-amber-500" />
+            <p className="text-sm text-slate-400">لا توجد وجبات تطابق بحثك حالياً.</p>
           </div>
         )}
       </main>
 
       {/* ===================== FOOTER INFO STRIP ===================== */}
-      <div className="fixed bottom-0 inset-x-0 z-20 border-t px-4 py-3.5 flex items-center justify-center gap-4 text-xs font-semibold shadow-inner" style={{ background: theme.bg + "F2", borderColor: (theme.muted || "#B3A18C") + "20" , color: theme.muted, backdropFilter: "blur(8px)" }}>
-        <a href="https://fb.com/mr.3abkarino" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 font-bold tracking-wide shrink-0 cursor-pointer hover:underline" style={{ color: theme.accent }}>
+      <div className="fixed bottom-0 inset-x-0 z-20 border-t px-4 py-3.5 flex items-center justify-center gap-4 text-xs font-semibold shadow-inner backdrop-blur-md" style={{ background: THEME.bg + "F2", borderColor: THEME.surface2, color: THEME.muted }}>
+        <a href="https://fb.com/mr.3abkarino" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 font-bold tracking-wide text-amber-400 hover:underline">
           Mr3abkarino© <span className="text-red-500 text-sm animate-pulse">❤️</span>
         </a>
-        <span className="opacity-40 shrink-0">|</span>
+        <span className="opacity-30">|</span>
         <span className="flex items-center gap-1 truncate min-w-0">
-          <MapPin size={13} className="shrink-0" /> 
-          <span className="truncate opacity-90">{address}</span>
+          <MapPin size={13} className="shrink-0 text-amber-500" /> 
+          <span className="truncate opacity-90 text-slate-300">{address}</span>
         </span>
       </div>
 
       {/* ===================== FLOATING CART BUTTON ===================== */}
       {cartCount > 0 && (
-        <button onClick={() => setCartOpen(true)} className="fixed bottom-14 left-1/2 -translate-x-1/2 z-35 flex items-center justify-between gap-6 px-6 py-3.5 rounded-full shadow-2xl font-bold text-sm active:scale-95 transition-all hover:scale-[1.01]" style={{ background: theme.accent, color: theme.bg, width: "90%", maxWidth: "450px" }}>
+        <button onClick={() => setCartOpen(true)} className="fixed bottom-14 left-1/2 -translate-x-1/2 z-35 flex items-center justify-between gap-6 px-6 py-4 rounded-xl shadow-2xl font-bold text-sm active:scale-95 transition-all w-[92%] max-w-[500px]" style={{ background: THEME.accent, color: THEME.bg }}>
           <div className="flex items-center gap-2">
             <div className="relative">
               <ShoppingCart size={18} />
-              <span className="absolute -top-2.5 -right-2 w-4.5 h-4.5 bg-red-600 text-white text-[9px] rounded-full flex items-center justify-center font-bold">{cartCount}</span>
+              <span className="absolute -top-2.5 -right-2.5 w-5 h-5 bg-red-600 text-white text-[9px] rounded-full flex items-center justify-center font-bold border border-amber-500">{cartCount}</span>
             </div>
-            <span>عرض الطلبات</span>
+            <span>عرض سلة الطلبات</span>
           </div>
-          <span className="text-xs tracking-wide">الإجمالي: {money(cartTotal)}</span>
+          <span className="text-xs tracking-wide bg-slate-950/20 px-3 py-1 rounded-lg">الإجمالي: {money(cartTotal)}</span>
         </button>
       )}
 
       {/* ===================== CART DRAWER ===================== */}
       {cartOpen && (
         <Overlay onClose={() => setCartOpen(false)}>
-          <Sheet theme={theme} title="سلة المشتريات" onClose={() => setCartOpen(false)}>
-            {cartList.length === 0 ? <p className="text-center py-8" style={{ color: theme.muted }}>العربة فارغة حالياً</p> : (
+          <Sheet title="سلة المشتريات" onClose={() => setCartOpen(false)}>
+            {cartList.length === 0 ? <p className="text-center py-8 text-slate-400">السلة فارغة حالياً</p> : (
               <>
-                <div className="space-y-3 max-h-[15vh] overflow-y-auto pr-1">
+                <div className="space-y-3 max-h-[22vh] overflow-y-auto pr-1 border-b border-slate-800 pb-3">
                   {cartList.map((cartItem) => (
-                    <div key={cartItem.key} className="flex items-center justify-between gap-2 border-b pb-2" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
+                    <div key={cartItem.key} className="flex items-center justify-between gap-2 py-1">
                       <div className="min-w-0">
-                        <p className="font-bold text-sm truncate">{cartItem.label}</p>
-                        <p className="text-xs" style={{ color: theme.muted }}>{money(cartItem.price)}</p>
+                        <p className="font-bold text-sm truncate text-slate-100">{cartItem.label}</p>
+                        <p className="text-xs text-amber-400 font-medium">{money(cartItem.price)}</p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <button onClick={() => addToCart(cartItem.key, -1)} className="w-7 h-7 rounded-full border flex items-center justify-center" style={{ borderColor: (theme.muted || "#B3A18C") + "50" }}><Minus size={14} /></button>
-                        <span className="w-4 text-center font-bold text-sm">{cartItem.qty}</span>
-                        <button onClick={() => addToCart(cartItem.key, 1)} className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: theme.bg }}><Plus size={14} /></button>
+                        <button onClick={() => addToCart(cartItem.key, -1)} className="w-7 h-7 rounded-lg border border-slate-700 bg-slate-800 flex items-center justify-center text-slate-300"><Minus size={12} /></button>
+                        <span className="w-4 text-center font-bold text-sm text-slate-100">{cartItem.qty}</span>
+                        <button onClick={() => addToCart(cartItem.key, 1)} className="w-7 h-7 rounded-lg flex items-center justify-center bg-amber-500 text-slate-950"><Plus size={12} /></button>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                {/* نظام نقاط الولاء والمكافآت (Loyalty Points Box) */}
+                {/* نظام نقاط الولاء والمكافآت التفاعلي */}
                 {userPoints > 0 && (
-                  <div className="mt-3 p-3 rounded-xl border border-dashed flex flex-col gap-2" style={{ borderColor: theme.accent + "40", background: theme.surface2 }}>
+                  <div className="mt-3 p-3 rounded-xl border border-dashed border-amber-500/30 bg-slate-950/40 flex flex-col gap-2">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-xs font-bold" style={{ color: theme.accent }}>
-                        <Coins size={15} className="animate-pulse" />
-                        <span>محفظة النقاط الذهبية: لديك {userPoints} نقطة</span>
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
+                        <Coins size={15} />
+                        <span>محفظتك الذهبية: {userPoints} نقطة</span>
                       </div>
-                      <span className="text-[10px] opacity-80 flex items-center gap-1" style={{ color: theme.muted }}>
+                      <span className="text-[10px] text-slate-400 flex items-center gap-1">
                         <Gem size={12} className="text-green-500" /> تساوي {money(userPoints * pointValueInMoney)} خصم
                       </span>
                     </div>
                     <button 
                       onClick={() => setRedeemPoints(!redeemPoints)}
-                      className="w-full py-2 rounded-lg text-[11px] font-black transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow-sm"
-                      style={redeemPoints ? { background: "#15803d", color: "#fff" } : { background: theme.accent, color: theme.bg }}
+                      className="w-full py-2 rounded-xl text-[11px] font-black transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                      style={redeemPoints ? { background: "#16a34a", color: "#fff" } : { background: THEME.accent, color: THEME.bg }}
                     >
                       {redeemPoints ? <Check size={13} /> : <Coins size={13} />}
-                      {redeemPoints ? "تم تطبيق خصم النقاط الذهبية بنجاح" : "اضغط هنا لاستبدال النقاط بخصم فوري كاش"}
+                      {redeemPoints ? "تمت المزامنة وتطبيق خصم الكاش" : "اضغط لاستبدال نقاطك بخصم كاش فوري"}
                     </button>
                   </div>
                 )}
                 
-                <div className="space-y-1 pt-2 mt-2 border-t text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
-                  <div className="flex items-center justify-between opacity-80">
-                    <span>حساب المأكولات:</span>
-                    <span>{money(cartTotal)}</span>
+                <div className="space-y-1.5 pt-3 text-xs text-slate-400">
+                  <div className="flex items-center justify-between">
+                    <span>حساب الوجبات الأصلي:</span>
+                    <span className="text-slate-200 font-bold">{money(cartTotal)}</span>
                   </div>
                   {discountAmount > 0 && (
-                    <div className="flex items-center justify-between text-green-500 font-medium">
-                      <span>خصم الكوبون (-{appliedDiscountPercent}%):</span>
+                    <div className="flex items-center justify-between text-green-400 font-medium">
+                      <span>خصم كوبون الخصم (-{appliedDiscountPercent}%):</span>
                       <span>-{money(discountAmount)}</span>
                     </div>
                   )}
                   {redeemPoints && pointsDiscountValue > 0 && (
-                    <div className="flex items-center justify-between text-green-500 font-medium animate-pulse">
-                      <span>خصم استبدال النقاط:</span>
+                    <div className="flex items-center justify-between text-green-400 font-medium">
+                      <span>خصم استبدال النقاط الذهبية:</span>
                       <span>-{money(pointsDiscountValue)}</span>
                     </div>
                   )}
-                  <div className="flex items-center justify-between opacity-80">
-                    <span>توصيل لـ ({selectedAreaIndex >= 0 ? activeDeliveryArea.name : "لم تحدد"}):</span>
-                    <span>{money(activeDeliveryArea.price)}</span>
+                  <div className="flex items-center justify-between">
+                    <span>توصيل لـ ({selectedAreaIndex >= 0 ? activeDeliveryArea.name : "لم يحدد"}):</span>
+                    <span className="text-slate-200 font-bold">+{money(activeDeliveryArea.price)}</span>
                   </div>
-                  <div className="flex items-center justify-between pt-2 text-sm font-black border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "15" }}>
-                    <span style={{ color: theme.muted }}>الإجمالي الإجمالي:</span>
-                    <span style={{ color: theme.accent }} className="text-base">{money(finalTotal)}</span>
+                  <div className="flex items-center justify-between pt-2.5 text-sm font-black border-t border-slate-800">
+                    <span className="text-slate-300">الإجمالي النهائي المطلوب:</span>
+                    <span className="text-base text-amber-400">{money(finalTotal)}</span>
                   </div>
                 </div>
 
-                {/* نظام كود الخصم */}
-                <div className="pt-2.5 flex gap-2">
+                {/* نظام كود الخصم المطور */}
+                <div className="pt-3 flex gap-2">
                   <div className="relative flex-1">
-                    <input type="text" value={enteredPromo} onChange={(e) => setEnteredPromo(e.target.value)} placeholder="هل لديك كوبون خصم؟" className="w-full px-3 py-2 pr-8 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "25", color: theme.text }} />
-                    <Tag size={13} className="absolute right-2.5 top-2.5 opacity-60" style={{ color: theme.text }} />
+                    <input type="text" value={enteredPromo} onChange={(e) => setEnteredPromo(e.target.value)} placeholder="هل لديك كوبون خصم؟" className="w-full px-3 py-2.5 pr-8 rounded-xl text-xs border focus:outline-none bg-slate-950 border-slate-800 text-slate-200" />
+                    <Tag size={13} className="absolute right-2.5 top-3 text-slate-500" />
                   </div>
-                  <button onClick={handleApplyPromo} className="px-4 py-2 rounded-xl font-bold text-xs shadow-sm flex items-center gap-1 border transition-colors" style={{ background: theme.surface2, color: theme.accent, borderColor: theme.accent + "40" }}>
+                  <button onClick={handleApplyPromo} className="px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-1 bg-slate-800 border border-slate-700 text-amber-400 hover:bg-slate-700">
                     <Percent size={12} /> تطبيق
                   </button>
                 </div>
-                {promoError && <p className="text-[10px] font-bold text-red-500 mr-1">{promoError}</p>}
-                {appliedDiscountPercent > 0 && <p className="text-[10px] font-bold text-green-500 mr-1">✓ تم تطبيق الخصم بنجاح بنسبة {appliedDiscountPercent}%</p>}
+                {promoError && <p className="text-[10px] font-bold text-red-400 mt-1 mr-1">{promoError}</p>}
+                {appliedDiscountPercent > 0 && <p className="text-[10px] font-bold text-green-400 mt-1 mr-1">✓ تم تطبيق الكود بنجاح بخصم {appliedDiscountPercent}%</p>}
 
-                {/* بيانات العميل والتوصيل والملاحظات */}
-                <div className="mt-3 pt-2 border-t space-y-2" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
-                  <p className="text-[11px] font-bold" style={{ color: theme.accent }}>بيانات التوصيل والطلب (الدليفري):</p>
+                {/* بيانات الشحن وعنوان التوصيل */}
+                <div className="mt-4 pt-3 border-t border-slate-800 space-y-2.5">
+                  <p className="text-[11px] font-bold text-amber-400">بيانات التوصيل والدليفري:</p>
                   
                   <div className="space-y-2">
                     <div className="relative">
-                      <input type="text" placeholder="اكتب اسمك الكريم هنا..." value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }} />
-                      <User size={14} className="absolute right-3 top-3.5 opacity-60" style={{ color: theme.text }} />
+                      <input type="text" placeholder="اكتب اسمك بالكامل هنا..." value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs bg-slate-950 border border-slate-800 text-slate-200 focus:outline-none" />
+                      <User size={14} className="absolute right-3 top-3 text-slate-500" />
                     </div>
 
                     <div className="relative">
                       <select 
                         value={selectedAreaIndex}
                         onChange={(e) => setSelectedAreaIndex(Number(e.target.value))}
-                        className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none appearance-none" 
-                        style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }}
+                        className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs bg-slate-950 border border-slate-800 text-slate-200 focus:outline-none appearance-none"
                       >
-                        <option value={-1}>اختر منطقة التوصيل...</option>
+                        <option value={-1}>اختر منطقة أو قرية التوصيل...</option>
                         {deliveryAreas.map((area, idx) => (
-                          <option key={idx} value={idx} style={{ background: theme.surface, color: theme.text }}>
+                          <option key={idx} value={idx} className="bg-slate-900 text-slate-200">
                             {area.name} (+{money(area.price)})
                           </option>
                         ))}
                       </select>
-                      <MapPin size={14} className="absolute right-3 top-3.5 opacity-60" style={{ color: theme.text }} />
-                      <ChevronDown size={14} className="absolute left-3 top-3.5 opacity-60" style={{ color: theme.text }} />
+                      <MapPin size={14} className="absolute right-3 top-3 text-slate-500" />
+                      <ChevronDown size={14} className="absolute left-3 top-3.5 text-slate-500" />
                     </div>
 
-                    {/* خيارات جدولة مواعيد التوصيل */}
-                    <div className="p-3 rounded-xl border border-dotted space-y-2.5" style={{ borderColor: (theme.muted || "#B3A18C") + "30", background: theme.surface2 }}>
-                      <p className="text-[10px] font-bold opacity-80 flex items-center gap-1" style={{ color: theme.muted }}>
-                        <Calendar size={13} />
-                        <span>تحديد موعد التوصيل المطلوب:</span>
+                    {/* جدولة مواعيد الطلبات */}
+                    <div className="p-3 rounded-xl border border-dashed border-slate-800 bg-slate-950/40 space-y-2">
+                      <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                        <Calendar size={13} /> تحديد موعد الاستلام المفضل:
                       </p>
                       <div className="grid grid-cols-2 gap-2">
                         <button 
                           type="button" 
                           onClick={() => setScheduleType("now")}
                           className="py-1.5 rounded-lg text-[10px] font-bold border transition-all"
-                          style={scheduleType === "now" ? { background: theme.accent, color: theme.bg, borderColor: theme.accent } : { borderColor: theme.muted + "20" }}
+                          style={scheduleType === "now" ? { background: THEME.accent, color: THEME.bg, borderColor: THEME.accent } : { borderColor: "rgba(255,255,255,0.08)", color: THEME.muted }}
                         >
                           ⚡ دليفري فوري (الآن)
                         </button>
@@ -844,57 +862,56 @@ export default function RestaurantMenu() {
                           type="button" 
                           onClick={() => setScheduleType("later")}
                           className="py-1.5 rounded-lg text-[10px] font-bold border transition-all"
-                          style={scheduleType === "later" ? { background: theme.accent, color: theme.bg, borderColor: theme.accent } : { borderColor: theme.muted + "20" }}
+                          style={scheduleType === "later" ? { background: THEME.accent, color: THEME.bg, borderColor: THEME.accent } : { borderColor: "rgba(255,255,255,0.08)", color: THEME.muted }}
                         >
                           🕒 توصيل مجدول لاحقاً
                         </button>
                       </div>
 
                       {scheduleType === "later" && (
-                        <div className="relative animate-pulse">
+                        <div className="relative">
                           <input 
                             type="text" 
-                            placeholder="اكتب الموعد المفضل (مثال: الساعة 9:30 مساءً)..." 
+                            placeholder="مثال: الساعة 9:30 مساءً..." 
                             value={scheduleTime} 
                             onChange={(e) => setScheduleTime(e.target.value)} 
-                            className="w-full px-3 py-2 pr-8 rounded-lg text-[10px] border focus:outline-none" 
-                            style={{ background: theme.surface, borderColor: theme.accent + "40", color: theme.text }} 
+                            className="w-full px-3 py-2 pr-8 rounded-lg text-[10px] bg-slate-900 border border-slate-800 text-slate-200 focus:outline-none" 
                           />
-                          <Calendar size={12} className="absolute right-2.5 top-2.5" style={{ color: theme.accent }} />
+                          <Calendar size={12} className="absolute right-2.5 top-2.5 text-amber-500" />
                         </div>
                       )}
                     </div>
 
                     <div className="relative">
-                      <input type="tel" placeholder="رقم تليفونك لتأكيد الطلب..." value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }} />
-                      <Phone size={14} className="absolute right-3 top-3.5 opacity-60" style={{ color: theme.text }} />
+                      <input type="tel" placeholder="رقم الموبايل لتأكيد الأوردر..." value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs bg-slate-950 border border-slate-800 text-slate-200 focus:outline-none" />
+                      <Phone size={14} className="absolute right-3 top-3 text-slate-500" />
                     </div>
 
                     <div className="flex gap-2">
                       <div className="relative flex-1">
-                        <input type="text" placeholder="العنوان بالتفصيل (البيت, الشارع)..." value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }} />
-                        <MapPin size={14} className="absolute right-3 top-3.5 opacity-60" style={{ color: theme.text }} />
+                        <input type="text" placeholder="العنوان بالتفصيل (الشارع والمنزل)..." value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs bg-slate-950 border border-slate-800 text-slate-200 focus:outline-none" />
+                        <MapPin size={14} className="absolute right-3 top-3 text-slate-500" />
                       </div>
-                      <button type="button" onClick={handleGetLocation} className="px-3 rounded-xl border font-bold text-xs flex items-center justify-center bg-black/10 transition-transform active:scale-95 shrink-0" style={{ borderColor: theme.accent, color: theme.accent }}>
+                      <button type="button" onClick={handleGetLocation} className="px-3 rounded-xl border border-slate-700 bg-slate-800 text-amber-400 font-bold text-xs flex items-center justify-center active:scale-95 shrink-0">
                         {geoLoading ? "..." : <Navigation size={14} className="animate-pulse" />}
                       </button>
                     </div>
 
                     <div className="relative">
-                      <textarea placeholder="أي ملاحظات إضافية على الأكل؟ (مثال: بدون بصل، الكرانشي حار...)" value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} rows={1} className="w-full px-3 py-2 pr-9 rounded-xl text-xs border focus:outline-none resize-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }} />
-                      <FileText size={14} className="absolute right-3 top-2.5 opacity-60" style={{ color: theme.text }} />
+                      <textarea placeholder="أي ملاحظات إضافية؟ (بدون بصل، حار...)" value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} rows={1} className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs bg-slate-950 border border-slate-800 text-slate-200 focus:outline-none resize-none" />
+                      <FileText size={14} className="absolute right-3 top-3 text-slate-500" />
                     </div>
                   </div>
                   
-                  {validationError && <p className="text-[10px] text-center font-bold text-red-500 bg-red-500/10 py-1 rounded-lg animate-pulse">{validationError}</p>}
+                  {validationError && <p className="text-[10px] text-center font-bold text-red-400 bg-red-500/10 py-1.5 rounded-xl animate-pulse">{validationError}</p>}
                 </div>
 
-                <button onClick={sendWhatsApp} className="w-full mt-3 py-3 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-md hover:opacity-90" style={{ background: "#25D366", color: "#fff" }}><MessageCircle size={18} />تأكيد وإرسال عبر واتساب</button>
+                <button onClick={sendWhatsApp} className="w-full mt-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-all shadow-md bg-green-600 hover:bg-green-500 text-white"><MessageCircle size={17} />تأكيد الأوردر وإرسال عبر الواتساب</button>
                 
-                <div className="mt-3 pt-3 border-t space-y-2" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
-                  <p className="text-xs font-bold" style={{ color: theme.muted }}>خيارات الدفع الإلكتروني المباشر</p>
-                  <PayRow icon={<Phone size={16} />} label="فودافون كاش كود" value={vodafoneCash} theme={theme} onCopy={copyText} copied={copied} />
-                  <PayRow icon={<CreditCard size={16} />} label="حساب InstaPay" value={instapay} theme={theme} onCopy={copyText} copied={copied} />
+                <div className="mt-4 pt-3 border-t border-slate-800 space-y-2">
+                  <p className="text-[11px] font-bold text-slate-400">طرق الدفع الكاش المباشر:</p>
+                  <PayRow icon={<Phone size={15} />} label="فودافون كاش كود" value={vodafoneCash} onCopy={copyText} copied={copied} />
+                  <PayRow icon={<CreditCard size={15} />} label="حساب InstaPay" value={instapay} onCopy={copyText} copied={copied} />
                 </div>
               </>
             )}
@@ -902,16 +919,16 @@ export default function RestaurantMenu() {
         </Overlay>
       )}
 
+      {/* ===================== MODAL OVERLAYS & SHEETS ===================== */}
       {orderSuccess && (
         <Overlay onClose={() => setOrderSuccess(false)}>
-          <Sheet theme={theme} title="تم إرسال طلبك بنجاح! 🎉" onClose={() => setOrderSuccess(false)}>
+          <Sheet title="تم إرسال طلبك بنجاح! 🎉" onClose={() => setOrderSuccess(false)}>
             <div className="text-center py-6 space-y-4">
-              <div className="w-16 h-16 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto text-3xl animate-bounce">✓</div>
-              <p className="text-sm font-bold leading-relaxed">
-                تم تجهيز الأوردر وتصفير السلة بنجاح. <br/>
-                جاري الآن تحويلك إلى تطبيق واتساب لإرسال الفاتورة وتأكيد التوصيل مع الكابتن!
+              <div className="w-16 h-16 bg-green-500/10 text-green-400 rounded-full flex items-center justify-center mx-auto text-3xl animate-bounce">✓</div>
+              <p className="text-sm font-bold leading-relaxed text-slate-300">
+                تم تجهيز الأوردر بنجاح. جاري الآن تحويلك إلى تطبيق واتساب لمتابعة التوصيل مع الكابتن وتأكيد الفاتورة!
               </p>
-              <button onClick={() => setOrderSuccess(false)} className="px-6 py-2 rounded-xl text-xs font-bold" style={{ background: theme.accent, color: theme.bg }}>فهمت، شكراً لك</button>
+              <button onClick={() => setOrderSuccess(false)} className="px-6 py-2.5 rounded-xl text-xs font-bold bg-amber-500 text-slate-950">موافق، شكراً لك</button>
             </div>
           </Sheet>
         </Overlay>
@@ -919,29 +936,13 @@ export default function RestaurantMenu() {
 
       {qrOpen && (
         <Overlay onClose={() => setQrOpen(false)}>
-          <Sheet theme={theme} title="بار كود المنيو للعملاء" onClose={() => setQrOpen(false)}>
+          <Sheet title="باركود المنيو للعملاء" onClose={() => setQrOpen(false)}>
             <div className="flex flex-col items-center gap-4">
-              <div className="p-4 rounded-2xl bg-white shadow-md"><img src={qrSrc} alt="QR Code للمنيو" width={220} height={220} /></div>
-              <label className="w-full text-sm">
-                <span style={{ color: theme.muted }}>رابط موقع المنيو الحالي</span>
-                <input value={menuUrl} onChange={(e) => setMenuUrl(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border bg-transparent text-sm font-semibold text-center" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }} dir="ltr" />
+              <div className="p-4 rounded-2xl bg-white shadow-xl"><img src={qrSrc} alt="QR Code" width={200} height={200} /></div>
+              <label className="w-full text-xs space-y-1.5">
+                <span className="text-slate-400 font-medium">رابط موقع المنيو الحالي للمطعم:</span>
+                <input value={menuUrl} onChange={(e) => setMenuUrl(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 text-center font-bold" dir="ltr" />
               </label>
-            </div>
-          </Sheet>
-        </Overlay>
-      )}
-
-      {themePickerOpen && (
-        <Overlay onClose={() => setThemePickerOpen(false)}>
-          <Sheet theme={theme} title="اختر هوية مطعمك البصرية" onClose={() => setThemePickerOpen(false)}>
-            <div className="grid grid-cols-1 gap-2.5">
-              {THEMES.map((t) => (
-                <button key={t.id} onClick={() => { setTheme(t); setThemePickerOpen(false); }} className="flex items-center gap-3 p-3 rounded-xl border text-right transition-colors hover:bg-black/5" style={{ borderColor: (theme.muted || "#B3A18C") + "30", background: t.bg }}>
-                  <div className="flex gap-1 shrink-0"><span className="w-6 h-6 rounded-full border border-white/20" style={{ background: t.accent }} /><span className="w-6 h-6 rounded-full border border-white/20" style={{ background: t.accent2 }} /></div>
-                  <span className="text-base font-bold" style={{ color: t.text }}>{t.name}</span>
-                  {t.id === theme.id && <Check size={16} className="mr-auto" style={{ color: t.accent }} />}
-                </button>
-              ))}
             </div>
           </Sheet>
         </Overlay>
@@ -949,15 +950,15 @@ export default function RestaurantMenu() {
 
       {pinModalOpen && (
         <Overlay onClose={() => setPinModalOpen(false)}>
-          <Sheet theme={theme} title="التحقق من هوية المدير" onClose={() => setPinModalOpen(false)}>
+          <Sheet title="التحقق من هوية الإدارة" onClose={() => setPinModalOpen(false)}>
             <form onSubmit={handleVerifyPin} className="space-y-4">
-              <div className="flex flex-col items-center justify-center py-2"><KeyRound size={40} className="mb-2" style={{ color: theme.accent }} /><p className="text-xs text-center" style={{ color: theme.muted }}>هذه المنطقة مخصصة لإدارة المطعم فقط.</p></div>
-              <label className="block text-sm space-y-1">
-                <span className="font-bold opacity-90" style={{ color: theme.muted }}>رمز الأمان الحالي</span>
-                <input type="password" maxLength={12} value={enteredPin} onChange={(e) => setEnteredPin(e.target.value)} placeholder="••••" className="w-full px-3 py-2.5 rounded-lg border bg-transparent text-center text-lg tracking-widest font-bold focus:outline-none" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} required />
+              <div className="flex flex-col items-center justify-center py-2"><KeyRound size={36} className="mb-2 text-amber-500 animate-pulse" /><p className="text-xs text-slate-400 text-center">لوحة تحكم مشفرة ومحمية خاصة بالمدير فقط.</p></div>
+              <label className="block text-xs space-y-1.5">
+                <span className="font-bold text-slate-300">رمز الأمان PIN الحالي:</span>
+                <input type="password" maxLength={12} value={enteredPin} onChange={(e) => setEnteredPin(e.target.value)} placeholder="••••" className="w-full px-3 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 text-center text-lg font-bold tracking-widest focus:outline-none" required />
               </label>
-              {pinError && <p className="text-xs text-center font-bold text-red-500 bg-red-500/10 py-1.5 rounded-lg">{pinError}</p>}
-              <div className="flex gap-2"><button type="submit" className="flex-1 py-2 rounded-xl font-bold text-xs" style={{ background: theme.accent, color: theme.bg }}>دخول الإدارة</button><button type="button" onClick={() => setPinModalOpen(false)} className="px-4 py-2 border rounded-xl text-xs font-bold" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }}>إلغاء</button></div>
+              {pinError && <p className="text-xs text-center font-bold text-red-400 bg-red-500/10 py-2 rounded-xl">{pinError}</p>}
+              <div className="flex gap-2"><button type="submit" className="flex-1 py-2.5 rounded-xl font-bold text-xs bg-amber-500 text-slate-950">تسجيل الدخول</button><button type="button" onClick={() => setPinModalOpen(false)} className="px-4 py-2.5 border border-slate-700 bg-slate-800 rounded-xl text-xs font-bold text-slate-300">إلغاء</button></div>
             </form>
           </Sheet>
         </Overlay>
@@ -965,67 +966,67 @@ export default function RestaurantMenu() {
 
       {adminOpen && (
         <Overlay onClose={() => setAdminOpen(false)}>
-          <Sheet theme={theme} title="إعدادات الإدارة والأسعار" onClose={() => setAdminOpen(false)}>
-            <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
-              <Field label="اسم المطعم" value={restaurantName} onChange={setRestaurantName} theme={theme} />
-              <Field label="الشعار الفرعي للمنيو" value={tagline} onChange={setTagline} theme={theme} />
-              <Field label="العنوان الجغرافي" value={address} onChange={setAddress} theme={theme} />
-              <Field label="رقم واتساب الاستقبال" value={whatsappNumber} onChange={setWhatsappNumber} theme={theme} dir="ltr" hint="بالصيغة الدولية مثال: +201006113627" />
-              <Field label="رقم فودافون كاش" value={vodafoneCash} onChange={setVodafoneCash} theme={theme} dir="ltr" />
-              <Field label="حساب InstaPay" value={instapay} onChange={setInstapay} theme={theme} dir="ltr" />
-              <Field label="رمز الأمان للإدارة (PIN)" value={adminPin} onChange={setAdminPin} theme={theme} dir="ltr" />
+          <Sheet title="لوحة التحكم والأسعار" onClose={() => setAdminOpen(false)}>
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1 text-slate-200">
+              <Field label="اسم المطعم" value={restaurantName} onChange={setRestaurantName} />
+              <Field label="الشعار الفرعي والتاغ لاين" value={tagline} onChange={setTagline} />
+              <Field label="العنوان الجغرافي للمطعم" value={address} onChange={setAddress} />
+              <Field label="رقم واتساب الاستقبال (دولي)" value={whatsappNumber} onChange={setWhatsappNumber} dir="ltr" hint="بالصيغة الدولية الكاملة مثال: +201006113627" />
+              <Field label="رقم محفظة فودافون كاش" value={vodafoneCash} onChange={setVodafoneCash} dir="ltr" />
+              <Field label="معرّف حساب InstaPay" value={instapay} onChange={setInstapay} dir="ltr" />
+              <Field label="رمز الدخول المشفر للإدارة (PIN)" value={adminPin} onChange={setAdminPin} dir="ltr" />
 
-              {/* قسم التحكم الذكي بالنقاط ونظام الولاء من لوحة الإدارة */}
-              <div className="pt-4 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
-                <p className="font-bold text-sm mb-2 flex items-center gap-1.5 text-yellow-500">
-                  <Coins size={16} /> إعدادات نقاط الولاء الذهبية (DCGC)
+              {/* إعدادات محفظة الولاء والنقاط الذهبية */}
+              <div className="pt-4 border-t border-slate-800">
+                <p className="font-bold text-xs mb-2 flex items-center gap-1.5 text-amber-400">
+                  <Coins size={15} /> نقاط الولاء الذهبية للمطعم
                 </p>
-                <div className="grid grid-cols-2 gap-3 bg-black/20 p-3 rounded-xl border border-[#1F1F1F]">
-                  <label className="block text-xs space-y-1">
-                    <span className="opacity-90 font-medium flex items-center gap-1"><TrendingUp size={12} /> معدل كسب النقاط</span>
-                    <input type="number" value={pointsEarnRate} onChange={(e) => setPointsEarnRate(Math.max(1, Number(e.target.value)))} className="w-full px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
-                    <span className="text-[9px] opacity-60 block">كل كم جنيه صرف يعطي 1 نقطة؟</span>
+                <div className="grid grid-cols-2 gap-3 bg-slate-950 p-3 rounded-xl border border-slate-800">
+                  <label className="block text-[11px] space-y-1">
+                    <span className="text-slate-300 font-medium flex items-center gap-1"><TrendingUp size={12} /> معدل كسب النقاط</span>
+                    <input type="number" value={pointsEarnRate} onChange={(e) => setPointsEarnRate(Math.max(1, Number(e.target.value)))} className="w-full px-2 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-200" />
+                    <span className="text-[9px] text-slate-500 block">كل كم جنيه صرف يعطي نقطة؟</span>
                   </label>
-                  <label className="block text-xs space-y-1">
-                    <span className="opacity-90 font-medium flex items-center gap-1"><Gem size={12} /> قيمة استبدال النقطة</span>
-                    <input type="number" step="0.1" value={pointValueInMoney} onChange={(e) => setPointValueInMoney(Math.max(0.1, Number(e.target.value)))} className="w-full px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
-                    <span className="text-[9px] opacity-60 block">النقطة الواحدة تساوي كم جنيه خصم؟</span>
+                  <label className="block text-[11px] space-y-1">
+                    <span className="text-slate-300 font-medium flex items-center gap-1"><Gem size={12} /> قيمة استبدال النقطة</span>
+                    <input type="number" step="0.1" value={pointValueInMoney} onChange={(e) => setPointValueInMoney(Math.max(0.1, Number(e.target.value)))} className="w-full px-2 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-200" />
+                    <span className="text-[9px] text-slate-500 block">النقطة تساوي كم جنيه كاش؟</span>
                   </label>
                 </div>
               </div>
 
-              {/* إدارة مناطق الدليفرى */}
-              <div className="pt-4 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
-                <p className="font-bold text-sm mb-2 flex items-center gap-1"><MapPin size={15} /> إدارة مناطق وقرى التوصيل</p>
-                <div className="bg-black/20 p-3 rounded-xl border border-[#1F1F1F] space-y-2 mb-3">
+              {/* قرى ومناطق التوصيل وحساب الدليفري */}
+              <div className="pt-4 border-t border-slate-800">
+                <p className="font-bold text-xs mb-2 flex items-center gap-1 text-slate-300"><MapPin size={14} className="text-amber-500" /> إدارة مناطق وقرى التوصيل</p>
+                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2 mb-3">
                   <div className="grid grid-cols-2 gap-2">
-                    <input type="text" placeholder="اسم القرية" value={newAreaName} onChange={(e) => setNewAreaName(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
-                    <input type="number" placeholder="سعر التوصيل" value={newAreaPrice} onChange={(e) => setNewAreaPrice(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
+                    <input type="text" placeholder="اسم القرية" value={newAreaName} onChange={(e) => setNewAreaName(e.target.value)} className="px-2 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-200" />
+                    <input type="number" placeholder="سعر التوصيل" value={newAreaPrice} onChange={(e) => setNewAreaPrice(e.target.value)} className="px-2 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-200" />
                   </div>
-                  <button onClick={handleAddDeliveryArea} className="w-full py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><PlusCircle size={13}/>إضافة المنطقة</button>
+                  <button onClick={handleAddDeliveryArea} className="w-full py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><PlusCircle size={12}/>إضافة المنطقة</button>
                 </div>
                 <div className="space-y-1.5 max-h-[15vh] overflow-y-auto pr-1">
                   {deliveryAreas.map((area, idx) => (
-                    <div key={idx} className="flex items-center justify-between text-xs p-2 rounded-lg bg-black/10 border border-[#1F1F1F]">
-                      <span className="font-medium">{area.name} · <span style={{ color: theme.accent }}>{money(area.price)}</span></span>
-                      <button onClick={() => handleRemoveDeliveryArea(idx)} className="p-1 rounded-full text-red-500 border border-red-500/20 bg-red-500/5"><Trash2 size={12}/></button>
+                    <div key={idx} className="flex items-center justify-between text-xs p-2 rounded-xl bg-slate-900 border border-slate-800">
+                      <span className="font-medium text-slate-300">{area.name} · <span className="text-amber-400">{money(area.price)}</span></span>
+                      <button onClick={() => handleRemoveDeliveryArea(idx)} className="p-1 rounded-full text-red-400 border border-red-500/20 bg-red-500/5"><Trash2 size={12}/></button>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* لوحة التحكم الاحترافية في الكوبونات بحدود الاستخدام */}
-              <div className="pt-4 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
-                <p className="font-bold text-sm mb-2 flex items-center gap-1 text-green-500">
-                  <Tag size={15} /> إدارة كوبونات الخصم والـ Promo Codes
+              {/* إدارة ومزامنة الكوبونات */}
+              <div className="pt-4 border-t border-slate-800">
+                <p className="font-bold text-xs mb-2 flex items-center gap-1 text-green-400">
+                  <Tag size={14} /> الكوبونات والأكواد الترويجية (Promo Codes)
                 </p>
-                <div className="bg-black/20 p-3 rounded-xl border border-[#1F1F1F] space-y-2 mb-3">
+                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2 mb-3">
                   <div className="grid grid-cols-3 gap-2">
-                    <input type="text" placeholder="الكود" value={newPromoCode} onChange={(e) => setNewPromoCode(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs uppercase font-bold" style={{ borderColor: theme.muted + "40", color: theme.text }} />
-                    <input type="number" placeholder="الخصم %" value={newPromoDiscount} onChange={(e) => setNewPromoDiscount(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
-                    <input type="number" placeholder="حد الاستخدام" value={newPromoLimit} onChange={(e) => setNewPromoLimit(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
+                    <input type="text" placeholder="الكود" value={newPromoCode} onChange={(e) => setNewPromoCode(e.target.value)} className="px-2 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs uppercase font-bold text-slate-200" />
+                    <input type="number" placeholder="الخصم %" value={newPromoDiscount} onChange={(e) => setNewPromoDiscount(e.target.value)} className="px-2 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-200" />
+                    <input type="number" placeholder="الحد" value={newPromoLimit} onChange={(e) => setNewPromoLimit(e.target.value)} className="px-2 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-200" />
                   </div>
-                  <button onClick={handleAddPromoCode} className="w-full py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><PlusCircle size={13}/>إضافة الكود بالحد الأقصى للمرات</button>
+                  <button onClick={handleAddPromoCode} className="w-full py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><PlusCircle size={12}/>إضافة الكود الجديد</button>
                 </div>
                 <div className="space-y-1.5 max-h-[15vh] overflow-y-auto pr-1">
                   {promoCodes.map((promo, idx) => {
@@ -1033,67 +1034,71 @@ export default function RestaurantMenu() {
                     const currentUsed = promo.used !== undefined ? promo.used : 0;
                     const remaining = Math.max(0, currentLimit - currentUsed);
                     return (
-                      <div key={idx} className="flex items-center justify-between text-xs p-2 rounded-lg bg-black/10 border border-[#1F1F1F]">
+                      <div key={idx} className="flex items-center justify-between text-xs p-2 rounded-xl bg-slate-900 border border-slate-800">
                         <div className="flex flex-col gap-0.5">
-                          <span className="font-bold text-green-500 flex items-center gap-1"><Tag size={11} /> {promo.code} · <span className="font-medium text-white">خصم {promo.discount}%</span></span>
-                          <span className="text-[10px]" style={{ color: theme.muted }}>
-                            الاستخدام الحالي: {currentUsed} من أصل {currentLimit === 9999 ? "∞" : currentLimit} مرة ({currentLimit === 9999 ? "مفتوح للأبد" : `${remaining} متبقي للعملاء`})
+                          <span className="font-bold text-green-400 flex items-center gap-1"><Tag size={11} /> {promo.code} · <span className="font-medium text-slate-200">خصم {promo.discount}%</span></span>
+                          <span className="text-[10px] text-slate-500">
+                            الاستخدام: {currentUsed} من {currentLimit === 9999 ? "∞" : currentLimit} ({currentLimit === 9999 ? "مفتوح" : `${remaining} متبقي`})
                           </span>
                         </div>
-                        <button onClick={() => handleRemovePromoCode(idx)} className="p-1 rounded-full text-red-500 border border-red-500/20 bg-red-500/5"><Trash2 size={12}/></button>
+                        <button onClick={() => handleRemovePromoCode(idx)} className="p-1 rounded-full text-red-400 border border-red-500/20 bg-red-500/5"><Trash2 size={12}/></button>
                       </div>
                     );
                   })}
                 </div>
               </div>
 
-              {/* إدارة قائمة المأكولات والأصناف */}
-              <div className="pt-4 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
+              {/* تعديل وإضافة وحذف وجبات المنيو */}
+              <div className="pt-4 border-t border-slate-800">
                 <div className="flex items-center justify-between mb-3">
-                  <p className="font-bold text-sm">قائمة المأكولات والأصناف</p>
-                  <button onClick={addNewItem} className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full" style={{ background: theme.accent, color: theme.bg }}><PlusCircle size={14} /> إضافة صنف للمنيو</button>
+                  <p className="font-bold text-xs text-slate-300">قائمة الوجبات الحالية</p>
+                  <button onClick={addNewItem} className="flex items-center gap-1 text-[11px] font-bold bg-amber-500 text-slate-950 px-3 py-1.5 rounded-xl"><PlusCircle size={13} /> إضافة وجبة</button>
                 </div>
                 <div className="space-y-3">
                   {items.map((item) => (
-                    <div key={item.id} className="p-3 rounded-xl border" style={{ borderColor: (theme.muted || "#B3A18C") + "25", background: theme.surface }}>
+                    <div key={item.id} className="p-3 rounded-xl border bg-slate-950 border-slate-800">
                       {editingId === item.id ? (
                         <div className="space-y-2">
-                          <input value={item.name} onChange={(e) => updateItem(item.id, { name: e.target.value })} className="w-full px-2.5 py-1.5 rounded-lg border bg-transparent text-sm font-bold" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
-                          <input value={item.desc || ""} onChange={(e) => updateItem(item.id, { desc: e.target.value })} className="w-full px-2.5 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
+                          <input value={item.name} onChange={(e) => updateItem(item.id, { name: e.target.value })} className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs font-bold text-slate-200" />
+                          <input value={item.desc || ""} onChange={(e) => updateItem(item.id, { desc: e.target.value })} className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-[11px] text-slate-400" />
+                          <input value={item.image || ""} onChange={(e) => updateItem(item.id, { image: e.target.value })} placeholder="رابط صورة الوجبة..." className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-[11px] text-slate-400" dir="ltr" />
                           <div className="grid grid-cols-2 gap-2">
-                            <input value={item.cat} onChange={(e) => updateItem(item.id, { cat: e.target.value })} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
-                            <input value={item.subcat || ""} onChange={(e) => updateItem(item.id, { subcat: e.target.value })} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
+                            <input value={item.cat} onChange={(e) => updateItem(item.id, { cat: e.target.value })} className="px-2 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-200" />
+                            <input value={item.subcat || ""} onChange={(e) => updateItem(item.id, { subcat: e.target.value })} className="px-2 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-200" />
                           </div>
                           <div className="flex justify-between items-center py-1">
                             {item.sizes ? (
-                              <button type="button" onClick={() => updateItem(item.id, { sizes: undefined, price: item.sizes[0]?.price || 40 })} className="text-[11px] font-bold underline" style={{ color: theme.accent }}>تحويل إلى سعر موحد</button>
+                              <button type="button" onClick={() => updateItem(item.id, { sizes: undefined, price: item.sizes[0]?.price || 40 })} className="text-[10px] font-bold text-amber-400 underline">تحويل إلى سعر موحد</button>
                             ) : (
-                              <button type="button" onClick={() => updateItem(item.id, { sizes: [{ label: "كبير", price: item.price || 90 }, { label: "وسط", price: item.price ? Math.max(20, item.price - 20) : 70 }, { label: "صغير", price: item.price ? Math.max(10, item.price - 40) : 45 }], price: undefined })} className="text-[11px] font-bold underline" style={{ color: theme.accent }}>تحويل إلى أحجام متعددة</button>
+                              <button type="button" onClick={() => updateItem(item.id, { sizes: [{ label: "كبير", price: item.price || 90 }, { label: "وسط", price: item.price ? Math.max(20, item.price - 20) : 70 }, { label: "صغير", price: item.price ? Math.max(10, item.price - 40) : 45 }], price: undefined })} className="text-[10px] font-bold text-amber-400 underline">تحويل إلى أحجام متعددة</button>
                             )}
                           </div>
                           {item.sizes ? (
                             <div className="space-y-1.5">
                               {item.sizes.map((sz, idx) => (
                                 <div key={idx} className="flex items-center gap-2">
-                                  <input value={sz.label} onChange={(e) => updateSize(item.id, idx, { label: e.target.value })} className="w-20 px-2 py-1.5 rounded-lg border bg-transparent text-xs text-center" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
-                                  <input type="number" value={sz.price} onChange={(e) => updateSize(item.id, idx, { price: Number(e.target.value) })} className="flex-1 px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
+                                  <input value={sz.label} onChange={(e) => updateSize(item.id, idx, { label: e.target.value })} className="w-16 px-2 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-center text-slate-200" />
+                                  <input type="number" value={sz.price} onChange={(e) => updateSize(item.id, idx, { price: Number(e.target.value) })} className="flex-1 px-2 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-200" />
                                 </div>
                               ))}
                             </div>
                           ) : (
-                            <input type="number" value={item.price} onChange={(e) => updateItem(item.id, { price: Number(e.target.value) })} className="w-full px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
+                            <input type="number" value={item.price} onChange={(e) => updateItem(item.id, { price: Number(e.target.value) })} className="w-full px-2 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-200" />
                           )}
-                          <button onClick={() => setEditingId(null)} className="w-full py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-1 shadow" style={{ background: theme.accent, color: theme.bg }}><Save size={13} /> حفظ التعديل</button>
+                          <button onClick={() => setEditingId(null)} className="w-full py-2 bg-amber-500 text-slate-950 rounded-lg font-bold text-xs flex items-center justify-center gap-1 shadow"><Save size={12} /> حفظ التعديلات</button>
                         </div>
                       ) : (
                         <div className="flex items-center justify-between gap-2">
-                          <div className="min-w-0">
-                            <p className="font-bold text-sm truncate">{item.name}</p>
-                            <p className="text-xs opacity-80" style={{ color: theme.muted }}>{item.cat}{item.subcat ? " · " + item.subcat : ""} · {item.sizes ? item.sizes.map((s) => s.label + ":" + money(s.price)).join(" / ") : money(item.price)}</p>
+                          <div className="min-w-0 flex items-center gap-2.5">
+                            <img src={item.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&q=80"} alt="" className="w-9 h-9 object-cover rounded-lg bg-slate-900" />
+                            <div className="min-w-0">
+                              <p className="font-bold text-xs text-slate-200 truncate">{item.name}</p>
+                              <p className="text-[10px] text-slate-400 truncate">{item.cat} · {item.sizes ? "أحجام متعددة" : money(item.price)}</p>
+                            </div>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
-                            <button onClick={() => setEditingId(item.id)} className="p-2 rounded-full border" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }}><Pencil size={13} /></button>
-                            <button onClick={() => deleteItem(item.id)} className="p-2 rounded-full border" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }}><Trash2 size={13} /></button>
+                            <button onClick={() => setEditingId(item.id)} className="p-2 border border-slate-800 bg-slate-900 rounded-lg text-slate-300"><Pencil size={12} /></button>
+                            <button onClick={() => deleteItem(item.id)} className="p-2 border border-slate-800 bg-slate-900 rounded-lg text-red-400"><Trash2 size={12} /></button>
                           </div>
                         </div>
                       )}
@@ -1102,8 +1107,8 @@ export default function RestaurantMenu() {
                 </div>
               </div>
               
-              <div className="pt-4 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
-                <button onClick={() => setShowResetConfirm(true)} className="w-full py-2.5 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 text-red-500 border-red-500/30"><RotateCcw size={14} /> إعادة تعيين منيو دريم كورنر الافتراضي</button>
+              <div className="pt-4 border-t border-slate-800">
+                <button onClick={() => setShowResetConfirm(true)} className="w-full py-2.5 rounded-xl text-xs font-bold border border-red-500/20 bg-red-500/5 text-red-400 flex items-center justify-center gap-1.5"><RotateCcw size={13} /> استعادة منيو دريم كورنر الافتراضي الأول</button>
               </div>
             </div>
           </Sheet>
@@ -1112,12 +1117,12 @@ export default function RestaurantMenu() {
 
       {showResetConfirm && (
         <Overlay onClose={() => setShowResetConfirm(false)}>
-          <Sheet theme={theme} title="تأكيد إعادة التعيين" onClose={() => setShowResetConfirm(false)}>
-            <div className="space-y-4 text-center">
-              <p className="text-sm">هل أنت متأكد من رغبتك في استعادة منيو دريم كورنر الأصلي؟</p>
+          <Sheet title="تأكيد رغبة الإعادة" onClose={() => setShowResetConfirm(false)}>
+            <div className="space-y-4 text-center py-2">
+              <p className="text-xs text-slate-300 font-medium">هل أنت متأكد من رغبتك في مسح التغييرات الحالية واستعادة منيو دريم كورنر الافتراضي بالكامل؟</p>
               <div className="flex gap-2 justify-center">
-                <button onClick={handleResetMenu} className="px-4 py-2 bg-red-600 text-white rounded-lg text-xs font-bold">نعم</button>
-                <button onClick={() => setShowResetConfirm(false)} className="px-4 py-2 border rounded-lg text-xs font-bold" style={{ borderColor: theme.muted + "40" }}>إلغاء</button>
+                <button onClick={handleResetMenu} className="px-5 py-2 bg-red-600 text-white rounded-lg text-xs font-bold">نعم، متأكد</button>
+                <button onClick={() => setShowResetConfirm(false)} className="px-4 py-2 border border-slate-700 bg-slate-800 rounded-lg text-xs font-bold text-slate-300">إلغاء</button>
               </div>
             </div>
           </Sheet>
@@ -1130,46 +1135,48 @@ export default function RestaurantMenu() {
 function Overlay({ children, onClose }) {
   return (
     <div className="fixed inset-0 z-40 flex items-end md:items-center justify-center p-0 md:p-4">
-      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
       {children}
     </div>
   );
 }
 
-function Sheet({ theme, title, onClose, children }) {
+function Sheet({ title, onClose, children }) {
   return (
-    <div className="relative z-10 w-full md:max-w-md max-h-[85vh] rounded-t-3xl md:rounded-3xl p-5 overflow-y-auto" style={{ background: theme.bg, color: theme.text, border: "1px solid " + (theme.muted || "#B3A18C") + "30" }} dir="rtl">
-      <div className="flex items-center justify-between mb-4 pb-2 border-b" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
-        <h2 className="text-lg font-black" style={{ color: theme.accent }}>{title}</h2>
-        <button onClick={onClose} className="p-1.5 rounded-full border" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }}><X size={15} /></button>
+    <div className="relative z-10 w-full md:max-w-md max-h-[85vh] rounded-t-3xl md:rounded-2xl p-5 overflow-y-auto bg-slate-900 border-t border-x md:border border-slate-800 text-slate-100" dir="rtl">
+      <div className="flex items-center justify-between mb-4 pb-2.5 border-b border-slate-800">
+        <h2 className="text-base font-black text-amber-400 flex items-center gap-1.5">
+          <Sparkles size={16} /> {title}
+        </h2>
+        <button onClick={onClose} className="p-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400"><X size={13} /></button>
       </div>
       {children}
     </div>
   );
 }
 
-function Field({ label, value, onChange, theme, dir = "rtl", hint }) {
+function Field({ label, value, onChange, dir = "rtl", hint }) {
   return (
-    <label className="block text-sm space-y-1">
-      <span className="font-bold opacity-90" style={{ color: theme.muted }}>{label}</span>
-      <input value={value} onChange={(e) => onChange(e.target.value)} dir={dir} className="w-full px-3 py-2 rounded-lg border bg-transparent" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
-      {hint && <span className="block mt-1 text-xs opacity-70" style={{ color: theme.muted }}>{hint}</span>}
+    <label className="block text-xs space-y-1.5">
+      <span className="font-bold text-slate-300">{label}</span>
+      <input value={value} onChange={(e) => onChange(e.target.value)} dir={dir} className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 focus:outline-none" />
+      {hint && <span className="block mt-1 text-[10px] text-slate-500 font-medium">{hint}</span>}
     </label>
   );
 }
 
-function PayRow({ icon, label, value, theme, onCopy, copied }) {
+function PayRow({ icon, label, value, onCopy, copied }) {
   return (
-    <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg" style={{ background: theme.surface2 }}>
+    <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-slate-950 border border-slate-800/60">
       <div className="flex items-center gap-2 min-w-0">
-        <span style={{ color: theme.accent }}>{icon}</span>
+        <span className="text-amber-500">{icon}</span>
         <div className="min-w-0">
-          <p className="text-xs" style={{ color: theme.muted }}>{label}</p>
-          <p className="text-sm font-bold truncate" dir="ltr">{value}</p>
+          <p className="text-[10px] text-slate-500">{label}</p>
+          <p className="text-xs font-bold text-slate-300 truncate" dir="ltr">{value}</p>
         </div>
       </div>
-      <button onClick={() => onCopy(label, value)} className="p-1.5 rounded-full border shrink-0 transition-transform active:scale-95" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }}>
-        {copied === label ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
+      <button onClick={() => onCopy(label, value)} className="p-1.5 border border-slate-800 bg-slate-900 text-slate-400 rounded-lg transition-transform active:scale-95">
+        {copied === label ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
       </button>
     </div>
   );
