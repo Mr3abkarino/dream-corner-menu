@@ -121,7 +121,7 @@ const getCategoryIcon = (categoryName, size = 14) => {
 export default function RestaurantMenu() {
   const [theme, setTheme] = useState(THEMES[0]);
   const [restaurantName, setRestaurantName] = useState("دريم كورنر");
-  const [tagline, setTagline] = useState("وجبات سريعة ولذيذة — طعم يفرق .. جودة تليق بك");
+  const [tagline, setTagline] = useState("وجبات سريعة ولذيثة — طعم يفرق .. جودة تليق بك");
   const [address, setAddress] = useState("البرامون، بجوار عيادة الدكتورة إلهام العشري");
   const [menuUrl, setMenuUrl] = useState("https://dream-corner-menu-4nfj.vercel.app");
   const [whatsappNumber, setWhatsappNumber] = useState("+201006113627");
@@ -199,6 +199,7 @@ export default function RestaurantMenu() {
   const saveTimer = useRef(null);
   const findItem = (id) => items.find((i) => i.id === id);
 
+  // تحديث لوجيك قراءة الـ cart لتفادي مشكلة الـ الكي الموحد والمختفي[span_2](start_span)[span_2](end_span)
   const cartList = useMemo(() => {
     return Object.entries(cart)
       .filter((entry) => entry[1] > 0)
@@ -210,8 +211,8 @@ export default function RestaurantMenu() {
         const sizeLabel = parts[1] || "";
         const item = findItem(id);
         if (!item) return null;
-        const price = sizeLabel ? item.sizes.find((s) => s.label === sizeLabel)?.price ?? 0 : item.price;
-        const label = sizeLabel ? item.name + " (" + sizeLabel + ")" : item.name;
+        const price = sizeLabel && sizeLabel !== "موحد" ? item.sizes.find((s) => s.label === sizeLabel)?.price ?? 0 : item.price;
+        const label = sizeLabel && sizeLabel !== "موحد" ? item.name + " (" + sizeLabel + ")" : item.name;
         return { key, id, label, price, qty };
       })
       .filter(Boolean);
@@ -436,14 +437,10 @@ export default function RestaurantMenu() {
   const updateItem = (id, patch) =>
     setItems((its) => its.map((i) => (i.id === id ? { ...i, ...patch } : i)));
 
-  const updateSize = (id, sizeIdx, patch) =>
-    setItems((its) => its.map((i) => i.id === id ? { ...i, sizes: i.sizes.map((s, idx) => (idx === sizeIdx ? { ...s, ...patch } : s)) } : i));
-
   const deleteItem = (id) => setItems((its) => its.filter((i) => i.id !== id));
 
   const addNewItem = () => {
     const id = "n" + Date.now().toString();
-    // جعل المولد الافتراضي يطابق الهيكل الجديد مع مصفوفة sizes فارغة بدلاً من تدمير الـ JSX
     setItems((its) => [...its, { id, cat: activeCat === "الكل" ? "بيتزا جديدة" : activeCat, name: "صنف جديد", price: 50, desc: "" }]);
     setEditingId(id);
   };
@@ -522,7 +519,7 @@ export default function RestaurantMenu() {
           <div className="flex items-center gap-3 min-w-0">
             <div onClick={handleLogoClickLocal} className="cursor-pointer active:scale-95 transition-transform shrink-0 relative">
               <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl shadow-md bg-gradient-to-br from-red-500 to-amber-500">🔥</div>
-              {logoClicks > 0 && <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold">{logoClicks}</span>}
+              {logoClicks > 0 && <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-600 text-white rounded-full flex items-center justify-center text-[9px] font-bold animate-pulse">{logoClicks}</span>}
             </div>
             <div className="min-w-0">
               <h1 className="text-lg md:text-xl font-black truncate leading-tight" style={{ color: theme.accent }}>{restaurantName}</h1>
@@ -532,14 +529,17 @@ export default function RestaurantMenu() {
           
           <div className="flex items-center gap-2">
             <button onClick={() => setTheme(theme.id === "brand" ? THEMES[1] : THEMES[0])} className="p-2 rounded-full bg-black/5 dark:bg-white/10 text-sm">🌙</button>
-            {isAdmin ? (
+            {/* ضبط إخفاء أيقونة الترس عن العامة وعرض زر السلة المناسب */}
+            {isAdmin && (
               <>
                 <button onClick={() => setAdminOpen(true)} className="p-2 rounded-full border text-green-500 bg-green-500/10 active:scale-95 animate-pulse"><Settings size={16} /></button>
                 <button onClick={() => setIsAdmin(false)} className="p-2 rounded-full border text-red-500 bg-red-500/5"><LogOut size={14} /></button>
               </>
-            ) : (
-              <button onClick={() => setPinModalOpen(true)} className="p-2.5 rounded-full border border-[#1F1F1F] text-xs font-bold transition-all hover:bg-black/10">⚙️ لوحة الإدارة</button>
             )}
+            <button onClick={() => setCartOpen(true)} className="relative p-2.5 rounded-full text-white shadow-md bg-gradient-to-r from-red-500 to-red-600">
+              <ShoppingCart size={16} />
+              {cartCount > 0 && <span className="absolute -top-1 -right-1 min-w-[18px] h-4 px-1 bg-amber-500 text-black text-[10px] font-bold rounded-full flex items-center justify-center">{cartCount}</span>}
+            </button>
           </div>
         </div>
 
@@ -547,7 +547,7 @@ export default function RestaurantMenu() {
         <div className="max-w-3xl mx-auto px-4 pb-3">
           <div className="relative">
             <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="ابحث عن برجر، بيتزا، سندوتش كفتة، كنز..." className="w-full px-4 py-2 pr-9 rounded-full text-xs border focus:outline-none transition-all shadow-sm" style={{ background: theme.surface, borderColor: theme.accent + "20", color: theme.text }} />
-            <Search size={14} className="absolute right-3.5 top-3 opacity-60" />
+            <Search size={14} className="absolute right-3.5 top-3 top-2.5 opacity-60" />
           </div>
         </div>
 
@@ -642,11 +642,10 @@ export default function RestaurantMenu() {
                         })()
                       ) : (
                         (() => {
-                          const key = `${item.id}::موحد`; // فرض الكي بالشكل الموحد لحل مشكلة الإضافة
+                          const key = `${item.id}::موحد`; 
                           const qty = cart[key] || 0;
                           return (
                             <div className="flex items-center gap-3">
-                              <span className="text-xs font-black" style={{ color: theme.accent }}>{money(item.price)}</span>
                               {qty > 0 ? (
                                 <div className="flex items-center gap-1.5 rounded-lg p-0.5 border" style={{ borderColor: theme.accent + "30", background: theme.surface2 }}>
                                   <button onClick={() => addToCart(key, -1)} className="w-6 h-6 rounded-md flex items-center justify-center border" style={{ borderColor: theme.accent }}><Minus size={10} /></button>
@@ -654,8 +653,8 @@ export default function RestaurantMenu() {
                                   <button onClick={() => addToCart(key, 1)} className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: theme.accent, color: "#fff" }}><Plus size={10} /></button>
                                 </div>
                               ) : (
-                                <button onClick={() => addToCart(key, 1)} className="w-7 h-7 rounded-lg flex items-center justify-center text-white active:scale-95" style={{ background: theme.accent }}>
-                                  <Plus size={12} />
+                                <button onClick={() => addToCart(key, 1)} className="px-3 py-1 rounded-lg text-[10px] font-black shadow-sm flex items-center gap-1 text-white" style={{ background: theme.accent }}>
+                                  <Plus size={10} /> إضافة
                                 </button>
                               )}
                             </div>
@@ -686,7 +685,7 @@ export default function RestaurantMenu() {
 
       {/* ===================== FLOATING CART BUTTON ===================== */}
       {cartCount > 0 && (
-        <button onClick={() => setCartOpen(true)} className="fixed bottom-14 left-1/2 -translate-x-1/2 z-35 flex items-center justify-between gap-6 px-6 py-3.5 rounded-full shadow-2xl font-bold text-sm active:scale-95 transition-all text-white" style={{ background: theme.accent, width: "90%", maxWidth: "450px" }}>
+        <button onClick={() => setCartOpen(true)} className="fixed bottom-14 left-1/2 -translate-x-1/2 z-35 flex items-center justify-between gap-6 px-6 py-3.5 rounded-full shadow-2xl font-bold text-sm active:scale-95 transition-all text-white animate-bounce" style={{ background: theme.accent, width: "90%", maxWidth: "450px" }}>
           <div className="flex items-center gap-2">
             <div className="relative">
               <ShoppingCart size={18} />
@@ -698,7 +697,7 @@ export default function RestaurantMenu() {
         </button>
       )}
 
-      {/* ===================== CART DRAWER (TICKET STYLE DESIGN) ===================== */}
+      {/* ===================== CART DRAWER ===================== */}
       {cartOpen && (
         <Overlay onClose={() => setCartOpen(false)}>
           <Sheet theme={theme} title="إيصال سلة المشتريات" onClose={() => setCartOpen(false)}>
@@ -770,7 +769,7 @@ export default function RestaurantMenu() {
                   </div>
                 </div>
 
-                {/* كود الخصم */}
+                {/* نظام كود الخصم */}
                 <div className="pt-2 flex gap-2">
                   <div className="relative flex-1">
                     <input type="text" value={enteredPromo} onChange={(e) => setEnteredPromo(e.target.value)} placeholder="هل لديك كوبون خصم؟" className="w-full px-3 py-2 pr-8 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: theme.accent + "25", color: theme.text }} />
@@ -820,7 +819,7 @@ export default function RestaurantMenu() {
                     </div>
 
                     <div className="relative">
-                      <textarea placeholder="أي ملاحظات على الأكل؟ (بدون بصل، الكرانشي بارد...)" value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} rows={1} className="w-full px-3 py-2 pr-9 rounded-xl text-xs border focus:outline-none resize-none" style={{ background: theme.surface2, borderColor: theme.accent + "30", color: theme.text }} />
+                      <textarea placeholder="أي ملاحظات إضافية على الأكل؟" value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} rows={1} className="w-full px-3 py-2 pr-9 rounded-xl text-xs border focus:outline-none resize-none" style={{ background: theme.surface2, borderColor: theme.accent + "30", color: theme.text }} />
                       <FileText size={14} className="absolute right-3 top-2 opacity-60" style={{ color: theme.text }} />
                     </div>
                   </div>
@@ -834,7 +833,7 @@ export default function RestaurantMenu() {
         </Overlay>
       )}
 
-      {/* بوب أب التحقق العكسي لمنع الهكر */}
+      {/* بوب أب التحقق العكسي من الـ CLAIM كود */}
       {orderSuccess && (
         <Overlay onClose={() => setOrderSuccess(false)}>
           <Sheet theme={theme} title="جاري تأكيد طلبك... 🕒" onClose={() => setOrderSuccess(false)}>
@@ -872,7 +871,7 @@ export default function RestaurantMenu() {
         </Overlay>
       )}
 
-      {/* بوب أب الـ PIN للإدارة */}
+      {/* بوب أب التحقق من الـ PIN للإدارة */}
       {pinModalOpen && (
         <Overlay onClose={() => setPinModalOpen(false)}>
           <Sheet theme={theme} title="التحقق من هوية المدير" onClose={() => setPinModalOpen(false)}>
@@ -895,7 +894,7 @@ export default function RestaurantMenu() {
           <Sheet theme={theme} title="لوحة كاشير وإدارة الطلبات والأسعار" onClose={() => setAdminOpen(false)}>
             <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
               
-              {/* سجل قاعدة بيانات العملاء والطلب وتصدير الإكسيل */}
+              {/* سجل قاعدة البيانات والعملاء وتصدير الإكسيل */}
               <div className="pt-2 border-b pb-4" style={{ borderColor: theme.accent + "20" }}>
                 <p className="font-bold text-sm mb-2 flex items-center justify-between text-blue-500">
                   <span className="flex items-center gap-1"><FileText size={16} /> سجل الطلبات وداتا العملاء حية ({savedOrders.length})</span>
@@ -928,7 +927,7 @@ export default function RestaurantMenu() {
                 )}
               </div>
 
-              {/* قسم إضافة الأصناف وتعديل المنيو بدون كراش */}
+              {/* قسم تعديل المنيو والأصناف */}
               <div className="pt-2 border-b pb-4" style={{ borderColor: theme.accent + "20" }}>
                 <div className="flex items-center justify-between mb-3">
                   <p className="font-bold text-sm text-amber-500 flex items-center gap-1"><Utensils size={15} /> قائمة المأكولات والأصناف</p>
@@ -985,7 +984,7 @@ export default function RestaurantMenu() {
                   {generatedBurnCode && (
                     <div className="p-2 bg-black/10 dark:bg-white/5 rounded border border-red-500/30 text-center select-all">
                       <p className="text-[10px] opacity-75">انسخ الكود وأرسله للشخص في محادثة الواتساب:</p>
-                      <p className="text-xs font-black tracking-widest text-red-400 mt-1">{generatedBurnCode}</p>
+                      <p className="text-xs font-black tracking-widest text-red-500 mt-1">{generatedBurnCode}</p>
                     </div>
                   )}
                 </div>
@@ -1008,7 +1007,7 @@ export default function RestaurantMenu() {
                 </div>
               </div>
 
-              {/* إدارة مناطق الدليفري */}
+              {/* خطوط الدليفري */}
               <div className="pt-4 border-t" style={{ borderColor: theme.accent + "20" }}>
                 <p className="font-bold text-sm mb-2 flex items-center gap-1"><MapPin size={15} /> إدارة مناطق وقرى خطوط التوصيل</p>
                 <div className="bg-black/5 dark:bg-white/5 p-3 rounded-xl border border-dashed space-y-2 mb-3" style={{ borderColor: theme.accent + "30" }}>
@@ -1018,9 +1017,17 @@ export default function RestaurantMenu() {
                   </div>
                   <button onClick={handleAddDeliveryArea} className="w-full py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><PlusCircle size={13}/>إضافة خط المنطقة</button>
                 </div>
+                <div className="space-y-1.5 max-h-[15vh] overflow-y-auto pr-1">
+                  {deliveryAreas.map((area, idx) => (
+                    <div key={idx} className="flex items-center justify-between text-xs p-2 rounded-lg bg-black/10 dark:bg-white/5 border border-dashed" style={{ borderColor: theme.accent + "15" }}>
+                      <span className="font-medium">{area.name} · <span style={{ color: theme.accent }}>{money(area.price)}</span></span>
+                      <button onClick={() => handleRemoveDeliveryArea(idx)} className="p-1 rounded-full text-red-500 border border-red-500/20 bg-red-500/5"><Trash2 size={12}/></button>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              {/* إدارة الكوبونات */}
+              {/* الكوبونات */}
               <div className="pt-4 border-t" style={{ borderColor: theme.accent + "20" }}>
                 <p className="font-bold text-sm mb-2 flex items-center gap-1 text-green-500"><Tag size={15} /> إدارة الكوبونات الفعالة</p>
                 <div className="bg-black/5 dark:bg-white/5 p-3 rounded-xl border border-dashed space-y-2 mb-3" style={{ borderColor: theme.accent + "30" }}>
@@ -1030,6 +1037,21 @@ export default function RestaurantMenu() {
                     <input type="number" placeholder="حد الاستخدام" value={newPromoLimit} onChange={(e) => setNewPromoLimit(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.accent + "30", color: theme.text }} />
                   </div>
                   <button onClick={handleAddPromoCode} className="w-full py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><PlusCircle size={13}/>حفظ وإدراج الكود في السيستم</button>
+                </div>
+                <div className="space-y-1.5 max-h-[15vh] overflow-y-auto pr-1">
+                  {promoCodes.map((promo, idx) => {
+                    const currentLimit = promo.limit !== undefined ? promo.limit : 9999;
+                    const currentUsed = promo.used !== undefined ? promo.used : 0;
+                    return (
+                      <div key={idx} className="flex items-center justify-between text-xs p-2 rounded-lg bg-black/10 dark:bg-white/5 border border-dashed" style={{ borderColor: theme.accent + "15" }}>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="font-bold text-green-500 flex items-center gap-1"><Tag size={11} /> {promo.code} · <span className="font-medium text-white">خصم {promo.discount}%</span></span>
+                          <span className="text-[10px]" style={{ color: theme.muted }}>الاستخدام الحالي: {currentUsed} من أصل {currentLimit} مرة</span>
+                        </div>
+                        <button onClick={() => handleRemovePromoCode(idx)} className="p-1 rounded-full text-red-500 border border-red-500/20 bg-red-500/5"><Trash2 size={12}/></button>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
