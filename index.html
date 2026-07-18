@@ -2,9 +2,68 @@
 <html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/assets/logo.png" />
+    <!-- فيف ايكون احتياطية بإيموجي البيتزا في حال عدم تحميل اللوجو -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍕</text></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0A0A0A" />
+
+    <!-- ===================== 1. تهيئة الـ SEO الأساسية لخرائط ومحركات بحث جوجل ===================== -->
     <title>منيو دريم كورنر - Dream Corner Menu</title>
+    <meta name="description" content="منيو مطعم دريم كورنر الرسمي بالبرامون - بجوار عيادة الدكتورة إلهام العشري. اطلب الآن أونلاين أشهى أنواع البيتزا، السندوتشات، والأصناف الجانبية. دليفري فوري وسريع للبرامون والقرى المجاورة." />
+    <meta name="keywords" content="دريم كورنر, منيو دريم كورنر, مطعم دريم كورنر البرامون, بيتزا البرامون, دليفري البرامون, مطاعم البرامون, Dream Corner" />
+    <meta name="author" content="Mr3abkarino" />
+
+    <!-- ===================== 2. كروت السوشيال ميديا لظهور احترافي على فيسبوك وواتساب (Open Graph) ===================== -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://dream-corner-menu-4nfj.vercel.app/" />
+    <meta property="og:title" content="منيو مطعم دريم كورنر أونلاين - طعم يفرق .. جودة تليق بك" />
+    <meta property="og:description" content="تصفح المنيو الذكي لمطعم دريم كورنر واطلب مباشرة عبر الواتساب. بيتزا، سندوتشات، ومشروبات مع خدمة التوصيل السريع للبرامون والقرى المجاورة." />
+    <meta property="og:image" content="https://dream-corner-menu-4nfj.vercel.app/assets/logo.png" />
+
+    <!-- ===================== 3. كود الـ Schema Markup المنظم (إجبار جوجل على أرشفته كمطعم حقيقي) ===================== -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Restaurant",
+      "name": "دريم كورنر - Dream Corner",
+      "image": "https://dream-corner-menu-4nfj.vercel.app/assets/logo.png",
+      "url": "https://dream-corner-menu-4nfj.vercel.app/",
+      "telephone": "+201006113627",
+      "priceRange": "$$",
+      "servesCuisine": [
+        "Pizza",
+        "Sandwiches",
+        "Fast Food"
+      ],
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "بجوار عيادة الدكتورة إلهام العشري",
+        "addressLocality": "البرامون",
+        "addressRegion": "المنصورة، الدقهلية",
+        "addressCountry": "EG"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "description": "موقع مطعم دريم كورنر بالبرامون"
+      },
+      "openingHoursSpecification": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "opens": "10:00",
+        "closes": "02:00"
+      },
+      "menu": "https://dream-corner-menu-4nfj.vercel.app/"
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
