@@ -121,7 +121,7 @@ const getCategoryIcon = (categoryName, size = 14) => {
 export default function RestaurantMenu() {
   const [theme, setTheme] = useState(THEMES[0]);
   const [restaurantName, setRestaurantName] = useState("دريم كورنر");
-  const [tagline, setTagline] = useState("وجبات سريعة ولذيثة — طعم يفرق .. جودة تليق بك");
+  const [tagline, setTagline] = useState("وجبات سريعة ولذيذة — طعم يفرق .. جودة تليق بك");
   const [address, setAddress] = useState("البرامون، بجوار عيادة الدكتورة إلهام العشري");
   const [menuUrl, setMenuUrl] = useState("https://dream-corner-menu-4nfj.vercel.app");
   const [whatsappNumber, setWhatsappNumber] = useState("+201006113627");
@@ -171,9 +171,6 @@ export default function RestaurantMenu() {
   const [pointsEarnRate, setPointsEarnRate] = useState(100); 
   const [pointValueInMoney, setPointValueInMoney] = useState(1); 
 
-  const [scheduleType, setScheduleType] = useState("now"); 
-  const [scheduleTime, setScheduleTime] = useState("");
-
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminPin, setAdminPin] = useState("1234");
   const [pinModalOpen, setPinModalOpen] = useState(false);
@@ -199,7 +196,6 @@ export default function RestaurantMenu() {
   const saveTimer = useRef(null);
   const findItem = (id) => items.find((i) => i.id === id);
 
-  // تحديث لوجيك قراءة الـ cart لتفادي مشكلة الـ الكي الموحد والمختفي[span_2](start_span)[span_2](end_span)
   const cartList = useMemo(() => {
     return Object.entries(cart)
       .filter((entry) => entry[1] > 0)
@@ -211,7 +207,7 @@ export default function RestaurantMenu() {
         const sizeLabel = parts[1] || "";
         const item = findItem(id);
         if (!item) return null;
-        const price = sizeLabel && sizeLabel !== "موحد" ? item.sizes.find((s) => s.label === sizeLabel)?.price ?? 0 : item.price;
+        const price = sizeLabel && sizeLabel !== "موحد" ? item.sizes?.find((s) => s.label === sizeLabel)?.price ?? item.price : item.price;
         const label = sizeLabel && sizeLabel !== "موحد" ? item.name + " (" + sizeLabel + ")" : item.name;
         return { key, id, label, price, qty };
       })
@@ -379,21 +375,6 @@ export default function RestaurantMenu() {
     }, 500);
   }, [items, restaurantName, tagline, address, menuUrl, whatsappNumber, vodafoneCash, instapay, adminPin, deliveryAreas, promoCodes, pointsEarnRate, pointValueInMoney, generatedBurnCode, burnPointsAmount, savedOrders, theme, loaded]);
 
-  const handleVerifyPin = (e) => {
-    e.preventDefault();
-    if (enteredPin === adminPin) {
-      setIsAdmin(true);
-      setAdminOpen(true);
-      setPinModalOpen(false);
-      setPinError("");
-      setEnteredPin("");
-      setLogoClicks(0);
-    } else {
-      setPinError("رمز الأمان PIN غير صحيح! يرجى إعادة المحاولة.");
-      setEnteredPin("");
-    }
-  };
-
   const deleteSavedOrder = (index) => {
     setSavedOrders((prev) => prev.filter((_, idx) => idx !== index));
   };
@@ -457,15 +438,102 @@ export default function RestaurantMenu() {
     setSelectedAreaIndex(-1);
   };
 
-  const handleLogoClickLocal = () => {
-    setLogoClicks((prev) => {
-      const nextClicks = prev + 1;
-      if (nextClicks >= 5) {
-        setPinModalOpen(true);
-        return 0;
-      }
-      return nextClicks;
-    });
+  const sendWhatsApp = () => {
+    if (cartList.length === 0) return;
+    if (!customerName.trim() || !customerPhone.trim() || !customerAddress.trim()) {
+      setValidationError("برجاء كتابة الاسم، ورقم الهاتف، وعنوان التوصيل أولاً لتأكيد طلبك!");
+      return;
+    }
+    if (selectedAreaIndex === -1) {
+      setValidationError("برجاء اختيار منطقة التوصيل لحساب إجمالي الأوردر بدقة!");
+      return;
+    }
+    setValidationError("");
+
+    const randomSecret = Math.floor(1000 + Math.random() * 9000);
+    const secretCode = `DCGC-${randomSecret}`;
+    setGeneratedClaimCode(secretCode);
+    setClaimCodeSuccess(false);
+    setClaimCodeError("");
+
+    const newlyEarnedPoints = Math.floor(cartTotal / pointsEarnRate);
+    setPointsToEarnPending(newlyEarnedPoints);
+
+    const itemsSummary = cartList.map(i => `${i.label} (x${i.qty})`).join(" | ");
+    const newOrderRecord = {
+      date: new Date().toLocaleString("ar-EG"),
+      name: customerName.trim(),
+      phone: customerPhone.trim(),
+      area: activeDeliveryArea.name,
+      address: customerAddress.trim(),
+      itemsDescription: itemsSummary,
+      total: finalTotal
+    };
+    setSavedOrders((prev) => [newOrderRecord, ...prev]);
+
+    let updatedPromoCodes = promoCodes;
+    if (appliedDiscountPercent > 0) {
+      const codeClean = enteredPromo.trim().toUpperCase();
+      updatedPromoCodes = promoCodes.map(p => {
+        if (p.code.toUpperCase() === codeClean) {
+          const currentUsed = p.used !== undefined ? p.used : 0;
+          return { ...p, used: currentUsed + 1 };
+        }
+        return p;
+      });
+      setPromoCodes(updatedPromoCodes);
+    }
+
+    let updatedPoints = userPoints;
+    if (redeemPoints) {
+      const pointsUsed = Math.ceil(pointsDiscountValue / pointValueInMoney);
+      updatedPoints = Math.max(0, userPoints - pointsUsed);
+    }
+
+    if (typeof window !== "undefined" && window.localStorage) {
+      localStorage.setItem("customer-name-cache", customerName.trim());
+      localStorage.setItem("customer-phone-cache", customerPhone.trim());
+      localStorage.setItem("customer-address-cache", customerAddress.trim());
+      localStorage.setItem("customer-points-loyalty", updatedPoints.toString());
+    }
+
+    const lines = cartList.map((cartItem) => "• " + cartItem.label + " x" + cartItem.qty + " — " + money(cartItem.price * cartItem.qty));
+
+    let text = `🔥 *طلب جديد — ${restaurantName}* \n\n` + 
+               `👤 اسم العميل: ${customerName}\n` +
+               `📱 تليفون العميل: ${customerPhone}\n` +
+               `📍 المنطقة: ${activeDeliveryArea.name}\n` +
+               `🏠 العنوان بالتفصيل: ${customerAddress}\n`;
+               
+    if (geoLink) text += `📍 لوكيشن GPS: ${geoLink}\n`;
+    if (customerNotes.trim()) text += `📝 ملاحظات العميل: ${customerNotes.trim()}\n`;
+    
+    text += `\nالطلبات:\n${lines.join("\n")}\n\n` + `💵 حساب الأصناف: ${money(cartTotal)}\n`;
+            
+    if (discountAmount > 0) {
+      text += `🏷️ كود الخصم: ${enteredPromo.toUpperCase()} (-${appliedDiscountPercent}%)\n📉 قيمة الخصم: ${money(discountAmount)}\n`;
+    }
+    if (redeemPoints && pointsDiscountValue > 0) {
+      const pointsUsed = Math.ceil(pointsDiscountValue / pointValueInMoney);
+      text += `🪙 خصم نقاط محفظة الولاء: -${money(pointsDiscountValue)} (تم خصم ${pointsUsed} نقطة)\n`;
+    }
+
+    text += `✨ نقاط مستحقة: +${newlyEarnedPoints} نقطة\n` +
+            `🛵 مصاريف التوصيل: ${money(activeDeliveryArea.price)}\n` +
+            `💰 *الإجمالي النهائي المطلوب: ${money(finalTotal)}*\n\n` +
+            `🔑 كود تفعيل هدية النقاط (انسخه وضعه في المنيو): ${secretCode}`;
+                 
+    const phone = whatsappNumber.replace(/[^\d+]/g, "");
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, "_blank");
+
+    setUserPoints(updatedPoints);
+    setCartOpen(false);
+    setCart({});
+    setOrderSuccess(true); 
+    setAppliedDiscountPercent(0);
+    setEnteredPromo("");
+    setGeoLink("");
+    setRedeemPoints(false);
   };
 
   const categories = useMemo(() => ["الكل", ...new Set(items.map((i) => i.cat))], [items]);
@@ -529,12 +597,8 @@ export default function RestaurantMenu() {
           
           <div className="flex items-center gap-2">
             <button onClick={() => setTheme(theme.id === "brand" ? THEMES[1] : THEMES[0])} className="p-2 rounded-full bg-black/5 dark:bg-white/10 text-sm">🌙</button>
-            {/* ضبط إخفاء أيقونة الترس عن العامة وعرض زر السلة المناسب */}
             {isAdmin && (
-              <>
-                <button onClick={() => setAdminOpen(true)} className="p-2 rounded-full border text-green-500 bg-green-500/10 active:scale-95 animate-pulse"><Settings size={16} /></button>
-                <button onClick={() => setIsAdmin(false)} className="p-2 rounded-full border text-red-500 bg-red-500/5"><LogOut size={14} /></button>
-              </>
+              <button onClick={() => setAdminOpen(true)} className="p-2 rounded-full border text-green-500 bg-green-500/10 active:scale-95 animate-pulse"><Settings size={16} /></button>
             )}
             <button onClick={() => setCartOpen(true)} className="relative p-2.5 rounded-full text-white shadow-md bg-gradient-to-r from-red-500 to-red-600">
               <ShoppingCart size={16} />
@@ -547,7 +611,7 @@ export default function RestaurantMenu() {
         <div className="max-w-3xl mx-auto px-4 pb-3">
           <div className="relative">
             <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="ابحث عن برجر، بيتزا، سندوتش كفتة، كنز..." className="w-full px-4 py-2 pr-9 rounded-full text-xs border focus:outline-none transition-all shadow-sm" style={{ background: theme.surface, borderColor: theme.accent + "20", color: theme.text }} />
-            <Search size={14} className="absolute right-3.5 top-3 top-2.5 opacity-60" />
+            <Search size={14} className="absolute right-3.5 top-2.5 opacity-60" />
           </div>
         </div>
 
@@ -646,6 +710,7 @@ export default function RestaurantMenu() {
                           const qty = cart[key] || 0;
                           return (
                             <div className="flex items-center gap-3">
+                              <span className="text-xs font-black" style={{ color: theme.accent }}>{money(item.price)}</span>
                               {qty > 0 ? (
                                 <div className="flex items-center gap-1.5 rounded-lg p-0.5 border" style={{ borderColor: theme.accent + "30", background: theme.surface2 }}>
                                   <button onClick={() => addToCart(key, -1)} className="w-6 h-6 rounded-md flex items-center justify-center border" style={{ borderColor: theme.accent }}><Minus size={10} /></button>
@@ -685,7 +750,7 @@ export default function RestaurantMenu() {
 
       {/* ===================== FLOATING CART BUTTON ===================== */}
       {cartCount > 0 && (
-        <button onClick={() => setCartOpen(true)} className="fixed bottom-14 left-1/2 -translate-x-1/2 z-35 flex items-center justify-between gap-6 px-6 py-3.5 rounded-full shadow-2xl font-bold text-sm active:scale-95 transition-all text-white animate-bounce" style={{ background: theme.accent, width: "90%", maxWidth: "450px" }}>
+        <button onClick={() => setCartOpen(true)} className="fixed bottom-14 left-1/2 -translate-x-1/2 z-35 flex items-center justify-between gap-6 px-6 py-3.5 rounded-full shadow-2xl font-bold text-sm active:scale-95 transition-all text-white" style={{ background: theme.accent, width: "90%", maxWidth: "450px" }}>
           <div className="flex items-center gap-2">
             <div className="relative">
               <ShoppingCart size={18} />
@@ -697,7 +762,7 @@ export default function RestaurantMenu() {
         </button>
       )}
 
-      {/* ===================== CART DRAWER ===================== */}
+      {/* ===================== CART DRAWER (TICKET STYLE DESIGN) ===================== */}
       {cartOpen && (
         <Overlay onClose={() => setCartOpen(false)}>
           <Sheet theme={theme} title="إيصال سلة المشتريات" onClose={() => setCartOpen(false)}>
@@ -819,7 +884,7 @@ export default function RestaurantMenu() {
                     </div>
 
                     <div className="relative">
-                      <textarea placeholder="أي ملاحظات إضافية على الأكل؟" value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} rows={1} className="w-full px-3 py-2 pr-9 rounded-xl text-xs border focus:outline-none resize-none" style={{ background: theme.surface2, borderColor: theme.accent + "30", color: theme.text }} />
+                      <textarea placeholder="أي ملاحظات على الأكل؟ (بدون بصل، الكرانشي بارد...)" value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} rows={1} className="w-full px-3 py-2 pr-9 rounded-xl text-xs border focus:outline-none resize-none" style={{ background: theme.surface2, borderColor: theme.accent + "30", color: theme.text }} />
                       <FileText size={14} className="absolute right-3 top-2 opacity-60" style={{ color: theme.text }} />
                     </div>
                   </div>
@@ -871,7 +936,7 @@ export default function RestaurantMenu() {
         </Overlay>
       )}
 
-      {/* بوب أب التحقق من الـ PIN للإدارة */}
+      {/* بوب أب الـ PIN للإدارة */}
       {pinModalOpen && (
         <Overlay onClose={() => setPinModalOpen(false)}>
           <Sheet theme={theme} title="التحقق من هوية المدير" onClose={() => setPinModalOpen(false)}>
@@ -927,7 +992,7 @@ export default function RestaurantMenu() {
                 )}
               </div>
 
-              {/* قسم تعديل المنيو والأصناف */}
+              {/* قسم تعديل المنيو والأصناف الحماة من كراش الـ price */}
               <div className="pt-2 border-b pb-4" style={{ borderColor: theme.accent + "20" }}>
                 <div className="flex items-center justify-between mb-3">
                   <p className="font-bold text-sm text-amber-500 flex items-center gap-1"><Utensils size={15} /> قائمة المأكولات والأصناف</p>
@@ -941,7 +1006,8 @@ export default function RestaurantMenu() {
                           <input value={item.name} onChange={(e) => updateItem(item.id, { name: e.target.value })} className="w-full p-1 border rounded bg-transparent font-bold" />
                           <div className="grid grid-cols-2 gap-1">
                             <input value={item.cat} onChange={(e) => updateItem(item.id, { cat: e.target.value })} className="p-1 border rounded bg-transparent" placeholder="القسم" />
-                            <input type="number" value={item.price || ""} onChange={(e) => updateItem(item.id, { price: Number(e.target.value) })} className="p-1 border rounded bg-transparent" placeholder="السعر" />
+                            {/* إصلاح الثغرة القاتلة: السيستم هنا بيقرأ السعر الصريح أو سعر الحجم الأول فوراً لتفادي الشاشة البيضاء */}
+                            <input type="number" value={item.price || item.sizes?.[0]?.price || ""} onChange={(e) => updateItem(item.id, item.sizes ? { sizes: item.sizes.map((s, idx) => idx === 0 ? { ...s, price: Number(e.target.value) } : s) } : { price: Number(e.target.value) })} className="p-1 border rounded bg-transparent" placeholder="السعر" />
                           </div>
                           <button onClick={() => setEditingId(null)} className="w-full py-1 bg-green-600 text-white rounded font-bold">حفظ الكارت</button>
                         </div>
@@ -949,7 +1015,7 @@ export default function RestaurantMenu() {
                         <>
                           <div>
                             <p className="font-bold">{item.name}</p>
-                            <p className="opacity-70 text-[10px]">{item.cat} · {item.sizes ? "أحجام متعددة" : `${item.price} ج`}</p>
+                            <p className="opacity-70 text-[10px]">{item.cat} · {item.sizes ? `متعدد (تبدأ من ${item.sizes[2]?.price || item.sizes[0]?.price}ج)` : `${item.price} ج`}</p>
                           </div>
                           <div className="flex gap-1">
                             <button onClick={() => setEditingId(item.id)} className="p-1.5 border rounded-full"><Pencil size={11} /></button>
@@ -984,7 +1050,7 @@ export default function RestaurantMenu() {
                   {generatedBurnCode && (
                     <div className="p-2 bg-black/10 dark:bg-white/5 rounded border border-red-500/30 text-center select-all">
                       <p className="text-[10px] opacity-75">انسخ الكود وأرسله للشخص في محادثة الواتساب:</p>
-                      <p className="text-xs font-black tracking-widest text-red-500 mt-1">{generatedBurnCode}</p>
+                      <p className="text-xs font-black tracking-widest text-red-400 mt-1">{generatedBurnCode}</p>
                     </div>
                   )}
                 </div>
@@ -1017,14 +1083,6 @@ export default function RestaurantMenu() {
                   </div>
                   <button onClick={handleAddDeliveryArea} className="w-full py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><PlusCircle size={13}/>إضافة خط المنطقة</button>
                 </div>
-                <div className="space-y-1.5 max-h-[15vh] overflow-y-auto pr-1">
-                  {deliveryAreas.map((area, idx) => (
-                    <div key={idx} className="flex items-center justify-between text-xs p-2 rounded-lg bg-black/10 dark:bg-white/5 border border-dashed" style={{ borderColor: theme.accent + "15" }}>
-                      <span className="font-medium">{area.name} · <span style={{ color: theme.accent }}>{money(area.price)}</span></span>
-                      <button onClick={() => handleRemoveDeliveryArea(idx)} className="p-1 rounded-full text-red-500 border border-red-500/20 bg-red-500/5"><Trash2 size={12}/></button>
-                    </div>
-                  ))}
-                </div>
               </div>
 
               {/* الكوبونات */}
@@ -1037,21 +1095,6 @@ export default function RestaurantMenu() {
                     <input type="number" placeholder="حد الاستخدام" value={newPromoLimit} onChange={(e) => setNewPromoLimit(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.accent + "30", color: theme.text }} />
                   </div>
                   <button onClick={handleAddPromoCode} className="w-full py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><PlusCircle size={13}/>حفظ وإدراج الكود في السيستم</button>
-                </div>
-                <div className="space-y-1.5 max-h-[15vh] overflow-y-auto pr-1">
-                  {promoCodes.map((promo, idx) => {
-                    const currentLimit = promo.limit !== undefined ? promo.limit : 9999;
-                    const currentUsed = promo.used !== undefined ? promo.used : 0;
-                    return (
-                      <div key={idx} className="flex items-center justify-between text-xs p-2 rounded-lg bg-black/10 dark:bg-white/5 border border-dashed" style={{ borderColor: theme.accent + "15" }}>
-                        <div className="flex flex-col gap-0.5">
-                          <span className="font-bold text-green-500 flex items-center gap-1"><Tag size={11} /> {promo.code} · <span className="font-medium text-white">خصم {promo.discount}%</span></span>
-                          <span className="text-[10px]" style={{ color: theme.muted }}>الاستخدام الحالي: {currentUsed} من أصل {currentLimit} مرة</span>
-                        </div>
-                        <button onClick={() => handleRemovePromoCode(idx)} className="p-1 rounded-full text-red-500 border border-red-500/20 bg-red-500/5"><Trash2 size={12}/></button>
-                      </div>
-                    );
-                  })}
                 </div>
               </div>
 
