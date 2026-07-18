@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "2.2"; // تحديث الإصدار لشحن شريط السوشيال ميديا الجديد بالمنتصف ومنع الكاش
+const MENU_VERSION = "2.3"; // تحديث الإصدار لشحن شريط السوشيال ميديا الجديد بالمنتصف ومنع الكاش
 
 const THEMES = [
   { id: "brand", name: "هوية دريم كورنر", bg: "#0A0A0A", surface: "#141414", surface2: "#1F1F1F", accent: "#D4AF37", accent2: "#8B1E1E", text: "#F3E9D8", muted: "#A3A3A3", display: "'Tajawal', sans-serif" },
@@ -584,7 +584,7 @@ export default function RestaurantMenu() {
 
           {/* 3. زر الفيسبوك المباشر لـ دريم كورنر */}
           <a 
-            href="https://www.facebook.com/profile.php?id=61571431350616" 
+            href="https://www.facebook.com/share/1E3Dx3c5Yh/" 
             target="_blank" 
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center p-2.5 rounded-full bg-[#1877F2] text-white hover:bg-[#166FE5] transition-all duration-200 active:scale-95 shadow-md group"
