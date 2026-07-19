@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "3.7"; // تحديث الإصدار لتفعيل سيستم الـ PWA المطور وقسم الأكثر طلباً الآن
+const MENU_VERSION = "3.8"; // تحديث الإصدار لشحن أيقونات الأقسام العلوية الجديدة
 
 const THEMES = [
   { id: "brand", name: "هوية دريم كورنر", bg: "#0A0A0A", surface: "#141414", surface2: "#1F1F1F", accent: "#D4AF37", accent2: "#8B1E1E", text: "#F3E9D8", muted: "#A3A3A3", display: "'Tajawal', sans-serif" },
@@ -142,7 +142,6 @@ export default function RestaurantMenu() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [closeNoticeOpen, setCloseNoticeOpen] = useState(false);
 
-  // حالات كارت التثبيت الذكي المستقل والمستقر
   const [showInstallBanner, setShowInstallBanner] = useState(true);
 
   const [deliveryAreas, setDeliveryAreas] = useState(DEFAULT_DELIVERY_AREAS);
@@ -188,7 +187,6 @@ export default function RestaurantMenu() {
   const status = checkRestaurantStatus();
   const findItem = (id) => items.find((i) => i.id === id);
 
-  // مدمج: تفعيل الكارت التوجيهي للتثبيت فوراً لكل عميل جديد بدون شروط متصفح معقدة
   useEffect(() => {
     setShowInstallBanner(true);
   }, []);
@@ -561,6 +559,18 @@ export default function RestaurantMenu() {
     setShowResetConfirm(false);
   };
 
+  // دالة مساعدة لربط كل قسم بأيقونة تعبيرية مناسبة في شريط الأقسام العلوي
+  const getCategoryIcon = (categoryName) => {
+    switch (categoryName) {
+      case "الكل": return "🍽";
+      case "البيتزا": return "🍕";
+      case "السندوتشات": return "🍔";
+      case "الأصناف الجانبية": return "🍟";
+      case "المشروبات": return "🥤";
+      default: return "✨";
+    }
+  };
+
   return (
     <div dir="rtl" className="min-h-screen w-full transition-colors duration-500 pb-28" style={{ background: theme.bg, color: theme.text, fontFamily: "'Tajawal', sans-serif" }}>
       {/* ===================== HEADER ===================== */}
@@ -624,12 +634,18 @@ export default function RestaurantMenu() {
         </div>
       </div>
 
-      {/* ===================== CATEGORIES BAR ===================== */}
+      {/* ===================== CATEGORIES BAR WITH NEW GRAPHIC EMOJIS ===================== */}
       <div className="sticky top-[138px] z-10 backdrop-blur-md border-b py-3 shadow-sm" style={{ background: theme.bg + "F2", borderColor: (theme.muted || "#B3A18C") + "15" }}>
         <div className="max-w-3xl mx-auto px-4 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
           {categories.map((c) => (
-            <button key={c} onClick={() => { setActiveCat(c); }} className="whitespace-nowrap px-5 py-2 rounded-full text-xs font-bold border transition-all duration-300" style={activeCat === c ? { background: theme.accent, color: theme.bg, borderColor: theme.accent, boxShadow: `0 4px 10px ${theme.accent}30` } : { borderColor: (theme.muted || "#B3A18C") + "20"., color: theme.muted, background: theme.surface }}>
-              {c}
+            <button 
+              key={c} 
+              onClick={() => { setActiveCat(c); }} 
+              className="whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold border transition-all duration-300 flex items-center gap-1.5" 
+              style={activeCat === c ? { background: theme.accent, color: theme.bg, borderColor: theme.accent, boxShadow: `0 4px 10px ${theme.accent}30` } : { borderColor: (theme.muted || "#B3A18C") + "20", color: theme.muted, background: theme.surface }}
+            >
+              <span>{getCategoryIcon(c)}</span>
+              <span>{c}</span>
             </button>
           ))}
         </div>
@@ -806,7 +822,7 @@ export default function RestaurantMenu() {
         </button>
       )}
 
-      {/* ===================== NEW: PWA INSTALLATION BANNER (كارت التثبيت الذكي الدائم للزبائن) ===================== */}
+      {/* ===================== PWA INSTALLATION BANNER ===================== */}
       {showInstallBanner && (
         <div className="fixed bottom-16 right-4 left-4 sm:left-auto sm:right-6 z-40 max-w-sm rounded-2xl p-4 shadow-2xl border flex flex-col gap-3 animate-fadeIn" style={{ background: theme.surface, borderColor: theme.accent + "40" }}>
           <div className="flex items-start justify-between gap-2">
@@ -820,7 +836,6 @@ export default function RestaurantMenu() {
             <button onClick={() => setShowInstallBanner(false)} className="p-1 rounded-full text-neutral-400 hover:text-white"><X size={14} /></button>
           </div>
 
-          {/* خطوات التثبيت بالعامية المصرية مدعومة بأيقونات المتصفح لتسهيل الشرح للزبون */}
           <div className="space-y-1.5 p-2.5 rounded-xl text-[10px] leading-relaxed" style={{ background: theme.surface2 }}>
             <p className="font-bold text-amber-500">💡 الطريقة في ثواني:</p>
             <p className="text-white">◀️ <span className="font-bold text-amber-400">لو أندرويد (كروم):</span> اضغط على الـ 3 نقط فوق واختار <span className="underline">"إضافة إلى الشاشة الرئيسية"</span>.</p>
@@ -1002,7 +1017,6 @@ export default function RestaurantMenu() {
                     </div>
                   </div>
 
-                  {/* خيارات طريقة الدفع المفضلة والتحويلات */}
                   <div className="pt-4 border-t space-y-2.5" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
                     <p className="text-[11px] font-bold" style={{ color: theme.accent }}>اختر طريقة الدفع المفضلة:</p>
                     <div className="grid grid-cols-2 gap-2">
