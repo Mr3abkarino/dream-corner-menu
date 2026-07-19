@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "2.3"; // تحديث الإصدار لشحن شريط السوشيال ميديا الجديد بالمنتصف ومنع الكاش
+const MENU_VERSION = "2.4"; // تحديث الإصدار لضمان تشغيل سيستم مواعيد العمل والـ Popups الجديدة للعملاء
 
 const THEMES = [
   { id: "brand", name: "هوية دريم كورنر", bg: "#0A0A0A", surface: "#141414", surface2: "#1F1F1F", accent: "#D4AF37", accent2: "#8B1E1E", text: "#F3E9D8", muted: "#A3A3A3", display: "'Tajawal', sans-serif" },
@@ -49,7 +49,7 @@ const DEFAULT_MENU = [
   { id: "p14", cat: "البيتزا", name: "حشو الأطراف", desc: "إضافة أطراف محشوة لأي بيتزا", sizes: [{ label: "كبير", price: 35 }, { label: "وسط", price: 30 }, { label: "صغير", price: 25 }] },
   { id: "s1", cat: "السندوتشات", subcat: "اللحوم", name: "كفتة مشوية", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
   { id: "s2", cat: "السندوتشات", subcat: "اللحوم", name: "سجق مشوي", sizes: [{ label: "كبير", price: 70 }, { label: "وسط", price: 60 }] },
-  { id: "s3", cat: "السندوتشات", subcat: "اللحوم", name: "كبدة إسكندراني", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
+  { id: "s3", cat: "السندوتشات", subcat: "اللحوم", name: "كبدة إस्कندراني", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
   { id: "s4", cat: "السندوتشات", subcat: "اللحوم", name: "ميكس لحوم (سجق+كبدة)", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
   { id: "s5", cat: "السندوتشات", subcat: "اللحوم", name: "حواوشي دبل طعم", price: 45 },
   { id: "s6", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "تشكن بانية", sizes: [{ label: "كبير", price: 85 }, { label: "وسط", price: 70 }] },
@@ -71,6 +71,18 @@ const DEFAULT_MENU = [
 ];
 
 const money = (n) => Number(n).toLocaleString("en-US") + " جنيه";
+
+// دالة فحص مواعيد العمل (1 ظهراً حتى 3 صباحاً)
+const checkRestaurantStatus = () => {
+  const now = new Date();
+  const hours = now.getHours();
+  const isOpen = hours >= 13 || hours < 3;
+  return {
+    isOpen,
+    text: isOpen ? "مفتوح الآن 🟢" : "مغلق حالياً 🔴",
+    timeText: "يومياً من 1:00 ظهراً لـ 3:00 صباحاً"
+  };
+};
 
 const safeStorage = {
   get: async (key) => {
@@ -129,6 +141,7 @@ export default function RestaurantMenu() {
   const [copied, setCopied] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [closeNoticeOpen, setCloseNoticeOpen] = useState(false);
 
   const [deliveryAreas, setDeliveryAreas] = useState(DEFAULT_DELIVERY_AREAS);
   const [newAreaName, setNewAreaName] = useState("");
@@ -168,6 +181,8 @@ export default function RestaurantMenu() {
   const [logoClicks, setLogoClicks] = useState(0);
   
   const saveTimer = useRef(null);
+
+  const status = useMemo(() => checkRestaurantStatus(), []);
 
   const findItem = (id) => items.find((i) => i.id === id);
 
@@ -424,6 +439,12 @@ export default function RestaurantMenu() {
   };
 
   const sendWhatsApp = () => {
+    const currentStatus = checkRestaurantStatus();
+    if (!currentStatus.isOpen) {
+      setCloseNoticeOpen(true);
+      return;
+    }
+
     if (cartList.length === 0) return;
     if (!customerName.trim() || !customerPhone.trim() || !customerAddress.trim()) {
       setValidationError("برجاء كتابة الاسم، ورقم الهاتف، وعنوان التوصيل أولاً لتأكيد طلبك!");
@@ -538,7 +559,13 @@ export default function RestaurantMenu() {
             </div>
             <div className="min-w-0">
               <h1 className="text-xl md:text-2xl font-black truncate leading-tight" style={{ color: theme.accent }}>{restaurantName}</h1>
-              <p className="text-[11px] truncate opacity-75 mt-0.5" style={{ color: theme.muted }}>{tagline}</p>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 mt-0.5 text-[10px]">
+                <span className="font-bold shrink-0 transition-colors" style={{ color: status.isOpen ? "#22c55e" : "#ef4444" }}>
+                  {status.text}
+                </span>
+                <span className="hidden sm:inline opacity-40">|</span>
+                <span className="truncate opacity-75" style={{ color: theme.muted }}>{status.timeText}</span>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -558,7 +585,6 @@ export default function RestaurantMenu() {
       <div className="w-full flex justify-center items-center py-3 border-b sticky top-[77px] z-20 backdrop-blur-md" style={{ background: theme.bg + "D9", borderColor: (theme.muted || "#B3A18C") + "15" }}>
         <div className="flex items-center gap-4 px-4 py-1.5 rounded-full shadow-inner border" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "20" }}>
           
-          {/* 1. زر الاتصال الهاتفي السريع */}
           <a
             href={"tel:" + whatsappNumber}
             className="inline-flex items-center justify-center p-2.5 rounded-full transition-all duration-200 active:scale-95 shadow-md group"
@@ -568,10 +594,8 @@ export default function RestaurantMenu() {
             <Phone size={15} className="group-hover:scale-110 transition-transform" />
           </a>
 
-          {/* خط فاصل صغير */}
           <span className="h-4 w-[1px]" style={{ background: (theme.muted || "#B3A18C") + "30" }} />
 
-          {/* 2. زر الواتساب */}
           <a
             href={"https://wa.me/" + whatsappNumber.replace(/[^\d+]/g, "")}
             target="_blank"
@@ -582,7 +606,6 @@ export default function RestaurantMenu() {
             <MessageCircle size={15} className="group-hover:scale-110 transition-transform" />
           </a>
 
-          {/* 3. زر الفيسبوك المباشر لـ دريم كورنر */}
           <a 
             href="https://www.facebook.com/share/1E3Dx3c5Yh/" 
             target="_blank" 
@@ -595,7 +618,6 @@ export default function RestaurantMenu() {
             </svg>
           </a>
 
-          {/* 4. زر التيك توك المباشر لـ دريم كورنر */}
           <a 
             href="https://www.tiktok.com/@dream_corner1" 
             target="_blank" 
@@ -611,7 +633,7 @@ export default function RestaurantMenu() {
         </div>
       </div>
 
-      {/* ===================== CATEGORIES BAR (SHIFTED TOP POSITION) ===================== */}
+      {/* ===================== CATEGORIES BAR ===================== */}
       <div className="sticky top-[138px] z-10 backdrop-blur-md border-b py-3 shadow-sm" style={{ background: theme.bg + "F2", borderColor: (theme.muted || "#B3A18C") + "15" }}>
         <div className="max-w-3xl mx-auto px-4 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
           {categories.map((c) => (
@@ -927,6 +949,35 @@ export default function RestaurantMenu() {
                 جاري الآن تحويلك إلى تطبيق واتساب لإرسال الفاتورة وتأكيد التوصيل مع الكابتن!
               </p>
               <button onClick={() => setOrderSuccess(false)} className="px-6 py-2 rounded-xl text-xs font-bold" style={{ background: theme.accent, color: theme.bg }}>فهمت، شكراً لك</button>
+            </div>
+          </Sheet>
+        </Overlay>
+      )}
+
+      {closeNoticeOpen && (
+        <Overlay onClose={() => setCloseNoticeOpen(false)}>
+          <Sheet theme={theme} title="نورتنا يا غالي.. 👨‍🍳" onClose={() => setCloseNoticeOpen(false)}>
+            <div className="text-center py-6 space-y-5">
+              <div className="w-16 h-16 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center mx-auto text-3xl animate-pulse">
+                🍕
+              </div>
+              <div className="space-y-2 px-2">
+                <h3 className="text-base font-black text-white">يا غالي، الأفران ريحت شوية..</h3>
+                <p className="text-xs opacity-90 leading-relaxed max-w-xs mx-auto" style={{ color: theme.muted }}>
+                  بنجهزلك حاجة فريش وطعم يفرّق بكرة! المنيو معاك لفّ فيه براحتك ونقّي الأكلات اللي تحبها من دلوقتي، وأول ما نفتح هنكون جاهزين نولّع الدنيا! 🔥🚀
+                </p>
+              </div>
+              <div className="p-3.5 rounded-2xl border text-center space-y-1" style={{ background: theme.surface2, borderColor: theme.accent + "20" }}>
+                <p className="text-[10px] font-bold opacity-70" style={{ color: theme.muted }}>مواعيد استقبال الدليفري والطلبات:</p>
+                <p className="text-sm font-black" style={{ color: theme.accent }}>{status.timeText}</p>
+              </div>
+              <button 
+                onClick={() => setCloseNoticeOpen(false)} 
+                className="w-full py-3 rounded-xl text-xs font-black transition-all active:scale-95 shadow-md" 
+                style={{ background: theme.accent, color: theme.bg }}
+              >
+                حبيبي، هتنقى الأكل من دلوقتي وجاهز لوقت الفتح! ✨
+              </button>
             </div>
           </Sheet>
         </Overlay>
