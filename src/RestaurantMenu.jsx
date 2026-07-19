@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "2.8"; // تحديث الإصدار لتفعيل سيستم الدفع المطور جوة السلة وكود الوقت اللحظي
+const MENU_VERSION = "2.9"; // تحديث الإصدار لتفعيل سيستم الدفع المطور جوة السلة وكود الوقت اللحظي
 
 const THEMES = [
   { id: "brand", name: "هوية دريم كورنر", bg: "#0A0A0A", surface: "#141414", surface2: "#1F1F1F", accent: "#D4AF37", accent2: "#8B1E1E", text: "#F3E9D8", muted: "#A3A3A3", display: "'Tajawal', sans-serif" },
@@ -28,8 +28,8 @@ const DEFAULT_DELIVERY_AREAS = [
 ];
 
 const DEFAULT_PROMO_CODES = [
-  { code: "OFF10", discount: 10, limit: 50, used: 0 },
-  { code: "DREAM", discount: 15, limit: 100, used: 0 }
+  { code: "OFF10", discount: 10, limit: 1, used: 0 },
+  { code: "DREAM", discount: 15, limit: 1, used: 0 }
 ];
 
 const DEFAULT_MENU = [
@@ -126,7 +126,7 @@ export default function RestaurantMenu() {
   const [address, setAddress] = useState("البرامون، بجوار عيادة الدكتورة إلهام العشري");
   const [menuUrl, setMenuUrl] = useState("https://dream-corner-menu-4nfj.vercel.app");
   const [whatsappNumber, setWhatsappNumber] = useState("+201006113627");
-  const [vodafoneCash, setVodafoneCash] = useState("+201023590020");
+  const [vodafoneCash, setVodafoneCash] = useState("01023590020");
   const [instapay, setInstapay] = useState("zxzwd@instapay");
 
   const [items, setItems] = useState(DEFAULT_MENU);
@@ -624,7 +624,7 @@ export default function RestaurantMenu() {
           </a>
 
           <a 
-            href="https://www.tiktok.com/@dream_corner1" 
+            href="https://www.tiktok.com/@dreamcornerfood" 
             target="_blank" 
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center p-2.5 rounded-full bg-[#000000] text-white hover:bg-neutral-900 border border-neutral-800 transition-all duration-200 active:scale-95 shadow-md group"
@@ -981,7 +981,7 @@ export default function RestaurantMenu() {
               <div className="w-16 h-16 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto text-3xl animate-bounce">✓</div>
               <p className="text-sm font-bold leading-relaxed">
                 تم تجهيز الأوردر وتصفير السلة بنجاح. <br/>
-                جاري الآن تحويلك إلى تطبيق واتساب لإرسال الفاتورة وتأكيد التوصيل مع الكابتن!
+                جاري الآن تحويلك إلى تطبيق واتساب لإرسال الفاتورة وتأكيد التوصيل مع مطعم دريم كورنر!
               </p>
               <button onClick={() => setOrderSuccess(false)} className="px-6 py-2 rounded-xl text-xs font-bold" style={{ background: theme.accent, color: theme.bg }}>فهمت، شكراً لك</button>
             </div>
@@ -999,7 +999,7 @@ export default function RestaurantMenu() {
               <div className="space-y-2 px-2">
                 <h3 className="text-base font-black text-white">يا غالي، الأفران ريحت شوية..</h3>
                 <p className="text-xs opacity-90 leading-relaxed max-w-xs mx-auto" style={{ color: theme.muted }}>
-                  بنجهزلك لقمة فريش وطعم يفرّق بكرة! المنيو معاك لفّ فيه براحتك ونقّي الوجبات اللي تحبها من دلوقتي، وأول ما نفتح هنكون جاهزين نولّع الدنيا! 🔥🚀
+                  بنجهزلك حاجة فريش وطعم يفرّق بكرة! المنيو معاك لفّ فيه براحتك واختار كل اللي تحبه من دلوقتي، وأول ما نفتح هنكون جاهزين نولّع الدنيا! 🔥🚀
                 </p>
               </div>
               <div className="p-3.5 rounded-2xl border text-center space-y-1" style={{ background: theme.surface2, borderColor: theme.accent + "20" }}>
@@ -1011,7 +1011,7 @@ export default function RestaurantMenu() {
                 className="w-full py-3 rounded-xl text-xs font-black transition-all active:scale-95 shadow-md" 
                 style={{ background: theme.accent, color: theme.bg }}
               >
-                حبيبي، هتنقى الأكل من دلوقتي وجاهز لوقت الفتح! ✨
+                حبيبي، هتختار الأكل من دلوقتي واستعد لوقت الفتح! ✨
               </button>
             </div>
           </Sheet>
