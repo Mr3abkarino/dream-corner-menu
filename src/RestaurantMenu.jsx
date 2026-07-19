@@ -3,11 +3,11 @@ import restaurantLogo from "./assets/logo.png";
 import {
   ShoppingCart, Plus, Minus, X, Pencil, Trash2, Check, Copy,
   QrCode, Settings, Phone, CreditCard, Sparkles, Search, RotateCcw,
-  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation, Award, Calendar, DollarSign, Wallet, Flame, Download
+  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation, Award, Calendar, DollarSign, Wallet, Flame
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "3.8"; // تحديث الإصدار لشحن أيقونات الأقسام العلوية الجديدة
+const MENU_VERSION = "3.9"; // تحديث الإصدار لإلغاء سيستم التثبيت وتنظيف الواجهة بالكامل
 
 const THEMES = [
   { id: "brand", name: "هوية دريم كورنر", bg: "#0A0A0A", surface: "#141414", surface2: "#1F1F1F", accent: "#D4AF37", accent2: "#8B1E1E", text: "#F3E9D8", muted: "#A3A3A3", display: "'Tajawal', sans-serif" },
@@ -142,8 +142,6 @@ export default function RestaurantMenu() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [closeNoticeOpen, setCloseNoticeOpen] = useState(false);
 
-  const [showInstallBanner, setShowInstallBanner] = useState(true);
-
   const [deliveryAreas, setDeliveryAreas] = useState(DEFAULT_DELIVERY_AREAS);
   const [newAreaName, setNewAreaName] = useState("");
   const [newAreaPrice, setNewAreaPrice] = useState("");
@@ -186,10 +184,6 @@ export default function RestaurantMenu() {
 
   const status = checkRestaurantStatus();
   const findItem = (id) => items.find((i) => i.id === id);
-
-  useEffect(() => {
-    setShowInstallBanner(true);
-  }, []);
 
   const cartList = useMemo(() => {
     return Object.entries(cart)
@@ -559,7 +553,6 @@ export default function RestaurantMenu() {
     setShowResetConfirm(false);
   };
 
-  // دالة مساعدة لربط كل قسم بأيقونة تعبيرية مناسبة في شريط الأقسام العلوي
   const getCategoryIcon = (categoryName) => {
     switch (categoryName) {
       case "الكل": return "🍽";
@@ -634,7 +627,7 @@ export default function RestaurantMenu() {
         </div>
       </div>
 
-      {/* ===================== CATEGORIES BAR WITH NEW GRAPHIC EMOJIS ===================== */}
+      {/* ===================== CATEGORIES BAR ===================== */}
       <div className="sticky top-[138px] z-10 backdrop-blur-md border-b py-3 shadow-sm" style={{ background: theme.bg + "F2", borderColor: (theme.muted || "#B3A18C") + "15" }}>
         <div className="max-w-3xl mx-auto px-4 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
           {categories.map((c) => (
@@ -820,36 +813,6 @@ export default function RestaurantMenu() {
           </div>
           <span className="text-xs tracking-wide">الإجمالي: {money(cartTotal)}</span>
         </button>
-      )}
-
-      {/* ===================== PWA INSTALLATION BANNER ===================== */}
-      {showInstallBanner && (
-        <div className="fixed bottom-16 right-4 left-4 sm:left-auto sm:right-6 z-40 max-w-sm rounded-2xl p-4 shadow-2xl border flex flex-col gap-3 animate-fadeIn" style={{ background: theme.surface, borderColor: theme.accent + "40" }}>
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex items-center gap-2.5">
-              <img src={LOGO_SRC} alt="logo" className="w-9 h-9 rounded-xl object-contain border" style={{ borderColor: theme.accent + "20" }} />
-              <div>
-                <h4 className="text-xs font-black text-white">ثبت تطبيق دريم كورنر على موبايلك! 🎉</h4>
-                <h5 className="text-[10px] opacity-80 mt-0.5" style={{ color: theme.muted }}>علشان تطلب أكلتك المفضلة كل يوم بضغطة واحدة وبدون ما تفضل تدور على المنيو.</h5>
-              </div>
-            </div>
-            <button onClick={() => setShowInstallBanner(false)} className="p-1 rounded-full text-neutral-400 hover:text-white"><X size={14} /></button>
-          </div>
-
-          <div className="space-y-1.5 p-2.5 rounded-xl text-[10px] leading-relaxed" style={{ background: theme.surface2 }}>
-            <p className="font-bold text-amber-500">💡 الطريقة في ثواني:</p>
-            <p className="text-white">◀️ <span className="font-bold text-amber-400">لو أندرويد (كروم):</span> اضغط على الـ 3 نقط فوق واختار <span className="underline">"إضافة إلى الشاشة الرئيسية"</span>.</p>
-            <p className="text-white">◀️ <span className="font-bold text-amber-400">لو آيفون (سفاري):</span> اضغط على زرار المشاركة تحت 📤 واختار <span className="underline">"إضافة للشاشة الرئيسية"</span>.</p>
-          </div>
-
-          <button 
-            onClick={() => setShowInstallBanner(false)} 
-            className="w-full py-2 rounded-xl text-xs font-black transition-all active:scale-95 shadow flex items-center justify-center gap-1.5"
-            style={{ background: theme.accent, color: theme.bg }}
-          >
-            <span>حاضر، هثبته الآن! ✨</span>
-          </button>
-        </div>
       )}
       
       {/* ===================== CART DRAWER ===================== */}
