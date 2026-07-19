@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "2.5"; // تحديث الإصدار لضمان شحن كود الحقوق ومواعيد العمل المدمجة معاً
+const MENU_VERSION = "2.6"; // تحديث الإصدار لضمان شحن كود الحقوق ومواعيد العمل المدمجة معاً
 
 const THEMES = [
   { id: "brand", name: "هوية دريم كورنر", bg: "#0A0A0A", surface: "#141414", surface2: "#1F1F1F", accent: "#D4AF37", accent2: "#8B1E1E", text: "#F3E9D8", muted: "#A3A3A3", display: "'Tajawal', sans-serif" },
@@ -619,7 +619,7 @@ export default function RestaurantMenu() {
           </a>
 
           <a 
-            href="https://www.tiktok.com/@dream_corner1" 
+            href="https://www.tiktok.com/@dreamcornerfood" 
             target="_blank" 
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center p-2.5 rounded-full bg-[#000000] text-white hover:bg-neutral-900 border border-neutral-800 transition-all duration-200 active:scale-95 shadow-md group"
