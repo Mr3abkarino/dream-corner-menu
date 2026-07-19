@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "3.6"; // تحديث الإصدار لتفعيل سيستم الـ PWA المطور وقسم الأكثر طلباً الآن
+const MENU_VERSION = "3.7"; // تحديث الإصدار لتفعيل سيستم الـ PWA المطور وقسم الأكثر طلباً الآن
 
 const THEMES = [
   { id: "brand", name: "هوية دريم كورنر", bg: "#0A0A0A", surface: "#141414", surface2: "#1F1F1F", accent: "#D4AF37", accent2: "#8B1E1E", text: "#F3E9D8", muted: "#A3A3A3", display: "'Tajawal', sans-serif" },
