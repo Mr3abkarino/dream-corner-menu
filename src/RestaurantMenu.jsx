@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "3.5"; // تحديث الإصدار لتفعيل سيستم الـ PWA والتثبيت على الموبايل
+const MENU_VERSION = "3.6"; // تحديث الإصدار لتفعيل سيستم الـ PWA المطور وقسم الأكثر طلباً الآن
 
 const THEMES = [
   { id: "brand", name: "هوية دريم كورنر", bg: "#0A0A0A", surface: "#141414", surface2: "#1F1F1F", accent: "#D4AF37", accent2: "#8B1E1E", text: "#F3E9D8", muted: "#A3A3A3", display: "'Tajawal', sans-serif" },
@@ -142,9 +142,8 @@ export default function RestaurantMenu() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [closeNoticeOpen, setCloseNoticeOpen] = useState(false);
 
-  // حالات خاصة بسيستم تثبيت التطبيق PWA للزبون
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [showInstallBanner, setShowInstallBanner] = useState(false);
+  // حالات كارت التثبيت الذكي المستقل والمستقر
+  const [showInstallBanner, setShowInstallBanner] = useState(true);
 
   const [deliveryAreas, setDeliveryAreas] = useState(DEFAULT_DELIVERY_AREAS);
   const [newAreaName, setNewAreaName] = useState("");
@@ -189,33 +188,10 @@ export default function RestaurantMenu() {
   const status = checkRestaurantStatus();
   const findItem = (id) => items.find((i) => i.id === id);
 
-  // تتبع حدث المتصفح وجاهزية المنيو للتحميل كتطبيق
+  // مدمج: تفعيل الكارت التوجيهي للتثبيت فوراً لكل عميل جديد بدون شروط متصفح معقدة
   useEffect(() => {
-    const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      // إظهار البانر فقط لو الزبون مش منزل التطبيق فعلياً قبل كدة
-      setShowInstallBanner(true);
-    };
-
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    };
+    setShowInstallBanner(true);
   }, []);
-
-  // دالة تشغيل التثبيت الفعلي على الموبايل
-  const handleInstallApp = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === "accepted") {
-      console.log("Customer accepted installing Dream Corner App");
-    }
-    setDeferredPrompt(null);
-    setShowInstallBanner(false);
-  };
 
   const cartList = useMemo(() => {
     return Object.entries(cart)
@@ -652,7 +628,7 @@ export default function RestaurantMenu() {
       <div className="sticky top-[138px] z-10 backdrop-blur-md border-b py-3 shadow-sm" style={{ background: theme.bg + "F2", borderColor: (theme.muted || "#B3A18C") + "15" }}>
         <div className="max-w-3xl mx-auto px-4 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
           {categories.map((c) => (
-            <button key={c} onClick={() => { setActiveCat(c); }} className="whitespace-nowrap px-5 py-2 rounded-full text-xs font-bold border transition-all duration-300" style={activeCat === c ? { background: theme.accent, color: theme.bg, borderColor: theme.accent, boxShadow: `0 4px 10px ${theme.accent}30` } : { borderColor: (theme.muted || "#B3A18C") + "20", color: theme.muted, background: theme.surface }}>
+            <button key={c} onClick={() => { setActiveCat(c); }} className="whitespace-nowrap px-5 py-2 rounded-full text-xs font-bold border transition-all duration-300" style={activeCat === c ? { background: theme.accent, color: theme.bg, borderColor: theme.accent, boxShadow: `0 4px 10px ${theme.accent}30` } : { borderColor: (theme.muted || "#B3A18C") + "20"., color: theme.muted, background: theme.surface }}>
               {c}
             </button>
           ))}
@@ -830,30 +806,36 @@ export default function RestaurantMenu() {
         </button>
       )}
 
-      {/* ===================== NEW: PWA INSTALLATION BANNER (كارت التثبيت السفلي) ===================== */}
-{showInstallBanner && (
-  <div className="fixed bottom-16 right-4 left-4 sm:left-auto sm:right-6 z-40 max-w-sm rounded-2xl p-4 shadow-2xl border flex flex-col gap-3 animate-fadeIn" style={{ background: theme.surface, borderColor: theme.accent + "40" }}>
-    <div className="flex items-start justify-between gap-2">
-      <div className="flex items-center gap-2.5">
-        {/* تحديث هيدر الصورة ليقرأ المتغير المستورد مباشرة لمنع أخطاء المسارات */}
-        <img src={LOGO_SRC} alt="logo" className="w-9 h-9 rounded-xl object-contain border" style={{ borderColor: theme.accent + "20" }} />
-        <div>
-          <h4 className="text-xs font-black text-white">ثبت منيو دريم كورنر على موبايلك!</h4>
-          <p className="text-[10px] opacity-80 mt-0.5" style={{ color: theme.muted }}>اطلب أكلتك بضغطة واحدة من الشاشة الرئيسية.</p>
+      {/* ===================== NEW: PWA INSTALLATION BANNER (كارت التثبيت الذكي الدائم للزبائن) ===================== */}
+      {showInstallBanner && (
+        <div className="fixed bottom-16 right-4 left-4 sm:left-auto sm:right-6 z-40 max-w-sm rounded-2xl p-4 shadow-2xl border flex flex-col gap-3 animate-fadeIn" style={{ background: theme.surface, borderColor: theme.accent + "40" }}>
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-2.5">
+              <img src={LOGO_SRC} alt="logo" className="w-9 h-9 rounded-xl object-contain border" style={{ borderColor: theme.accent + "20" }} />
+              <div>
+                <h4 className="text-xs font-black text-white">ثبت تطبيق دريم كورنر على موبايلك! 🎉</h4>
+                <h5 className="text-[10px] opacity-80 mt-0.5" style={{ color: theme.muted }}>علشان تطلب أكلتك المفضلة كل يوم بضغطة واحدة وبدون ما تفضل تدور على المنيو.</h5>
+              </div>
+            </div>
+            <button onClick={() => setShowInstallBanner(false)} className="p-1 rounded-full text-neutral-400 hover:text-white"><X size={14} /></button>
+          </div>
+
+          {/* خطوات التثبيت بالعامية المصرية مدعومة بأيقونات المتصفح لتسهيل الشرح للزبون */}
+          <div className="space-y-1.5 p-2.5 rounded-xl text-[10px] leading-relaxed" style={{ background: theme.surface2 }}>
+            <p className="font-bold text-amber-500">💡 الطريقة في ثواني:</p>
+            <p className="text-white">◀️ <span className="font-bold text-amber-400">لو أندرويد (كروم):</span> اضغط على الـ 3 نقط فوق واختار <span className="underline">"إضافة إلى الشاشة الرئيسية"</span>.</p>
+            <p className="text-white">◀️ <span className="font-bold text-amber-400">لو آيفون (سفاري):</span> اضغط على زرار المشاركة تحت 📤 واختار <span className="underline">"إضافة للشاشة الرئيسية"</span>.</p>
+          </div>
+
+          <button 
+            onClick={() => setShowInstallBanner(false)} 
+            className="w-full py-2 rounded-xl text-xs font-black transition-all active:scale-95 shadow flex items-center justify-center gap-1.5"
+            style={{ background: theme.accent, color: theme.bg }}
+          >
+            <span>حاضر، هثبته الآن! ✨</span>
+          </button>
         </div>
-      </div>
-      <button onClick={() => setShowInstallBanner(false)} className="p-1 rounded-full text-neutral-400 hover:text-white"><X size={14} /></button>
-    </div>
-    <button 
-      onClick={handleInstallApp}
-      className="w-full py-2 rounded-xl text-xs font-black transition-all active:scale-95 shadow flex items-center justify-center gap-1.5"
-      style={{ background: theme.accent, color: theme.bg }}
-    >
-      <Download size={13} />
-      <span>إضافة للشاشة الرئيسية الآن ✨</span>
-    </button>
-  </div>
-)}
+      )}
       
       {/* ===================== CART DRAWER ===================== */}
       {cartOpen && (
@@ -1020,6 +1002,7 @@ export default function RestaurantMenu() {
                     </div>
                   </div>
 
+                  {/* خيارات طريقة الدفع المفضلة والتحويلات */}
                   <div className="pt-4 border-t space-y-2.5" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
                     <p className="text-[11px] font-bold" style={{ color: theme.accent }}>اختر طريقة الدفع المفضلة:</p>
                     <div className="grid grid-cols-2 gap-2">
