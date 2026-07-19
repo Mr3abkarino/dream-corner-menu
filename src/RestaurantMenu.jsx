@@ -3,11 +3,11 @@ import restaurantLogo from "./assets/logo.png";
 import {
   ShoppingCart, Plus, Minus, X, Pencil, Trash2, Check, Copy,
   QrCode, Settings, Phone, CreditCard, Sparkles, Search, RotateCcw,
-  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation, Award, Calendar, DollarSign, Wallet
+  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation, Award, Calendar, DollarSign, Wallet, Flame
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "2.9"; // تحديث الإصدار لتفعيل سيستم الدفع المطور جوة السلة وكود الوقت اللحظي
+const MENU_VERSION = "3.1"; // تحديث الإصدار لتفعيل قسم "الأكثر طلباً الآن" الفاخر
 
 const THEMES = [
   { id: "brand", name: "هوية دريم كورنر", bg: "#0A0A0A", surface: "#141414", surface2: "#1F1F1F", accent: "#D4AF37", accent2: "#8B1E1E", text: "#F3E9D8", muted: "#A3A3A3", display: "'Tajawal', sans-serif" },
@@ -32,18 +32,19 @@ const DEFAULT_PROMO_CODES = [
   { code: "DREAM", discount: 15, limit: 1, used: 0 }
 ];
 
+// أضفنا خاصية isBestSeller: true للأصناف المميزة عندك في دريم كورنر لتظهر في القسم الجديد
 const DEFAULT_MENU = [
   { id: "p1", cat: "البيتزا", name: "بيتزا مارجريتا", sizes: [{ label: "كبير", price: 90 }, { label: "وسط", price: 70 }, { label: "صغير", price: 45 }] },
-  { id: "p2", cat: "البيتزا", name: "بيتزا ميكس جبنة", sizes: [{ label: "كبير", price: 120 }, { label: "وسط", price: 90 }, { label: "صغير", price: 60 }] },
+  { id: "p2", cat: "البيتزا", name: "بيتزا ميكس جبنة", isBestSeller: true, sizes: [{ label: "كبير", price: 120 }, { label: "وسط", price: 90 }, { label: "صغير", price: 60 }] },
   { id: "p3", cat: "البيتزا", name: "بيتزا خضروات", sizes: [{ label: "كبير", price: 120 }, { label: "وسط", price: 90 }, { label: "صغير", price: 60 }] },
   { id: "p4", cat: "البيتزا", name: "بيتزا هوت دوج", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 100 }, { label: "صغير", price: 70 }] },
   { id: "p5", cat: "البيتزا", name: "بيتزا سجق", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 100 }, { label: "صغير", price: 70 }] },
   { id: "p6", cat: "البيتزا", name: "بيتزا لحمة مفرومة", sizes: [{ label: "كبير", price: 145 }, { label: "وسط", price: 110 }, { label: "صغير", price: 75 }] },
   { id: "p7", cat: "البيتزا", name: "بيتزا بيروني", sizes: [{ label: "كبير", price: 110 }, { label: "وسط", price: 90 }, { label: "صغير", price: 70 }] },
   { id: "p8", cat: "البيتزا", name: "بيتزا سلامي", sizes: [{ label: "كبير", price: 110 }, { label: "وسط", price: 90 }, { label: "صغير", price: 70 }] },
-  { id: "p9", cat: "البيتزا", name: "بيتزا شاورما دجاج", sizes: [{ label: "كبير", price: 155 }, { label: "وسط", price: 120 }, { label: "صغير", price: 80 }] },
+  { id: "p9", cat: "البيتزا", name: "بيتزا شاورما دجاج", isBestSeller: true, sizes: [{ label: "كبير", price: 155 }, { label: "وسط", price: 120 }, { label: "صغير", price: 80 }] },
   { id: "p10", cat: "البيتزا", name: "بيتزا دجاج رانش", sizes: [{ label: "كبير", price: 155 }, { label: "وسط", price: 120 }, { label: "صغير", price: 80 }] },
-  { id: "p11", cat: "البيتزا", name: "بيتزا دريم كورنر سبيشال", desc: "خلطة البيت الخاصة المميزة", sizes: [{ label: "كبير", price: 170 }, { label: "وسط", price: 130 }, { label: "صغير", price: 90 }] },
+  { id: "p11", cat: "البيتزا", name: "بيتزا دريم كورنر سبيشال", desc: "خلطة البيت الخاصة المميزة", isBestSeller: true, sizes: [{ label: "كبير", price: 170 }, { label: "وسط", price: 130 }, { label: "صغير", price: 90 }] },
   { id: "p12", cat: "البيتزا", name: "بيتزا كرانشي (حار أو بارد)", sizes: [{ label: "كبير", price: 130 }, { label: "وسط", price: 100 }, { label: "صغير", price: 80 }] },
   { id: "p13", cat: "البيتزا", name: "بيتزا ميكس دجاج", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 105 }, { label: "صغير", price: 85 }] },
   { id: "p14", cat: "البيتزا", name: "حشو الأطراف", desc: "إضافة أطراف محشوة لأي بيتزا", sizes: [{ label: "كبير", price: 35 }, { label: "وسط", price: 30 }, { label: "صغير", price: 25 }] },
@@ -53,7 +54,7 @@ const DEFAULT_MENU = [
   { id: "s4", cat: "السندوتشات", subcat: "اللحوم", name: "ميكس لحوم (سجق+كبدة)", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
   { id: "s5", cat: "السندوتشات", subcat: "اللحوم", name: "حواوشي دبل طعم", price: 45 },
   { id: "s6", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "تشكن بانية", sizes: [{ label: "كبير", price: 85 }, { label: "وسط", price: 70 }] },
-  { id: "s7", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "زنجر سوبريم", sizes: [{ label: "كبير", price: 95 }, { label: "وسط", price: 80 }] },
+  { id: "s7", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "زنجر سوبريم", isBestSeller: true, sizes: [{ label: "كبير", price: 95 }, { label: "وسط", price: 80 }] },
   { id: "s8", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "سوبر كرانشي", sizes: [{ label: "كبير", price: 95 }, { label: "وسط", price: 80 }] },
   { id: "s9", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "شيش طاووق", sizes: [{ label: "كبير", price: 90 }, { label: "وسط", price: 75 }] },
   { id: "s10", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "تشكن رانش", sizes: [{ label: "كبير", price: 90 }, { label: "وسط", price: 75 }] },
@@ -183,7 +184,7 @@ export default function RestaurantMenu() {
   
   const saveTimer = useRef(null);
 
-  // إزالة الـ useMemo وجعل فحص الحالة ديناميكي في كل ريندر لمنع مشكلة الفتح المسبق
+  // تحديث فوري لحظي لحالة الوقت لمنع الكاش والتأخير
   const status = checkRestaurantStatus();
 
   const findItem = (id) => items.find((i) => i.id === id);
@@ -365,6 +366,11 @@ export default function RestaurantMenu() {
   };
 
   const categories = useMemo(() => ["الكل", ...new Set(items.map((i) => i.cat))], [items]);
+
+  // استخراج المأكولات المميزة المحددة كأكثر طلباً
+  const bestSellerItems = useMemo(() => {
+    return items.filter(item => item.isBestSeller);
+  }, [items]);
 
   const visibleItems = useMemo(() => {
     return items.filter((item) => {
@@ -586,50 +592,27 @@ export default function RestaurantMenu() {
         </div>
       </header>
 
-      {/* ===================== NEW: SOCIAL MEDIA BAR IN MIDDLE ===================== */}
+      {/* ===================== SOCIAL MEDIA BAR IN MIDDLE ===================== */}
       <div className="w-full flex justify-center items-center py-3 border-b sticky top-[77px] z-20 backdrop-blur-md" style={{ background: theme.bg + "D9", borderColor: (theme.muted || "#B3A18C") + "15" }}>
         <div className="flex items-center gap-4 px-4 py-1.5 rounded-full shadow-inner border" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "20" }}>
           
-          <a
-            href={"tel:" + whatsappNumber}
-            className="inline-flex items-center justify-center p-2.5 rounded-full transition-all duration-200 active:scale-95 shadow-md group"
-            style={{ background: theme.accent, color: theme.bg }}
-            aria-label="اتصل بنا هاتفياً"
-          >
+          <a href={"tel:" + whatsappNumber} className="inline-flex items-center justify-center p-2.5 rounded-full transition-all duration-200 active:scale-95 shadow-md group" style={{ background: theme.accent, color: theme.bg }} aria-label="اتصل بنا هاتفياً">
             <Phone size={15} className="group-hover:scale-110 transition-transform" />
           </a>
 
           <span className="h-4 w-[1px]" style={{ background: (theme.muted || "#B3A18C") + "30" }} />
 
-          <a
-            href={"https://wa.me/" + whatsappNumber.replace(/[^\d+]/g, "")}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center p-2.5 rounded-full bg-[#25D366] text-white hover:bg-[#20ba5a] transition-all duration-200 active:scale-95 shadow-md group"
-            aria-label="تواصل معنا عبر واتساب"
-          >
+          <a href={"https://wa.me/" + whatsappNumber.replace(/[^\d+]/g, "")} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center p-2.5 rounded-full bg-[#25D366] text-white hover:bg-[#20ba5a] transition-all duration-200 active:scale-95 shadow-md group" aria-label="تواصل معنا عبر واتساب">
             <MessageCircle size={15} className="group-hover:scale-110 transition-transform" />
           </a>
 
-          <a 
-            href="https://www.facebook.com/share/1E3Dx3c5Yh/" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center p-2.5 rounded-full bg-[#1877F2] text-white hover:bg-[#166FE5] transition-all duration-200 active:scale-95 shadow-md group"
-            aria-label="تابعنا على فيسبوك"
-          >
+          <a href="https://www.facebook.com/share/1E3Dx3c5Yh/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center p-2.5 rounded-full bg-[#1877F2] text-white hover:bg-[#166FE5] transition-all duration-200 active:scale-95 shadow-md group" aria-label="تابعنا على فيسبوك">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current group-hover:scale-110 transition-transform">
               <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
             </svg>
           </a>
 
-          <a 
-            href="https://www.tiktok.com/@dreamcornerfood" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center p-2.5 rounded-full bg-[#000000] text-white hover:bg-neutral-900 border border-neutral-800 transition-all duration-200 active:scale-95 shadow-md group"
-            aria-label="تابعنا على تيك توك"
-          >
+          <a href="https://www.tiktok.com/@dreamcornerfood" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center p-2.5 rounded-full bg-[#000000] text-white hover:bg-neutral-900 border border-neutral-800 transition-all duration-200 active:scale-95 shadow-md group" aria-label="تابعنا على تيك توك">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 group-hover:scale-110 transition-transform">
               <path d="M12.525.02c1.31.01 2.61.03 3.91.05.08 1.53.64 2.93 1.66 4.02.97.97 2.24 1.57 3.63 1.69v3.91c-1.6-.05-3.11-.64-4.32-1.64-.1-.08-.19-.17-.28-.26v6.2c-.06 4.67-3.81 8.28-8.42 8.01-3.69-.21-6.72-3.14-7.06-6.82-.44-4.78 3.32-8.91 8.11-8.52v3.96c-2.15-.22-4.11 1.29-4.44 3.44-.4 2.58 1.56 4.88 4.15 4.96 2.43.08 4.5-1.74 4.66-4.16.03-.43.02-.87.02-1.3V0z"/>
             </svg>
@@ -642,12 +625,7 @@ export default function RestaurantMenu() {
       <div className="sticky top-[138px] z-10 backdrop-blur-md border-b py-3 shadow-sm" style={{ background: theme.bg + "F2", borderColor: (theme.muted || "#B3A18C") + "15" }}>
         <div className="max-w-3xl mx-auto px-4 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
           {categories.map((c) => (
-            <button 
-              key={c} 
-              onClick={() => { setActiveCat(c); }} 
-              className="whitespace-nowrap px-5 py-2 rounded-full text-xs font-bold border transition-all duration-300" 
-              style={activeCat === c ? { background: theme.accent, color: theme.bg, borderColor: theme.accent, boxShadow: `0 4px 10px ${theme.accent}30` } : { borderColor: (theme.muted || "#B3A18C") + "20", color: theme.muted, background: theme.surface }}
-            >
+            <button key={c} onClick={() => { setActiveCat(c); }} className="whitespace-nowrap px-5 py-2 rounded-full text-xs font-bold border transition-all duration-300" style={activeCat === c ? { background: theme.accent, color: theme.bg, borderColor: theme.accent, boxShadow: `0 4px 10px ${theme.accent}30` } : { borderColor: (theme.muted || "#B3A18C") + "20", color: theme.muted, background: theme.surface }}>
               {c}
             </button>
           ))}
@@ -662,6 +640,75 @@ export default function RestaurantMenu() {
           {searchQuery && <button onClick={() => setSearchQuery("")} className="absolute left-3 top-2.5 p-1 rounded-full hover:bg-black/10 transition-colors" style={{ color: theme.muted }}><X size={14} /></button>}
         </div>
       </div>
+
+      {/* ===================== NEW: BEST SELLERS SECTION (الأكثر طلباً الآن) ===================== */}
+      {bestSellerItems.length > 0 && activeCat === "الكل" && !searchQuery.trim() && (
+        <div className="max-w-3xl mx-auto px-4 pt-6">
+          <div className="flex items-center gap-1.5 mb-3.5">
+            <Flame size={16} className="text-red-500 animate-pulse" />
+            <h2 className="text-sm font-black tracking-wide uppercase" style={{ color: theme.accent }}>الأكثر طلباً الآن 🔥</h2>
+          </div>
+          
+          {/* شريط أفقي متحرك فاخر للتصفح السريع بدون تشتيت */}
+          <div className="flex gap-3 overflow-x-auto pb-3 pt-1 no-scrollbar" style={{ scrollbarWidth: "none" }}>
+            {bestSellerItems.map((item) => (
+              <div 
+                key={item.id} 
+                className="w-[170px] sm:w-[200px] shrink-0 rounded-2xl p-3 border relative flex flex-col justify-between shadow-md transition-transform duration-300 hover:scale-[1.02]" 
+                style={{ background: theme.surface, borderColor: theme.accent + "30" }}
+              >
+                {/* شارة متوهجة توضح تميز الوجبة للزبون */}
+                <span className="absolute -top-2 right-3 px-2 py-0.5 rounded-md text-[8px] font-black text-white bg-gradient-to-r from-red-600 to-amber-500 shadow animate-bounce flex items-center gap-0.5">
+                  ✨ الأكثر طلباً
+                </span>
+
+                <div className="space-y-1 mt-1">
+                  <h3 className="font-bold text-xs leading-snug line-clamp-1">{item.name}</h3>
+                  <p className="text-[9px] opacity-75 line-clamp-2 leading-relaxed" style={{ color: theme.muted }}>{item.desc || "الوجبة الأكثر طلباً وشهيرة من دريم كورنر!"}</p>
+                </div>
+
+                <div className="mt-3 pt-2 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "10" }}>
+                  {item.sizes ? (
+                    <div className="space-y-1">
+                      {item.sizes.slice(0, 2).map((sz) => { // عرض أول حجمين اختصاراً للمساحة في الشريط
+                        const key = item.id + "::" + sz.label;
+                        const qty = cart[key] || 0;
+                        return (
+                          <div key={sz.label} className="flex items-center justify-between gap-1 rounded-lg px-1.5 py-0.5 text-[9px]" style={{ background: theme.surface2 }}>
+                            <span className="font-bold opacity-70 truncate">{sz.label}</span>
+                            {qty > 0 ? (
+                              <div className="flex items-center gap-1">
+                                <button onClick={() => addToCart(key, -1)} className="w-3.5 h-3.5 rounded-full flex items-center justify-center border" style={{ borderColor: theme.accent }}><Minus size={8} /></button>
+                                <span className="font-bold">{qty}</span>
+                                <button onClick={() => addToCart(key, 1)} className="w-3.5 h-3.5 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: theme.bg }}><Plus size={8} /></button>
+                              </div>
+                            ) : (
+                              <button onClick={() => addToCart(key, 1)} className="font-extrabold" style={{ color: theme.accent }}>{money(sz.price)} +</button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-black" style={{ color: theme.accent }}>{money(item.price)}</span>
+                      {cart[item.id] > 0 ? (
+                        <div className="flex items-center gap-1 rounded-full px-1.5 py-0.5" style={{ background: theme.surface2 }}>
+                          <button onClick={() => addToCart(item.id, -1)} className="w-4 h-4 rounded-full flex items-center justify-center border" style={{ borderColor: theme.accent }}><Minus size={8} /></button>
+                          <span className="text-[10px] font-bold px-1">{cart[item.id]}</span>
+                          <button onClick={() => addToCart(item.id, 1)} className="w-4 h-4 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: theme.bg }}><Plus size={8} /></button>
+                        </div>
+                      ) : (
+                        <button onClick={() => addToCart(item.id, 1)} className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: theme.bg }}><Plus size={10} /></button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ===================== MENU ITEMS ===================== */}
       <main className="max-w-3xl mx-auto px-4 pb-32 pt-5 space-y-8">
@@ -679,7 +726,7 @@ export default function RestaurantMenu() {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {list.map((item) => (
                   <div key={item.id} className="rounded-2xl p-3.5 border transition-all duration-300 flex flex-col justify-between hover:shadow-lg shadow-sm" style={{ background: theme.surface, borderColor: (theme.muted || "#B3A18C") + "15" }}>
-                    <div className="space-y-1.5">
+                    <div className="space-y-1.5 relative">
                       <h3 className="font-bold text-sm leading-snug line-clamp-2">{item.name}</h3>
                       {item.desc && <p className="text-[10px] opacity-75 line-clamp-3 leading-relaxed" style={{ color: theme.muted }}>{item.desc}</p>}
                     </div>
@@ -927,7 +974,7 @@ export default function RestaurantMenu() {
                     </div>
                   </div>
 
-                  {/* ===================== NEW: INTERACTIVE PAYMENT SELECTION IN CART ===================== */}
+                  {/* خيارات الدفع الإلكتروني والنقدي المباشر */}
                   <div className="pt-4 border-t space-y-2.5" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
                     <p className="text-[11px] font-bold" style={{ color: theme.accent }}>اختر طريقة الدفع المفضلة:</p>
                     <div className="grid grid-cols-2 gap-2">
@@ -951,7 +998,6 @@ export default function RestaurantMenu() {
                       </button>
                     </div>
 
-                    {/* عرض خيارات الدفع الإلكتروني المباشر ورسالة التحذير التوجيهية في حال تم اختياره */}
                     {paymentMethod === "electronic" && (
                       <div className="p-3 rounded-xl border border-dashed space-y-2.5 bg-black/10 transition-all animate-fadeIn" style={{ borderColor: theme.accent + "40" }}>
                         <p className="text-[10px] font-bold text-center leading-relaxed text-amber-500 animate-pulse">
@@ -1130,7 +1176,7 @@ export default function RestaurantMenu() {
                     <div key={item.id} className="p-3 rounded-xl border" style={{ borderColor: (theme.muted || "#B3A18C") + "25", background: theme.surface }}>
                       {editingId === item.id ? (
                         <div className="space-y-2">
-                          <input value={item.name} onChange={(e) => updateItem(item.id, { name: e.target.value })} className="w-full px-2.5 py-1.5 rounded-lg border bg-transparent text-sm font-bold" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: text }} />
+                          <input value={item.name} onChange={(e) => updateItem(item.id, { name: e.target.value })} className="w-full px-2.5 py-1.5 rounded-lg border bg-transparent text-sm font-bold" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
                           <input value={item.desc || ""} onChange={(e) => updateItem(item.id, { desc: e.target.value })} className="w-full px-2.5 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
                           <div className="grid grid-cols-2 gap-2">
                             <input value={item.cat} onChange={(e) => updateItem(item.id, { cat: e.target.value })} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
@@ -1207,9 +1253,10 @@ function Overlay({ children, onClose }) {
   );
 }
 
+// تعديل بسيط لمنع تداخل شارات المنتجات عند عرض النوافذ المنبثقة
 function Sheet({ theme, title, onClose, children }) {
   return (
-    <div className="relative z-10 w-full md:max-w-md max-h-[85vh] rounded-t-3xl md:rounded-3xl p-5 overflow-y-auto" style={{ background: theme.bg, color: theme.text, border: "1px solid " + (theme.muted || "#B3A18C") + "30" }} dir="rtl">
+    <div className="relative z-50 w-full md:max-w-md max-h-[85vh] rounded-t-3xl md:rounded-3xl p-5 overflow-y-auto" style={{ background: theme.bg, color: theme.text, border: "1px solid " + (theme.muted || "#B3A18C") + "30" }} dir="rtl">
       <div className="flex items-center justify-between mb-4 pb-2 border-b" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
         <h2 className="text-lg font-black" style={{ color: theme.accent }}>{title}</h2>
         <button onClick={onClose} className="p-1.5 rounded-full border" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }}><X size={15} /></button>
