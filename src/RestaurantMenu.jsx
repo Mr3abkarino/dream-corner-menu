@@ -3,11 +3,11 @@ import restaurantLogo from "./assets/logo.png";
 import {
   ShoppingCart, Plus, Minus, X, Pencil, Trash2, Check, Copy,
   QrCode, Settings, Phone, CreditCard, Sparkles, Search, RotateCcw,
-  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation, Award, Calendar
+  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation, Award, Calendar, DollarSign, Wallet
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "2.7"; // تحديث الإصدار لضمان شحن كود الحقوق ومواعيد العمل المدمجة معاً
+const MENU_VERSION = "2.8"; // تحديث الإصدار لتفعيل سيستم الدفع المطور جوة السلة وكود الوقت اللحظي
 
 const THEMES = [
   { id: "brand", name: "هوية دريم كورنر", bg: "#0A0A0A", surface: "#141414", surface2: "#1F1F1F", accent: "#D4AF37", accent2: "#8B1E1E", text: "#F3E9D8", muted: "#A3A3A3", display: "'Tajawal', sans-serif" },
@@ -35,7 +35,7 @@ const DEFAULT_PROMO_CODES = [
 const DEFAULT_MENU = [
   { id: "p1", cat: "البيتزا", name: "بيتزا مارجريتا", sizes: [{ label: "كبير", price: 90 }, { label: "وسط", price: 70 }, { label: "صغير", price: 45 }] },
   { id: "p2", cat: "البيتزا", name: "بيتزا ميكس جبنة", sizes: [{ label: "كبير", price: 120 }, { label: "وسط", price: 90 }, { label: "صغير", price: 60 }] },
-  { id: "p3", cat: "البيتزا", name: "بيتزا خضار", sizes: [{ label: "كبير", price: 120 }, { label: "وسط", price: 90 }, { label: "صغير", price: 60 }] },
+  { id: "p3", cat: "البيتزا", name: "بيتزا خضروات", sizes: [{ label: "كبير", price: 120 }, { label: "وسط", price: 90 }, { label: "صغير", price: 60 }] },
   { id: "p4", cat: "البيتزا", name: "بيتزا هوت دوج", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 100 }, { label: "صغير", price: 70 }] },
   { id: "p5", cat: "البيتزا", name: "بيتزا سجق", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 100 }, { label: "صغير", price: 70 }] },
   { id: "p6", cat: "البيتزا", name: "بيتزا لحمة مفرومة", sizes: [{ label: "كبير", price: 145 }, { label: "وسط", price: 110 }, { label: "صغير", price: 75 }] },
@@ -72,7 +72,7 @@ const DEFAULT_MENU = [
 
 const money = (n) => Number(n).toLocaleString("en-US") + " جنيه";
 
-// دالة فحص مواعيد العمل (1 ظهراً حتى 3 صباحاً)
+// دالة فحص مواعيد العمل اللحظية (1 ظهراً حتى 3 صباحاً)
 const checkRestaurantStatus = () => {
   const now = new Date();
   const hours = now.getHours();
@@ -164,6 +164,7 @@ export default function RestaurantMenu() {
   const [promoError, setPromoError] = useState("");
   
   const [selectedAreaIndex, setSelectedAreaIndex] = useState(-1);
+  const [paymentMethod, setPaymentMethod] = useState("cash"); // نقدي كافتراضي
   const [validationError, setValidationError] = useState("");
   const [orderSuccess, setOrderSuccess] = useState(false);
 
@@ -182,6 +183,7 @@ export default function RestaurantMenu() {
   
   const saveTimer = useRef(null);
 
+  // إزالة الـ useMemo وجعل فحص الحالة ديناميكي في كل ريندر لمنع مشكلة الفتح المسبق
   const status = checkRestaurantStatus();
 
   const findItem = (id) => items.find((i) => i.id === id);
@@ -488,10 +490,12 @@ export default function RestaurantMenu() {
     const lines = cartList.map((cartItem) => "• " + cartItem.label + " x" + cartItem.qty + " — " + money(cartItem.price * cartItem.qty));
     
     const deliveryTimeText = scheduleType === "now" ? "⚡ توصيل فوري (الآن)" : "🕒 مجدول للموعد: " + scheduleTime;
+    const paymentText = paymentMethod === "cash" ? "💵 نقدي (كاش عند الاستلام)" : "📱 دفع إلكتروني (فودافون كاش / إنستا باي)";
 
     let text = "طلب جديد من منيو " + restaurantName + " 🍽\n\n" + 
                "👤 اسم العميل: " + customerName + "\n" +
                "📱 تليفون العميل: " + customerPhone + "\n" +
+               "💳 طريقة الدفع: " + paymentText + "\n" +
                "📅 موعد التوصيل: " + deliveryTimeText + "\n" +
                "📍 المنطقة: " + activeDeliveryArea.name + "\n" +
                "🏠 العنوان بالتفصيل: " + customerAddress + "\n";
@@ -530,6 +534,7 @@ export default function RestaurantMenu() {
     setEnteredPromo("");
     setGeoLink("");
     setRedeemPoints(false);
+    setPaymentMethod("cash");
   };
 
   const copyText = (label, value) => {
@@ -619,7 +624,7 @@ export default function RestaurantMenu() {
           </a>
 
           <a 
-            href="https://www.tiktok.com/@dreamcornerfood" 
+            href="https://www.tiktok.com/@dream_corner1" 
             target="_blank" 
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center p-2.5 rounded-full bg-[#000000] text-white hover:bg-neutral-900 border border-neutral-800 transition-all duration-200 active:scale-95 shadow-md group"
@@ -763,7 +768,7 @@ export default function RestaurantMenu() {
           <Sheet theme={theme} title="سلة المشتريات" onClose={() => setCartOpen(false)}>
             {cartList.length === 0 ? <p className="text-center py-8" style={{ color: theme.muted }}>العربة فارغة حالياً</p> : (
               <>
-                <div className="space-y-3 max-h-[35vh] overflow-y-auto pr-1">
+                <div className="space-y-3 max-h-[30vh] overflow-y-auto pr-1">
                   {cartList.map((cartItem) => (
                     <div key={cartItem.key} className="flex items-center justify-between gap-2 border-b pb-2" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
                       <div className="min-w-0">
@@ -825,7 +830,7 @@ export default function RestaurantMenu() {
                   </div>
                 </div>
 
-                <div className="pt-2.5 flex gap-2">
+                <div className="pt-2 flex gap-2">
                   <div className="relative flex-1">
                     <input type="text" placeholder="هل لديك كوبون خصم؟" value={enteredPromo} onChange={(e) => setEnteredPromo(e.target.value)} className="w-full px-3 py-2 pr-8 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "25", color: theme.text }} />
                     <Tag size={13} className="absolute right-2.5 top-2.5 opacity-60" style={{ color: theme.text }} />
@@ -908,7 +913,7 @@ export default function RestaurantMenu() {
 
                     <div className="flex gap-2">
                       <div className="relative flex-1">
-                        <input type="text" placeholder="العنوان بالتفصيل (البيت، الشارع)..." value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }} />
+                        <input type="text" placeholder="العنوان بالتفصيل (البيت, الشارع)..." value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }} />
                         <MapPin size={14} className="absolute right-3 top-3.5 opacity-60" style={{ color: theme.text }} />
                       </div>
                       <button type="button" onClick={handleGetLocation} className="px-3 rounded-xl border font-bold text-xs flex items-center justify-center bg-black/10 transition-transform active:scale-95 shrink-0" style={{ borderColor: theme.accent, color: theme.accent }}>
@@ -917,21 +922,51 @@ export default function RestaurantMenu() {
                     </div>
 
                     <div className="relative">
-                      <textarea placeholder="أي ملاحظات إضافية على الأكل? (مثال: بدون بصل، الكرانشي حار...)" value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} rows={1} className="w-full px-3 py-2 pr-9 rounded-xl text-xs border focus:outline-none resize-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }} />
+                      <textarea placeholder="أي ملاحظات إضافية على الأكل؟ (مثال: بدون بصل، الكرانشي حار...)" value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} rows={1} className="w-full px-3 py-2 pr-9 rounded-xl text-xs border focus:outline-none resize-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }} />
                       <FileText size={14} className="absolute right-3 top-2.5 opacity-60" style={{ color: theme.text }} />
                     </div>
+                  </div>
+
+                  {/* ===================== NEW: INTERACTIVE PAYMENT SELECTION IN CART ===================== */}
+                  <div className="pt-4 border-t space-y-2.5" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
+                    <p className="text-[11px] font-bold" style={{ color: theme.accent }}>اختر طريقة الدفع المفضلة:</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod("cash")}
+                        className="py-2 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5"
+                        style={paymentMethod === "cash" ? { background: theme.accent, color: theme.bg, borderColor: theme.accent } : { background: theme.surface2, borderColor: theme.muted + "20" }}
+                      >
+                        <DollarSign size={14} />
+                        <span>نقدي (كاش)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod("electronic")}
+                        className="py-2 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5"
+                        style={paymentMethod === "electronic" ? { background: theme.accent, color: theme.bg, borderColor: theme.accent } : { background: theme.surface2, borderColor: theme.muted + "20" }}
+                      >
+                        <Wallet size={14} />
+                        <span>دفع إلكتروني</span>
+                      </button>
+                    </div>
+
+                    {/* عرض خيارات الدفع الإلكتروني المباشر ورسالة التحذير التوجيهية في حال تم اختياره */}
+                    {paymentMethod === "electronic" && (
+                      <div className="p-3 rounded-xl border border-dashed space-y-2.5 bg-black/10 transition-all animate-fadeIn" style={{ borderColor: theme.accent + "40" }}>
+                        <p className="text-[10px] font-bold text-center leading-relaxed text-amber-500 animate-pulse">
+                          📢 انسخ الرقم وحول المبلغ وارسل اسكرين شوت للتحويل عبر الواتس اب بعد تأكيد الأوردر!
+                        </p>
+                        <PayRow icon={<Phone size={14} />} label="فودافون كاش كود" value={vodafoneCash} theme={theme} onCopy={copyText} copied={copied} />
+                        <PayRow icon={<CreditCard size={14} />} label="حساب InstaPay" value={instapay} theme={theme} onCopy={copyText} copied={copied} />
+                      </div>
+                    )}
                   </div>
                   
                   {validationError && <p className="text-[10px] text-center font-bold text-red-500 bg-red-500/10 py-1 rounded-lg animate-pulse">{validationError}</p>}
                 </div>
 
-                <button onClick={sendWhatsApp} className="w-full mt-3 py-3 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-md hover:opacity-90" style={{ background: "#25D366", color: "#fff" }}><MessageCircle size={18} />تأكيد وإرسال عبر واتساب</button>
-                
-                <div className="mt-3 pt-3 border-t space-y-2" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
-                  <p className="text-xs font-bold" style={{ color: theme.muted }}>خيارات الدفع الإلكتروني المباشر</p>
-                  <PayRow icon={<Phone size={16} />} label="فودافون كاش كود" value={vodafoneCash} theme={theme} onCopy={copyText} copied={copied} />
-                  <PayRow icon={<CreditCard size={16} />} label="حساب InstaPay" value={instapay} theme={theme} onCopy={copyText} copied={copied} />
-                </div>
+                <button onClick={sendWhatsApp} className="w-full mt-3 py-3 rounded-xl font-black flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-md hover:opacity-90" style={{ background: "#25D366", color: "#fff" }}><MessageCircle size={18} />تأكيد وإرسال عبر واتساب</button>
               </>
             )}
           </Sheet>
@@ -1095,7 +1130,7 @@ export default function RestaurantMenu() {
                     <div key={item.id} className="p-3 rounded-xl border" style={{ borderColor: (theme.muted || "#B3A18C") + "25", background: theme.surface }}>
                       {editingId === item.id ? (
                         <div className="space-y-2">
-                          <input value={item.name} onChange={(e) => updateItem(item.id, { name: e.target.value })} className="w-full px-2.5 py-1.5 rounded-lg border bg-transparent text-sm font-bold" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
+                          <input value={item.name} onChange={(e) => updateItem(item.id, { name: e.target.value })} className="w-full px-2.5 py-1.5 rounded-lg border bg-transparent text-sm font-bold" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: text }} />
                           <input value={item.desc || ""} onChange={(e) => updateItem(item.id, { desc: e.target.value })} className="w-full px-2.5 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
                           <div className="grid grid-cols-2 gap-2">
                             <input value={item.cat} onChange={(e) => updateItem(item.id, { cat: e.target.value })} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
@@ -1196,16 +1231,16 @@ function Field({ label, value, onChange, theme, dir = "rtl", hint }) {
 
 function PayRow({ icon, label, value, theme, onCopy, copied }) {
   return (
-    <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg" style={{ background: theme.surface2 }}>
+    <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-black/20" style={{ background: theme.surface2 }}>
       <div className="flex items-center gap-2 min-w-0">
         <span style={{ color: theme.accent }}>{icon}</span>
         <div className="min-w-0">
-          <p className="text-xs" style={{ color: theme.muted }}>{label}</p>
-          <p className="text-sm font-bold truncate" dir="ltr">{value}</p>
+          <p className="text-[10px]" style={{ color: theme.muted }}>{label}</p>
+          <p className="text-xs font-bold truncate" dir="ltr">{value}</p>
         </div>
       </div>
       <button onClick={() => onCopy(label, value)} className="p-1.5 rounded-full border shrink-0 transition-transform active:scale-95" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }}>
-        {copied === label ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
+        {copied === label ? <Check size={11} className="text-green-500" /> : <Copy size={11} />}
       </button>
     </div>
   );
