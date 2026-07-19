@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "2.6"; // تحديث الإصدار لضمان شحن كود الحقوق ومواعيد العمل المدمجة معاً
+const MENU_VERSION = "2.7"; // تحديث الإصدار لضمان شحن كود الحقوق ومواعيد العمل المدمجة معاً
 
 const THEMES = [
   { id: "brand", name: "هوية دريم كورنر", bg: "#0A0A0A", surface: "#141414", surface2: "#1F1F1F", accent: "#D4AF37", accent2: "#8B1E1E", text: "#F3E9D8", muted: "#A3A3A3", display: "'Tajawal', sans-serif" },
@@ -182,7 +182,7 @@ export default function RestaurantMenu() {
   
   const saveTimer = useRef(null);
 
-  const status = useMemo(() => checkRestaurantStatus(), []);
+  const status = checkRestaurantStatus();
 
   const findItem = (id) => items.find((i) => i.id === id);
 
