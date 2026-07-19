@@ -3,11 +3,11 @@ import restaurantLogo from "./assets/logo.png";
 import {
   ShoppingCart, Plus, Minus, X, Pencil, Trash2, Check, Copy,
   QrCode, Settings, Phone, CreditCard, Sparkles, Search, RotateCcw,
-  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation, Award, Calendar, DollarSign, Wallet, Flame
+  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation, Award, Calendar, DollarSign, Wallet, Flame, Download
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "3.1"; // تحديث الإصدار لتفعيل قسم "الأكثر طلباً الآن" الفاخر
+const MENU_VERSION = "3.5"; // تحديث الإصدار لتفعيل سيستم الـ PWA والتثبيت على الموبايل
 
 const THEMES = [
   { id: "brand", name: "هوية دريم كورنر", bg: "#0A0A0A", surface: "#141414", surface2: "#1F1F1F", accent: "#D4AF37", accent2: "#8B1E1E", text: "#F3E9D8", muted: "#A3A3A3", display: "'Tajawal', sans-serif" },
@@ -32,7 +32,6 @@ const DEFAULT_PROMO_CODES = [
   { code: "DREAM", discount: 15, limit: 1, used: 0 }
 ];
 
-// أضفنا خاصية isBestSeller: true للأصناف المميزة عندك في دريم كورنر لتظهر في القسم الجديد
 const DEFAULT_MENU = [
   { id: "p1", cat: "البيتزا", name: "بيتزا مارجريتا", sizes: [{ label: "كبير", price: 90 }, { label: "وسط", price: 70 }, { label: "صغير", price: 45 }] },
   { id: "p2", cat: "البيتزا", name: "بيتزا ميكس جبنة", isBestSeller: true, sizes: [{ label: "كبير", price: 120 }, { label: "وسط", price: 90 }, { label: "صغير", price: 60 }] },
@@ -73,7 +72,6 @@ const DEFAULT_MENU = [
 
 const money = (n) => Number(n).toLocaleString("en-US") + " جنيه";
 
-// دالة فحص مواعيد العمل اللحظية (1 ظهراً حتى 3 صباحاً)
 const checkRestaurantStatus = () => {
   const now = new Date();
   const hours = now.getHours();
@@ -144,6 +142,10 @@ export default function RestaurantMenu() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [closeNoticeOpen, setCloseNoticeOpen] = useState(false);
 
+  // حالات خاصة بسيستم تثبيت التطبيق PWA للزبون
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+
   const [deliveryAreas, setDeliveryAreas] = useState(DEFAULT_DELIVERY_AREAS);
   const [newAreaName, setNewAreaName] = useState("");
   const [newAreaPrice, setNewAreaPrice] = useState("");
@@ -165,7 +167,7 @@ export default function RestaurantMenu() {
   const [promoError, setPromoError] = useState("");
   
   const [selectedAreaIndex, setSelectedAreaIndex] = useState(-1);
-  const [paymentMethod, setPaymentMethod] = useState("cash"); // نقدي كافتراضي
+  const [paymentMethod, setPaymentMethod] = useState("cash");
   const [validationError, setValidationError] = useState("");
   const [orderSuccess, setOrderSuccess] = useState(false);
 
@@ -184,10 +186,36 @@ export default function RestaurantMenu() {
   
   const saveTimer = useRef(null);
 
-  // تحديث فوري لحظي لحالة الوقت لمنع الكاش والتأخير
   const status = checkRestaurantStatus();
-
   const findItem = (id) => items.find((i) => i.id === id);
+
+  // تتبع حدث المتصفح وجاهزية المنيو للتحميل كتطبيق
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      // إظهار البانر فقط لو الزبون مش منزل التطبيق فعلياً قبل كدة
+      setShowInstallBanner(true);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  // دالة تشغيل التثبيت الفعلي على الموبايل
+  const handleInstallApp = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === "accepted") {
+      console.log("Customer accepted installing Dream Corner App");
+    }
+    setDeferredPrompt(null);
+    setShowInstallBanner(false);
+  };
 
   const cartList = useMemo(() => {
     return Object.entries(cart)
@@ -367,7 +395,6 @@ export default function RestaurantMenu() {
 
   const categories = useMemo(() => ["الكل", ...new Set(items.map((i) => i.cat))], [items]);
 
-  // استخراج المأكولات المميزة المحددة كأكثر طلباً
   const bestSellerItems = useMemo(() => {
     return items.filter(item => item.isBestSeller);
   }, [items]);
@@ -641,7 +668,7 @@ export default function RestaurantMenu() {
         </div>
       </div>
 
-      {/* ===================== NEW: BEST SELLERS SECTION (الأكثر طلباً الآن) ===================== */}
+      {/* ===================== BEST SELLERS SECTION ===================== */}
       {bestSellerItems.length > 0 && activeCat === "الكل" && !searchQuery.trim() && (
         <div className="max-w-3xl mx-auto px-4 pt-6">
           <div className="flex items-center gap-1.5 mb-3.5">
@@ -649,15 +676,9 @@ export default function RestaurantMenu() {
             <h2 className="text-sm font-black tracking-wide uppercase" style={{ color: theme.accent }}>الأكثر طلباً الآن 🔥</h2>
           </div>
           
-          {/* شريط أفقي متحرك فاخر للتصفح السريع بدون تشتيت */}
           <div className="flex gap-3 overflow-x-auto pb-3 pt-1 no-scrollbar" style={{ scrollbarWidth: "none" }}>
             {bestSellerItems.map((item) => (
-              <div 
-                key={item.id} 
-                className="w-[170px] sm:w-[200px] shrink-0 rounded-2xl p-3 border relative flex flex-col justify-between shadow-md transition-transform duration-300 hover:scale-[1.02]" 
-                style={{ background: theme.surface, borderColor: theme.accent + "30" }}
-              >
-                {/* شارة متوهجة توضح تميز الوجبة للزبون */}
+              <div key={item.id} className="w-[170px] sm:w-[200px] shrink-0 rounded-2xl p-3 border relative flex flex-col justify-between shadow-md transition-transform duration-300 hover:scale-[1.02]" style={{ background: theme.surface, borderColor: theme.accent + "30" }}>
                 <span className="absolute -top-2 right-3 px-2 py-0.5 rounded-md text-[8px] font-black text-white bg-gradient-to-r from-red-600 to-amber-500 shadow animate-bounce flex items-center gap-0.5">
                   ✨ الأكثر طلباً
                 </span>
@@ -670,7 +691,7 @@ export default function RestaurantMenu() {
                 <div className="mt-3 pt-2 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "10" }}>
                   {item.sizes ? (
                     <div className="space-y-1">
-                      {item.sizes.slice(0, 2).map((sz) => { // عرض أول حجمين اختصاراً للمساحة في الشريط
+                      {item.sizes.slice(0, 2).map((sz) => {
                         const key = item.id + "::" + sz.label;
                         const qty = cart[key] || 0;
                         return (
@@ -726,7 +747,7 @@ export default function RestaurantMenu() {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {list.map((item) => (
                   <div key={item.id} className="rounded-2xl p-3.5 border transition-all duration-300 flex flex-col justify-between hover:shadow-lg shadow-sm" style={{ background: theme.surface, borderColor: (theme.muted || "#B3A18C") + "15" }}>
-                    <div className="space-y-1.5 relative">
+                    <div className="space-y-1.5">
                       <h3 className="font-bold text-sm leading-snug line-clamp-2">{item.name}</h3>
                       {item.desc && <p className="text-[10px] opacity-75 line-clamp-3 leading-relaxed" style={{ color: theme.muted }}>{item.desc}</p>}
                     </div>
@@ -809,6 +830,31 @@ export default function RestaurantMenu() {
         </button>
       )}
 
+      {/* ===================== NEW: PWA INSTALLATION BANNER (كارت التثبيت السفلي) ===================== */}
+{showInstallBanner && (
+  <div className="fixed bottom-16 right-4 left-4 sm:left-auto sm:right-6 z-40 max-w-sm rounded-2xl p-4 shadow-2xl border flex flex-col gap-3 animate-fadeIn" style={{ background: theme.surface, borderColor: theme.accent + "40" }}>
+    <div className="flex items-start justify-between gap-2">
+      <div className="flex items-center gap-2.5">
+        {/* تحديث هيدر الصورة ليقرأ المتغير المستورد مباشرة لمنع أخطاء المسارات */}
+        <img src={LOGO_SRC} alt="logo" className="w-9 h-9 rounded-xl object-contain border" style={{ borderColor: theme.accent + "20" }} />
+        <div>
+          <h4 className="text-xs font-black text-white">ثبت منيو دريم كورنر على موبايلك!</h4>
+          <p className="text-[10px] opacity-80 mt-0.5" style={{ color: theme.muted }}>اطلب أكلتك بضغطة واحدة من الشاشة الرئيسية.</p>
+        </div>
+      </div>
+      <button onClick={() => setShowInstallBanner(false)} className="p-1 rounded-full text-neutral-400 hover:text-white"><X size={14} /></button>
+    </div>
+    <button 
+      onClick={handleInstallApp}
+      className="w-full py-2 rounded-xl text-xs font-black transition-all active:scale-95 shadow flex items-center justify-center gap-1.5"
+      style={{ background: theme.accent, color: theme.bg }}
+    >
+      <Download size={13} />
+      <span>إضافة للشاشة الرئيسية الآن ✨</span>
+    </button>
+  </div>
+)}
+      
       {/* ===================== CART DRAWER ===================== */}
       {cartOpen && (
         <Overlay onClose={() => setCartOpen(false)}>
@@ -974,7 +1020,6 @@ export default function RestaurantMenu() {
                     </div>
                   </div>
 
-                  {/* خيارات الدفع الإلكتروني والنقدي المباشر */}
                   <div className="pt-4 border-t space-y-2.5" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
                     <p className="text-[11px] font-bold" style={{ color: theme.accent }}>اختر طريقة الدفع المفضلة:</p>
                     <div className="grid grid-cols-2 gap-2">
@@ -1253,7 +1298,6 @@ function Overlay({ children, onClose }) {
   );
 }
 
-// تعديل بسيط لمنع تداخل شارات المنتجات عند عرض النوافذ المنبثقة
 function Sheet({ theme, title, onClose, children }) {
   return (
     <div className="relative z-50 w-full md:max-w-md max-h-[85vh] rounded-t-3xl md:rounded-3xl p-5 overflow-y-auto" style={{ background: theme.bg, color: theme.text, border: "1px solid " + (theme.muted || "#B3A18C") + "30" }} dir="rtl">
