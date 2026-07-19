@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "2.4"; // تحديث الإصدار لضمان تشغيل سيستم مواعيد العمل والـ Popups الجديدة للعملاء
+const MENU_VERSION = "2.5"; // تحديث الإصدار لضمان شحن كود الحقوق ومواعيد العمل المدمجة معاً
 
 const THEMES = [
   { id: "brand", name: "هوية دريم كورنر", bg: "#0A0A0A", surface: "#141414", surface2: "#1F1F1F", accent: "#D4AF37", accent2: "#8B1E1E", text: "#F3E9D8", muted: "#A3A3A3", display: "'Tajawal', sans-serif" },
@@ -49,7 +49,7 @@ const DEFAULT_MENU = [
   { id: "p14", cat: "البيتزا", name: "حشو الأطراف", desc: "إضافة أطراف محشوة لأي بيتزا", sizes: [{ label: "كبير", price: 35 }, { label: "وسط", price: 30 }, { label: "صغير", price: 25 }] },
   { id: "s1", cat: "السندوتشات", subcat: "اللحوم", name: "كفتة مشوية", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
   { id: "s2", cat: "السندوتشات", subcat: "اللحوم", name: "سجق مشوي", sizes: [{ label: "كبير", price: 70 }, { label: "وسط", price: 60 }] },
-  { id: "s3", cat: "السندوتشات", subcat: "اللحوم", name: "كبدة إस्कندراني", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
+  { id: "s3", cat: "السندوتشات", subcat: "اللحوم", name: "كبدة إسكندراني", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
   { id: "s4", cat: "السندوتشات", subcat: "اللحوم", name: "ميكس لحوم (سجق+كبدة)", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
   { id: "s5", cat: "السندوتشات", subcat: "اللحوم", name: "حواوشي دبل طعم", price: 45 },
   { id: "s6", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "تشكن بانية", sizes: [{ label: "كبير", price: 85 }, { label: "وسط", price: 70 }] },
@@ -733,9 +733,9 @@ export default function RestaurantMenu() {
 
       {/* ===================== FOOTER INFO STRIP ===================== */}
       <div className="fixed bottom-0 inset-x-0 z-20 border-t px-4 py-3.5 flex items-center justify-center gap-4 text-xs font-semibold shadow-inner" style={{ background: theme.bg + "F2", borderColor: (theme.muted || "#B3A18C") + "20" , color: theme.muted, backdropFilter: "blur(8px)" }}>
-        <div onClick={handleLogoClickLocal} className="flex items-center gap-1 font-bold tracking-wide shrink-0 cursor-pointer hover:underline" style={{ color: theme.accent }}>
-          دريم كورنر © <span className="text-red-500 text-sm animate-pulse">❤️</span>
-        </div>
+        <a href="https://fb.com/mr.3abkarino" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 font-bold tracking-wide shrink-0 cursor-pointer hover:underline" style={{ color: theme.accent }}>
+          Mr3abkarino© <span className="text-red-500 text-sm animate-pulse">❤️</span>
+        </a>
         <span className="opacity-40 shrink-0">|</span>
         <span className="flex items-center gap-1 truncate min-w-0">
           <MapPin size={13} className="shrink-0" /> 
@@ -862,7 +862,7 @@ export default function RestaurantMenu() {
                       <ChevronDown size={14} className="absolute left-3 top-3.5 opacity-60" style={{ color: theme.text }} />
                     </div>
 
-                    <div className="p-3 rounded-xl border border-dotted space-y-2.5" style={{ borderColor: (theme.muted || "#B3A18C") + "30", background: theme.surface2 }}>
+                    <div className="p-3 rounded-xl border border-dotted space-y-2.5" style={{ borderColor: (theme.muted || "#B3A18C") + "30" , background: theme.surface2 }}>
                       <p className="text-[10px] font-bold opacity-80 flex items-center gap-1" style={{ color: theme.muted }}>
                         <Calendar size={13} />
                         <span>تحديد موعد التوصيل المطلق:</span>
@@ -917,7 +917,7 @@ export default function RestaurantMenu() {
                     </div>
 
                     <div className="relative">
-                      <textarea placeholder="أي ملاحظات إضافية على الأكل؟ (مثال: بدون بصل، الكرانشي حار...)" value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} rows={1} className="w-full px-3 py-2 pr-9 rounded-xl text-xs border focus:outline-none resize-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }} />
+                      <textarea placeholder="أي ملاحظات إضافية على الأكل? (مثال: بدون بصل، الكرانشي حار...)" value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} rows={1} className="w-full px-3 py-2 pr-9 rounded-xl text-xs border focus:outline-none resize-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }} />
                       <FileText size={14} className="absolute right-3 top-2.5 opacity-60" style={{ color: theme.text }} />
                     </div>
                   </div>
@@ -964,7 +964,7 @@ export default function RestaurantMenu() {
               <div className="space-y-2 px-2">
                 <h3 className="text-base font-black text-white">يا غالي، الأفران ريحت شوية..</h3>
                 <p className="text-xs opacity-90 leading-relaxed max-w-xs mx-auto" style={{ color: theme.muted }}>
-                  بنجهزلك حاجة فريش وطعم يفرّق بكرة! المنيو معاك لفّ فيه براحتك ونقّي الأكلات اللي تحبها من دلوقتي، وأول ما نفتح هنكون جاهزين نولّع الدنيا! 🔥🚀
+                  بنجهزلك لقمة فريش وطعم يفرّق بكرة! المنيو معاك لفّ فيه براحتك ونقّي الوجبات اللي تحبها من دلوقتي، وأول ما نفتح هنكون جاهزين نولّع الدنيا! 🔥🚀
                 </p>
               </div>
               <div className="p-3.5 rounded-2xl border text-center space-y-1" style={{ background: theme.surface2, borderColor: theme.accent + "20" }}>
