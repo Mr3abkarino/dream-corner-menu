@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "15.0"; // v15.0: مسح شامل وحتمي لكل الكاش والذاكرة القديمة
+const MENU_VERSION = "16.0"; // v16.0: إصلاح خطأ Build esbuild على Vercel بنسبة 100%
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbybuw8CuUGV-hf_ecUyevpGB5YioMKCdeOP3PxSKKuzGgMmtcfbHyrd0F81eJg3Z_U/exec";
 
 const THEMES = [
@@ -173,12 +173,12 @@ export default function RestaurantMenu() {
   const status = checkRestaurantStatus();
   const findItem = (id) => items.find((i) => i.id === id);
 
-  // 🟢 تطهير كلي وحتمي للذاكرة القديمة للعميل لمنع استعادة رصيد النقاط نهائياً
+  // مسح كامل لأي ذاكرة قديمة
   useEffect(() => {
     if (typeof window !== "undefined" && window.localStorage) {
       const currentVersion = localStorage.getItem("menu-version");
       if (currentVersion !== MENU_VERSION) {
-        localStorage.clear(); // مسح كامل إجباري للـ LocalStorage
+        localStorage.clear();
         localStorage.setItem("menu-version", MENU_VERSION);
       }
     }
@@ -416,6 +416,14 @@ export default function RestaurantMenu() {
     e.preventDefault();
     if (enteredPin === adminPin) { setIsAdmin(true); setPinModalOpen(false); setEnteredPin(""); setAdminOpen(true); }
     else setPinError("رمز الأمان PIN غير صحيح!");
+  };
+
+  const copyText = (label, value) => {
+    const ok = copyTextToClipboard(value);
+    if (ok) {
+      setCopied(label);
+      setTimeout(() => setCopied(""), 2000);
+    }
   };
 
   const categories = useMemo(() => ["الكل", ...new Set(items.map((i) => i.cat))], [items]);
@@ -840,14 +848,33 @@ export default function RestaurantMenu() {
                 {paymentMethod === "electronic" && (
                   <div className="p-3 rounded-2xl bg-black/50 border border-amber-500/30 space-y-2 text-[10px]">
                     <p className="text-amber-400 text-center font-bold">حول المبلغ وانسخ الحساب وارسل اسكرين شوت بالتحويل:</p>
+                    
                     <div className="flex items-center justify-between p-2 rounded-xl bg-[#1A1D26]">
-                      <div className="flex items-center gap-2"><Phone size={13} className="text-amber-400" /><div><p className="text-[9px] text-gray-400">فودافون كاش</p><p className="font-bold text-white">{vodafoneCash}</p></div></div>
-                      <button type="button" onClick={() => copyText("vodafone", vodafoneCash)} className="p-1.5 rounded-lg border border-white/10 text-amber-300">{copied === "vodafone" ? <Check size={12} className="text-green-400" /> : <Copy size={12} /></button>
+                      <div className="flex items-center gap-2">
+                        <Phone size={13} className="text-amber-400" />
+                        <div>
+                          <p className="text-[9px] text-gray-400">فودافون كاش</p>
+                          <p className="font-bold text-white">{vodafoneCash}</p>
+                        </div>
+                      </div>
+                      <button type="button" onClick={() => copyText("vodafone", vodafoneCash)} className="p-1.5 rounded-lg border border-white/10 text-amber-300">
+                        {copied === "vodafone" ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+                      </button>
                     </div>
+
                     <div className="flex items-center justify-between p-2 rounded-xl bg-[#1A1D26]">
-                      <div className="flex items-center gap-2"><CreditCard size={13} className="text-amber-400" /><div><p className="text-[9px] text-gray-400">حساب InstaPay</p><p className="font-bold text-white">{instapay}</p></div></div>
-                      <button type="button" onClick={() => copyText("instapay", instapay)} className="p-1.5 rounded-lg border border-white/10 text-amber-300">{copied === "instapay" ? <Check size={12} className="text-green-400" /> : <Copy size={12} /></button>
+                      <div className="flex items-center gap-2">
+                        <CreditCard size={13} className="text-amber-400" />
+                        <div>
+                          <p className="text-[9px] text-gray-400">حساب InstaPay</p>
+                          <p className="font-bold text-white">{instapay}</p>
+                        </div>
+                      </div>
+                      <button type="button" onClick={() => copyText("instapay", instapay)} className="p-1.5 rounded-lg border border-white/10 text-amber-300">
+                        {copied === "instapay" ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+                      </button>
                     </div>
+
                   </div>
                 )}
               </div>
@@ -888,7 +915,7 @@ export default function RestaurantMenu() {
                 <div>
                   <h2 className="text-base font-black text-amber-400 flex items-center gap-1.5">
                     <span>الرئيسية | لوحة تحكم دريم كورنر</span>
-                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v15.0</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v16.0</span>
                   </h2>
                   <p className="text-[10px] text-gray-400">مرحباً بك في لوحة التحكّم والذكاء المالي 👋</p>
                 </div>
@@ -1028,12 +1055,12 @@ export default function RestaurantMenu() {
 
                 {adminTab === "items" && (
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between mb-3"><p className="font-bold text-sm text-amber-400">إدارة الأصناف والأسعار</p><button onClick={addNewItem} className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full bg-amber-500 text-black"><PlusCircle size={14} /> إضافة صنف</button></div>
+                    <div className="flex items-center justify-between mb-3"><p className="font-bold text-sm text-amber-400">إدارة الأصناف والأسعار</p><button onClick={() => { const id = "n" + Date.now(); setItems([...items, { id, cat: "أصناف جديدة", name: "صنف جديد", price: 20 }]); setEditingId(id); }} className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full bg-amber-500 text-black"><PlusCircle size={14} /> إضافة صنف</button></div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {items.map((item) => (
                         <div key={item.id} className="p-3 rounded-2xl border border-white/5 bg-[#141721] flex justify-between items-center text-xs">
                           <div><p className="font-bold text-white text-sm">{item.name}</p><p className="text-gray-400">{item.sizes ? item.sizes.map((s) => s.label + ":" + money(s.price)).join(" / ") : money(item.price)}</p></div>
-                          <button onClick={() => deleteItem(item.id)} className="p-2 rounded-full border border-red-500/30 text-red-400"><Trash2 size={13} /></button>
+                          <button onClick={() => setItems(items.filter(i => i.id !== item.id))} className="p-2 rounded-full border border-red-500/30 text-red-400"><Trash2 size={13} /></button>
                         </div>
                       ))}
                     </div>
@@ -1055,10 +1082,17 @@ export default function RestaurantMenu() {
                 {adminTab === "delivery" && (
                   <div className="space-y-3">
                     <p className="font-bold text-sm text-amber-400 mb-2">إدارة مناطق وقرى الدليفري</p>
-                    <div className="flex gap-2"><input type="text" placeholder="اسم القرية" value={newAreaName} onChange={(e) => setNewAreaName(e.target.value)} className="flex-1 p-2 rounded-xl bg-[#141721] text-xs text-white" /><input type="number" placeholder="سعر التوصيل" value={newAreaPrice} onChange={(e) => setNewAreaPrice(e.target.value)} className="w-24 p-2 rounded-xl bg-[#141721] text-xs text-white" /><button onClick={handleAddDeliveryArea} className="px-4 bg-emerald-600 text-white rounded-xl text-xs font-bold">إضافة</button></div>
+                    <div className="flex gap-2">
+                      <input type="text" placeholder="اسم القرية" value={newAreaName} onChange={(e) => setNewAreaName(e.target.value)} className="flex-1 p-2 rounded-xl bg-[#141721] text-xs text-white" />
+                      <input type="number" placeholder="سعر التوصيل" value={newAreaPrice} onChange={(e) => setNewAreaPrice(e.target.value)} className="w-24 p-2 rounded-xl bg-[#141721] text-xs text-white" />
+                      <button onClick={() => { if(newAreaName.trim() && newAreaPrice) setDeliveryAreas([...deliveryAreas, { name: newAreaName.trim(), price: Number(newAreaPrice) }]); setNewAreaName(""); setNewAreaPrice(""); }} className="px-4 bg-emerald-600 text-white rounded-xl text-xs font-bold">إضافة</button>
+                    </div>
                     <div className="grid grid-cols-2 gap-2">
                       {deliveryAreas.map((area, idx) => (
-                        <div key={idx} className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-[#141721]"><span>{area.name} · <span className="text-amber-400">{money(area.price)}</span></span><button onClick={() => handleRemoveDeliveryArea(idx)} className="text-red-400"><Trash2 size={12}/></button></div>
+                        <div key={idx} className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-[#141721]">
+                          <span>{area.name} · <span className="text-amber-400">{money(area.price)}</span></span>
+                          <button onClick={() => setDeliveryAreas(deliveryAreas.filter((_, i) => i !== idx))} className="text-red-400"><Trash2 size={12}/></button>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -1073,7 +1107,7 @@ export default function RestaurantMenu() {
                     <label className="block space-y-1"><span className="text-gray-300 font-bold">رقم واتساب الاستقبال:</span><input value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
                     <label className="block space-y-1"><span className="text-gray-300 font-bold">رقم فودافون كاش:</span><input value={vodafoneCash} onChange={e => setVodafoneCash(e.target.value)} dir="ltr" className="w-full p-2.5 rounded-xl text-white border border-white/10" /></label>
                     <label className="block space-y-1"><span className="text-gray-300 font-bold">حساب InstaPay:</span><input value={instapay} onChange={e => setInstapay(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
-                    <label className="block space-[#141721] space-y-1"><span className="text-gray-300 font-bold">رمز الأمان PIN للمدير:</span><input value={adminPin} onChange={e => setAdminPin(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
+                    <label className="block space-y-1"><span className="text-gray-300 font-bold">رمز الأمان PIN للمدير:</span><input value={adminPin} onChange={e => setAdminPin(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
                   </div>
                 )}
               </div>
