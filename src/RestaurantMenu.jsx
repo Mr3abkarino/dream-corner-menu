@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "14.0"; // v14.0: تطهير حتمي وشامل للذاكرة من النقاط
+const MENU_VERSION = "15.0"; // v15.0: مسح شامل وحتمي لكل الكاش والذاكرة القديمة
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbybuw8CuUGV-hf_ecUyevpGB5YioMKCdeOP3PxSKKuzGgMmtcfbHyrd0F81eJg3Z_U/exec";
 
 const THEMES = [
@@ -26,8 +26,8 @@ const DEFAULT_DELIVERY_AREAS = [
 ];
 
 const DEFAULT_PROMO_CODES = [
-  { code: "OFF10", discount: 10, limit: 0, used: 0 },
-  { code: "DREAM", discount: 15, limit: 0, used: 0 }
+  { code: "OFF10", discount: 10, limit: 1, used: 0 },
+  { code: "DREAM", discount: 15, limit: 1, used: 0 }
 ];
 
 const COMING_SOON_OFFERS = [
@@ -87,27 +87,6 @@ const checkRestaurantStatus = () => {
   };
 };
 
-const safeStorage = {
-  get: async (key) => {
-    if (typeof window !== "undefined" && window.storage && typeof window.storage.get === "function") {
-      try { return await window.storage.get(key, false); } catch (e) {}
-    }
-    if (typeof window !== "undefined" && window.localStorage) {
-      const local = localStorage.getItem(key);
-      return local ? { value: local } : null;
-    }
-    return null;
-  },
-  set: async (key, val) => {
-    if (typeof window !== "undefined" && window.storage && typeof window.storage.set === "function") {
-      try { return await window.storage.set(key, val, false); } catch (e) {}
-    }
-    if (typeof window !== "undefined" && window.localStorage) {
-      localStorage.setItem(key, val);
-    }
-  }
-};
-
 const copyTextToClipboard = (text) => {
   if (typeof document === "undefined") return false;
   const textArea = document.createElement("textarea");
@@ -151,7 +130,6 @@ export default function RestaurantMenu() {
   const [adminTab, setAdminTab] = useState("dashboard");
   const [editingId, setEditingId] = useState(null);
   const [copied, setCopied] = useState("");
-  const [loaded, setLoaded] = useState(false);
   const [closeNoticeOpen, setCloseNoticeOpen] = useState(false);
   const [animateCart, setAnimateCart] = useState(false);
 
@@ -192,19 +170,17 @@ export default function RestaurantMenu() {
   const [reportDateFilter, setReportDateFilter] = useState("all");
   const [reportSearchQuery, setReportSearchQuery] = useState("");
 
-  const saveTimer = useRef(null);
   const status = checkRestaurantStatus();
   const findItem = (id) => items.find((i) => i.id === id);
 
-  // 🟢 تطهير إجباري وفوري لجميع المفاتيح المتصلة بالنقاط بداخل ذاكرة المتصفح
+  // 🟢 تطهير كلي وحتمي للذاكرة القديمة للعميل لمنع استعادة رصيد النقاط نهائياً
   useEffect(() => {
     if (typeof window !== "undefined" && window.localStorage) {
-      localStorage.removeItem("customer-points-loyalty");
-      Object.keys(localStorage).forEach(key => {
-        if (key.includes("point") || key.includes("loyalty")) {
-          localStorage.removeItem(key);
-        }
-      });
+      const currentVersion = localStorage.getItem("menu-version");
+      if (currentVersion !== MENU_VERSION) {
+        localStorage.clear(); // مسح كامل إجباري للـ LocalStorage
+        localStorage.setItem("menu-version", MENU_VERSION);
+      }
     }
   }, []);
 
@@ -426,35 +402,14 @@ export default function RestaurantMenu() {
   };
 
   useEffect(() => {
-    (async () => {
-      try {
-        if (typeof window !== "undefined" && window.localStorage) {
-          const savedVersion = localStorage.getItem("menu-version");
-          if (savedVersion !== MENU_VERSION) {
-            localStorage.setItem("menu-version", MENU_VERSION);
-            setItems(DEFAULT_MENU); setDeliveryAreas(DEFAULT_DELIVERY_AREAS); setPromoCodes(DEFAULT_PROMO_CODES); setLoaded(true); return;
-          }
-        }
-        const res = await safeStorage.get("dream-corner-menu");
-        if (res && res.value) {
-          const d = JSON.parse(res.value);
-          if (d.items) setItems(d.items);
-          if (d.restaurantName) setRestaurantName(d.restaurantName);
-          if (d.whatsappNumber) setWhatsappNumber(d.whatsappNumber);
-          if (d.vodafoneCash) setVodafoneCash(d.vodafoneCash);
-          if (d.instapay) setInstapay(d.instapay);
-        }
-        if (typeof window !== "undefined" && window.localStorage) {
-          const savedName = localStorage.getItem("customer-name-cache");
-          const savedPhone = localStorage.getItem("customer-phone-cache");
-          const savedAddress = localStorage.getItem("customer-address-cache");
-          if (savedName) setCustomerName(savedName);
-          if (savedPhone) setCustomerPhone(savedPhone);
-          if (savedAddress) setCustomerAddress(savedAddress);
-        }
-      } catch (e) { console.error("Storage error", e); }
-      setLoaded(true);
-    })();
+    if (typeof window !== "undefined" && window.localStorage) {
+      const savedName = localStorage.getItem("customer-name-cache");
+      const savedPhone = localStorage.getItem("customer-phone-cache");
+      const savedAddress = localStorage.getItem("customer-address-cache");
+      if (savedName) setCustomerName(savedName);
+      if (savedPhone) setCustomerPhone(savedPhone);
+      if (savedAddress) setCustomerAddress(savedAddress);
+    }
   }, []);
 
   const handleVerifyPin = (e) => {
@@ -552,7 +507,7 @@ export default function RestaurantMenu() {
         </div>
       </div>
 
-      {/* WELCOME BANNER (مظهر فقط للاسم بشكل أنيق ونظيف) */}
+      {/* WELCOME BANNER */}
       {customerName && (
         <div className="bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent border-b border-amber-500/30 px-4 py-2 flex items-center justify-between text-xs">
           <div className="flex items-center gap-2"><Crown size={15} className="text-amber-400 animate-bounce" /><span className="font-bold text-amber-300">أهلاً بعودتك يا {customerName}! 👋</span></div>
@@ -933,7 +888,7 @@ export default function RestaurantMenu() {
                 <div>
                   <h2 className="text-base font-black text-amber-400 flex items-center gap-1.5">
                     <span>الرئيسية | لوحة تحكم دريم كورنر</span>
-                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v14.0</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v15.0</span>
                   </h2>
                   <p className="text-[10px] text-gray-400">مرحباً بك في لوحة التحكّم والذكاء المالي 👋</p>
                 </div>
@@ -1118,7 +1073,7 @@ export default function RestaurantMenu() {
                     <label className="block space-y-1"><span className="text-gray-300 font-bold">رقم واتساب الاستقبال:</span><input value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
                     <label className="block space-y-1"><span className="text-gray-300 font-bold">رقم فودافون كاش:</span><input value={vodafoneCash} onChange={e => setVodafoneCash(e.target.value)} dir="ltr" className="w-full p-2.5 rounded-xl text-white border border-white/10" /></label>
                     <label className="block space-y-1"><span className="text-gray-300 font-bold">حساب InstaPay:</span><input value={instapay} onChange={e => setInstapay(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
-                    <label className="block space-y-1"><span className="text-gray-300 font-bold">رمز الأمان PIN للمدير:</span><input value={adminPin} onChange={e => setAdminPin(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
+                    <label className="block space-[#141721] space-y-1"><span className="text-gray-300 font-bold">رمز الأمان PIN للمدير:</span><input value={adminPin} onChange={e => setAdminPin(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
                   </div>
                 )}
               </div>
