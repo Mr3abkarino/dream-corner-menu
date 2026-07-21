@@ -7,8 +7,8 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "17.0"; // v17.0: إصلاح الشاشة البيضاء في لوحة الإدارة
-const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwndOxzx5j5JIA3GegNsRGyaDfaVp4zlIvHNZtdZ8wUa17-pmPoDIvgqOWskDFSavY/exec";
+const MENU_VERSION = "17.1"; // v17.1: إصلاح الشاشة البيضاء في لوحة الإدارة
+const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzvpfGqKcjyD7YNnKaqcscDVU3pS76Zm5R3RezPhBi3rbQb0rV-_Bg3KvCFV6mWQBE/exec";
 
 const DEFAULT_DELIVERY_AREAS = [
   { name: "البرامون (داخل البلد)", price: 10 },
