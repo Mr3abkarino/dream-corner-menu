@@ -7,8 +7,8 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "18.0"; // v18.0: نظام تتبع الزوار النشطين لحظياً + لوحة التحكم الكاملة
-const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxjXGcUj3Vc9zIXz2BFwr3IU7ZqF1dIlkA2o6Q2dUzOHWwo4CgJDbEQe_sdbd0wTHs/exec";
+const MENU_VERSION = "19.0"; // v19.0: عودة صافي المبيعات + عداد زوار نشطين حقيقي ومتصل بالشيت
+const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyJgJtl76mx8Dq-xRtYpHPDideWhBNQ6CqWtyAxKydTTNfwLp1mDjZZMt8eL4S8VSQ/exec";
 
 const DEFAULT_DELIVERY_AREAS = [
   { name: "البرامون (داخل البلد)", price: 10 },
@@ -125,7 +125,7 @@ export default function RestaurantMenu() {
   const [copied, setCopied] = useState("");
   const [closeNoticeOpen, setCloseNoticeOpen] = useState(false);
   const [animateCart, setAnimateCart] = useState(false);
-  const [activeVisitors, setActiveVisitors] = useState(1); // عدد الزوار النشطين
+  const [activeVisitors, setActiveVisitors] = useState(1);
 
   const [deliveryAreas, setDeliveryAreas] = useState(DEFAULT_DELIVERY_AREAS);
   const [newAreaName, setNewAreaName] = useState("");
@@ -165,7 +165,7 @@ export default function RestaurantMenu() {
   const status = checkRestaurantStatus();
   const findItem = (id) => items.find((i) => i.id === id);
 
-  // تتبع الزوار النشطين دورياً
+  // إرسال وتحديث الزوار النشطين
   useEffect(() => {
     let visitorId = localStorage.getItem("dc_visitor_id");
     if (!visitorId) {
@@ -175,17 +175,21 @@ export default function RestaurantMenu() {
 
     const sendPing = async () => {
       try {
-        const res = await fetch(GOOGLE_SHEET_SCRIPT_URL, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "application/json" },
+        await fetch(GOOGLE_SHEET_SCRIPT_URL, {
+          method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "ping_visitor", visitorId })
         });
+        
+        const res = await fetch(GOOGLE_SHEET_SCRIPT_URL + "?type=visitors");
+        const data = await res.json();
+        if (data && data.activeVisitors) {
+          setActiveVisitors(data.activeVisitors);
+        }
       } catch (e) {}
     };
 
     sendPing();
-    const interval = setInterval(sendPing, 60000);
+    const interval = setInterval(sendPing, 30000); // كل 30 ثانية
     return () => clearInterval(interval);
   }, []);
 
@@ -952,7 +956,7 @@ export default function RestaurantMenu() {
                 <div>
                   <h2 className="text-base font-black text-amber-400 flex items-center gap-1.5">
                     <span>الرئيسية | لوحة تحكم دريم كورنر</span>
-                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v18.0</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v19.0</span>
                   </h2>
                   <p className="text-[10px] text-gray-400">مرحباً بك في لوحة التحكّم والذكاء المالي 👋</p>
                 </div>
@@ -999,9 +1003,9 @@ export default function RestaurantMenu() {
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                       {/* كارت الزوار النشطين الحاليين */}
                       <div className="p-3.5 rounded-2xl bg-[#141721] border border-amber-500/20 flex flex-col justify-between">
-                        <div className="flex items-center justify-between text-gray-400 text-xs"><span>الزوار النشطون</span><span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400"><Users size={14} /></span></div>
-                        <div className="my-2"><span className="text-xl font-black text-amber-400">نشط الآن 🟢</span></div>
-                        <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold"><span>تحديث مباشر لحظي</span></div>
+                        <div className="flex items-center justify-between text-gray-400 text-xs"><span>الزوار النشطون الآن</span><span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400"><Users size={14} /></span></div>
+                        <div className="my-2"><span className="text-xl font-black text-amber-400">{activeVisitors} زائر 🟢</span></div>
+                        <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold"><span>متصل لحظياً بالشيت</span></div>
                       </div>
 
                       <div className="p-3.5 rounded-2xl bg-[#141721] border border-amber-500/20 flex flex-col justify-between">
@@ -1010,16 +1014,17 @@ export default function RestaurantMenu() {
                         <div className={`flex items-center gap-1 text-[10px] font-bold ${reportsAnalytics.growthSalesPercent >= 0 ? "text-emerald-400" : "text-red-400"}`}>{reportsAnalytics.growthSalesPercent >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}<span>{reportsAnalytics.growthSalesPercent >= 0 ? `+${reportsAnalytics.growthSalesPercent}% عن أمس` : `${reportsAnalytics.growthSalesPercent}% عن أمس`}</span></div>
                       </div>
 
+                      {/* إرجاع كارت صافي المأكولات */}
+                      <div className="p-3.5 rounded-2xl bg-[#141721] border border-white/5 flex flex-col justify-between">
+                        <div className="flex items-center justify-between text-gray-400 text-xs"><span>صافي المأكولات</span><span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400"><Utensils size={14} /></span></div>
+                        <div className="my-2"><span className="text-xl font-black text-white">{money(reportsAnalytics.totalSales)}</span></div>
+                        <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold"><CheckCircle2 size={12} /><span>بدون مصاريف التوصيل</span></div>
+                      </div>
+
                       <div className="p-3.5 rounded-2xl bg-[#141721] border border-white/5 flex flex-col justify-between">
                         <div className="flex items-center justify-between text-gray-400 text-xs"><span>عدد الطلبات</span><span className="p-1.5 rounded-lg bg-sky-500/10 text-sky-400"><ShoppingCart size={14} /></span></div>
                         <div className="my-2"><span className="text-xl font-black text-white">{reportsAnalytics.totalOrders} أوردر</span></div>
                         <div className={`flex items-center gap-1 text-[10px] font-bold ${reportsAnalytics.growthOrdersPercent >= 0 ? "text-emerald-400" : "text-red-400"}`}>{reportsAnalytics.growthOrdersPercent >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}<span>{reportsAnalytics.growthOrdersPercent >= 0 ? `+${reportsAnalytics.growthOrdersPercent}% عن أمس` : `${reportsAnalytics.growthOrdersPercent}% عن أمس`}</span></div>
-                      </div>
-
-                      <div className="p-3.5 rounded-2xl bg-[#141721] border border-white/5 flex flex-col justify-between">
-                        <div className="flex items-center justify-between text-gray-400 text-xs"><span>إيرادات الدليفري</span><span className="p-1.5 rounded-lg bg-purple-500/10 text-purple-400"><Bike size={14} /></span></div>
-                        <div className="my-2"><span className="text-xl font-black text-white">{money(reportsAnalytics.totalDelivery)}</span></div>
-                        <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold"><CheckCircle2 size={12} /><span>محسوب حقيقي من الشيت</span></div>
                       </div>
                     </div>
 
