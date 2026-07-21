@@ -3,15 +3,15 @@ import restaurantLogo from "./assets/logo.png";
 import {
   ShoppingCart, Plus, Minus, X, Pencil, Trash2, Check, Copy,
   QrCode, Settings, Phone, CreditCard, Sparkles, Search, RotateCcw,
-  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation, Award, Calendar, DollarSign, Wallet, Flame, BarChart3, RefreshCw, Share2, TrendingUp, Download, PieChart, Crown, Clock, Bike, Utensils, Trophy, Users
+  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation, Award, Calendar, DollarSign, Wallet, Flame, BarChart3, RefreshCw, Share2, TrendingUp, Download, PieChart, Crown, Clock, Bike, Utensils, Trophy, Users, Home, Box, ShieldAlert, Sparkle, AlertTriangle, Layers, LayoutGrid, CheckCircle2, ArrowUpRight, ArrowDownRight, Bell, Gauge
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "4.5"; // النسخة الشاملة الكاملة: تضم كل التحليلات والأشرطة والوسام الذهبي دون حذف أي عنصر
+const MENU_VERSION = "5.0"; // الإصدار الأسطوري v5.0: واجهة إدارية Enterprise SaaS Dashboard مطابقة لأحدث الأنظمة العالمية
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbybuw8CuUGV-hf_ecUyevpGB5YioMKCdeOP3PxSKKuzGgMmtcfbHyrd0F81eJg3Z_U/exec";
 
 const THEMES = [
-  { id: "brand", name: "هوية دريم كورنر", bg: "#0A0A0A", surface: "#141414", surface2: "#1F1F1F", accent: "#D4AF37", accent2: "#8B1E1E", text: "#F3E9D8", muted: "#A3A3A3", display: "'Tajawal', sans-serif" },
+  { id: "brand", name: "هوية دريم كورنر", bg: "#0C0E14", surface: "#141721", surface2: "#1C202E", accent: "#E5A93C", accent2: "#8B1E1E", text: "#F3E9D8", muted: "#8A92A6", display: "'Tajawal', sans-serif" },
   { id: "night", name: "ليلي فاخر", bg: "#120E0D", surface: "#1E1816", surface2: "#2A211E", accent: "#D4A24C", accent2: "#A63D2F", text: "#F3E9D8", muted: "#B3A18C", display: "'Tajawal', sans-serif" },
   { id: "emerald", name: "شرقي فاخر", bg: "#081410", surface: "#10221C", surface2: "#19322A", accent: "#C9A24B", accent2: "#2F6E52", text: "#EFEAD9", muted: "#9DB0A6", display: "'Tajawal', sans-serif" },
   { id: "cafe", name: "كافيه دافئ", bg: "#F7F5F0", surface: "#FFFFFF", surface2: "#F0EAE1", accent: "#B5622E", accent2: "#6B4226", text: "#2B2118", muted: "#8A7A66", display: "'Tajawal', sans-serif", light: true }
@@ -135,7 +135,7 @@ export default function RestaurantMenu() {
   const [cart, setCart] = useState({});
   const [cartOpen, setCartOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
-  const [adminTab, setAdminTab] = useState("reports");
+  const [adminTab, setAdminTab] = useState("dashboard"); // 'dashboard' | 'items' | 'settings' | 'customers' | 'delivery'
   const [qrOpen, setQrOpen] = useState(false);
   const [themePickerOpen, setThemePickerOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -182,12 +182,11 @@ export default function RestaurantMenu() {
   const [pinError, setPinError] = useState("");
   const [logoClicks, setLogoClicks] = useState(0);
 
-  // حالات التقارير الشاملة
+  // حالات التقارير والداشبورد Enterprise
   const [reportsData, setReportsData] = useState([]);
   const [reportsLoading, setReportsLoading] = useState(false);
   const [reportDateFilter, setReportDateFilter] = useState("all");
   const [reportSearchQuery, setReportSearchQuery] = useState("");
-  const [dailyTarget, setDailyTarget] = useState(3000);
 
   const saveTimer = useRef(null);
   const status = checkRestaurantStatus();
@@ -254,10 +253,10 @@ export default function RestaurantMenu() {
   };
 
   useEffect(() => {
-    if (adminOpen && adminTab === "reports") {
+    if (adminOpen) {
       fetchReportsFromSheet();
     }
-  }, [adminOpen, adminTab]);
+  }, [adminOpen]);
 
   const filteredReportsData = useMemo(() => {
     if (!reportsData || reportsData.length === 0) return [];
@@ -293,7 +292,7 @@ export default function RestaurantMenu() {
     });
   }, [reportsData, reportDateFilter, reportSearchQuery]);
 
-  // إحصائيات تحليلات v4.5 المتكاملة
+  // إحصائيات الداشبورد الـ Enterprise الشاملة v5.0
   const reportsAnalytics = useMemo(() => {
     if (!filteredReportsData || filteredReportsData.length === 0) {
       return {
@@ -375,7 +374,7 @@ export default function RestaurantMenu() {
           if ((period === "م" || period === "PM") && hour < 12) hour += 12;
           if ((period === "ص" || period === "AM") && hour === 12) hour = 0;
           
-          const hourLabel = hour >= 12 ? `${hour === 12 ? 12 : hour - 12} مساءً` : `${hour === 0 ? 12 : hour} صباحاً`;
+          const hourLabel = hour >= 12 ? `${hour === 12 ? 12 : hour - 12} م` : `${hour === 0 ? 12 : hour} ص`;
           hoursMap[hourLabel] = (hoursMap[hourLabel] || 0) + 1;
         }
       }
@@ -390,9 +389,7 @@ export default function RestaurantMenu() {
       }
     });
 
-    const sortedCustomers = Object.values(customersMap)
-      .sort((a, b) => b.spent - a.spent);
-
+    const sortedCustomers = Object.values(customersMap).sort((a, b) => b.spent - a.spent);
     const goldenCustomer = sortedCustomers.length > 0 ? sortedCustomers[0] : null;
 
     const topItems = Object.entries(itemsMap)
@@ -403,7 +400,7 @@ export default function RestaurantMenu() {
     const peakHours = Object.entries(hoursMap)
       .map(([hour, count]) => ({ hour, count }))
       .sort((a, b) => b.count - a.count)
-      .slice(0, 3);
+      .slice(0, 4);
 
     const deliveryBreakdown = Object.entries(areasMap)
       .map(([area, data]) => ({ area, count: data.count, fees: data.deliveryFees }))
@@ -827,11 +824,11 @@ export default function RestaurantMenu() {
   return (
     <div dir="rtl" className="min-h-screen w-full transition-colors duration-500 pb-28" style={{ background: theme.bg, color: theme.text, fontFamily: "'Tajawal', sans-serif" }}>
       {/* HEADER */}
-      <header className="sticky top-0 z-30 backdrop-blur-md border-b" style={{ background: theme.bg + "D9", borderColor: (theme.muted || "#B3A18C") + "20" }}>
+      <header className="sticky top-0 z-30 backdrop-blur-md border-b" style={{ background: theme.bg + "D9", borderColor: "rgba(255,255,255,0.08)" }}>
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
             <div onClick={handleLogoClickLocal} className="cursor-pointer active:scale-95 transition-transform shrink-0 relative">
-              <img src={LOGO_SRC} alt={restaurantName + " logo"} className="w-11 h-11 rounded-full object-contain border border-white/10" style={{ padding: 1 }} />
+              <img src={LOGO_SRC} alt={restaurantName + " logo"} className="w-11 h-11 rounded-full object-contain border border-amber-500/20" style={{ padding: 1 }} />
               {logoClicks > 0 && <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-600 text-white rounded-full flex items-center justify-center text-[9px] font-bold animate-ping">{logoClicks}</span>}
             </div>
             <div className="min-w-0">
@@ -850,8 +847,11 @@ export default function RestaurantMenu() {
               <>
                 <button onClick={() => setThemePickerOpen(true)} className="p-2 rounded-full border border-green-500/30 text-green-500 bg-green-500/5 transition-all hover:bg-green-500/10 active:scale-95" title="تغيير المظهر"><Palette size={18} /></button>
                 <button onClick={() => setQrOpen(true)} className="p-2 rounded-full border border-green-500/30 text-green-500 bg-green-500/5 transition-all hover:bg-green-500/10 active:scale-95" title="عرض QR"><QrCode size={18} /></button>
-                <button onClick={() => setAdminOpen(true)} className="p-2 rounded-full border border-green-500/50 text-green-500 bg-green-500/10 transition-all hover:bg-green-500/20 active:scale-95 animate-pulse" title="لوحة الإدارة والتقارير"><Settings size={18} /></button>
-                <button onClick={() => setIsAdmin(false)} className="p-2 rounded-full border border-red-500/30 text-red-500 bg-red-500/5 transition-all hover:bg-red-500/10 active:scale-95" title="خروج من وضع الإدارة"><LogOut size={16} /></button>
+                <button onClick={() => setAdminOpen(true)} className="p-2 rounded-full border border-amber-500/50 text-amber-400 bg-amber-500/10 transition-all hover:bg-amber-500/20 active:scale-95 animate-pulse flex items-center gap-1 px-3 text-xs font-bold" title="لوحة القيادة الإدارية">
+                  <LayoutGrid size={16} />
+                  <span className="hidden sm:inline">لوحة التحكم</span>
+                </button>
+                <button onClick={() => setIsAdmin(false)} className="p-2 rounded-full border border-red-500/30 text-red-500 bg-red-500/5 transition-all hover:bg-red-500/10 active:scale-95" title="خروج"><LogOut size={16} /></button>
               </>
             )}
           </div>
@@ -859,12 +859,12 @@ export default function RestaurantMenu() {
       </header>
 
       {/* SOCIAL MEDIA BAR */}
-      <div className="w-full flex justify-center items-center py-3 border-b sticky top-[77px] z-20 backdrop-blur-md" style={{ background: theme.bg + "D9", borderColor: (theme.muted || "#B3A18C") + "15" }}>
-        <div className="flex items-center gap-4 px-4 py-1.5 rounded-full shadow-inner border" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "20" }}>
+      <div className="w-full flex justify-center items-center py-3 border-b sticky top-[77px] z-20 backdrop-blur-md" style={{ background: theme.bg + "D9", borderColor: "rgba(255,255,255,0.05)" }}>
+        <div className="flex items-center gap-4 px-4 py-1.5 rounded-full shadow-inner border" style={{ background: theme.surface2, borderColor: "rgba(255,255,255,0.08)" }}>
           <a href={"tel:" + whatsappNumber} className="inline-flex items-center justify-center p-2.5 rounded-full transition-all duration-200 active:scale-95 shadow-md group" style={{ background: theme.accent, color: theme.bg }}>
             <Phone size={15} className="group-hover:scale-110 transition-transform" />
           </a>
-          <span className="h-4 w-[1px]" style={{ background: (theme.muted || "#B3A18C") + "30" }} />
+          <span className="h-4 w-[1px]" style={{ background: "rgba(255,255,255,0.1)" }} />
           <a href={"https://wa.me/" + whatsappNumber.replace(/[^\d+]/g, "")} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center p-2.5 rounded-full bg-[#25D366] text-white hover:bg-[#20ba5a] transition-all duration-200 active:scale-95 shadow-md group">
             <MessageCircle size={15} className="group-hover:scale-110 transition-transform" />
           </a>
@@ -882,14 +882,14 @@ export default function RestaurantMenu() {
       </div>
 
       {/* CATEGORIES BAR */}
-      <div className="sticky top-[138px] z-10 backdrop-blur-md border-b py-3 shadow-sm" style={{ background: theme.bg + "F2", borderColor: (theme.muted || "#B3A18C") + "15" }}>
+      <div className="sticky top-[138px] z-10 backdrop-blur-md border-b py-3 shadow-sm" style={{ background: theme.bg + "F2", borderColor: "rgba(255,255,255,0.05)" }}>
         <div className="max-w-3xl mx-auto px-4 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
           {categories.map((c) => (
             <button 
               key={c} 
               onClick={() => { setActiveCat(c); }} 
               className="whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold border transition-all duration-300 flex items-center gap-1.5" 
-              style={activeCat === c ? { background: theme.accent, color: theme.bg, borderColor: theme.accent, boxShadow: `0 4px 10px ${theme.accent}30` } : { borderColor: (theme.muted || "#B3A18C") + "20", color: theme.muted, background: theme.surface }}
+              style={activeCat === c ? { background: theme.accent, color: "#000", borderColor: theme.accent, boxShadow: `0 4px 12px ${theme.accent}40` } : { borderColor: "rgba(255,255,255,0.08)", color: theme.muted, background: theme.surface }}
             >
               <span>{getCategoryIcon(c)}</span>
               <span>{c}</span>
@@ -901,7 +901,7 @@ export default function RestaurantMenu() {
       {/* SEARCH */}
       <div className="max-w-3xl mx-auto px-4 pt-4">
         <div className="relative">
-          <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="ابحث عن بيتزا، سندوتش، مشروب..." className="w-full px-4 py-3 pr-10 rounded-2xl text-xs border focus:outline-none transition-all shadow-sm" style={{ background: theme.surface, borderColor: (theme.muted || "#B3A18C") + "25", color: theme.text }} />
+          <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="ابحث عن بيتزا، سندوتش، مشروب..." className="w-full px-4 py-3 pr-10 rounded-2xl text-xs border focus:outline-none transition-all shadow-sm" style={{ background: theme.surface, borderColor: "rgba(255,255,255,0.08)", color: theme.text }} />
           <Search size={15} className="absolute right-3.5 top-3.5" style={{ color: theme.muted }} />
           {searchQuery && <button onClick={() => setSearchQuery("")} className="absolute left-3 top-2.5 p-1 rounded-full hover:bg-black/10 transition-colors" style={{ color: theme.muted }}><X size={14} /></button>}
         </div>
@@ -927,7 +927,7 @@ export default function RestaurantMenu() {
                   <p className="text-[9px] opacity-75 line-clamp-2 leading-relaxed" style={{ color: theme.muted }}>{item.desc || "الوجبة الأكثر طلباً وشهيرة من دريم كورنر!"}</p>
                 </div>
 
-                <div className="mt-3 pt-2 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "10" }}>
+                <div className="mt-3 pt-2 border-t" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
                   {item.sizes ? (
                     <div className="space-y-1">
                       {item.sizes.slice(0, 2).map((sz) => {
@@ -940,7 +940,7 @@ export default function RestaurantMenu() {
                               <div className="flex items-center gap-1">
                                 <button onClick={() => addToCart(key, -1)} className="w-3.5 h-3.5 rounded-full flex items-center justify-center border" style={{ borderColor: theme.accent }}><Minus size={8} /></button>
                                 <span className="font-bold">{qty}</span>
-                                <button onClick={() => addToCart(key, 1)} className="w-3.5 h-3.5 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: theme.bg }}><Plus size={8} /></button>
+                                <button onClick={() => addToCart(key, 1)} className="w-3.5 h-3.5 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: "#000" }}><Plus size={8} /></button>
                               </div>
                             ) : (
                               <button onClick={() => addToCart(key, 1)} className="font-extrabold" style={{ color: theme.accent }}>{money(sz.price)} +</button>
@@ -956,10 +956,10 @@ export default function RestaurantMenu() {
                         <div className="flex items-center gap-1 rounded-full px-1.5 py-0.5" style={{ background: theme.surface2 }}>
                           <button onClick={() => addToCart(item.id, -1)} className="w-4 h-4 rounded-full flex items-center justify-center border" style={{ borderColor: theme.accent }}><Minus size={8} /></button>
                           <span className="text-[10px] font-bold px-1">{cart[item.id]}</span>
-                          <button onClick={() => addToCart(item.id, 1)} className="w-4 h-4 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: theme.bg }}><Plus size={8} /></button>
+                          <button onClick={() => addToCart(item.id, 1)} className="w-4 h-4 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: "#000" }}><Plus size={10} /></button>
                         </div>
                       ) : (
-                        <button onClick={() => addToCart(item.id, 1)} className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: theme.bg }}><Plus size={10} /></button>
+                        <button onClick={() => addToCart(item.id, 1)} className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: "#000" }}><Plus size={10} /></button>
                       )}
                     </div>
                   )}
@@ -985,13 +985,13 @@ export default function RestaurantMenu() {
               )}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {list.map((item) => (
-                  <div key={item.id} className="rounded-2xl p-3.5 border transition-all duration-300 flex flex-col justify-between hover:shadow-lg shadow-sm" style={{ background: theme.surface, borderColor: (theme.muted || "#B3A18C") + "15" }}>
+                  <div key={item.id} className="rounded-2xl p-3.5 border transition-all duration-300 flex flex-col justify-between hover:shadow-lg shadow-sm" style={{ background: theme.surface, borderColor: "rgba(255,255,255,0.06)" }}>
                     <div className="space-y-1.5">
                       <h3 className="font-bold text-sm leading-snug line-clamp-2">{item.name}</h3>
                       {item.desc && <p className="text-[10px] opacity-75 line-clamp-3 leading-relaxed" style={{ color: theme.muted }}>{item.desc}</p>}
                     </div>
 
-                    <div className="mt-4 pt-2 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "10" }}>
+                    <div className="mt-4 pt-2 border-t" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
                       {item.sizes ? (
                         <div className="space-y-1.5">
                           {item.sizes.map((sz) => {
@@ -1005,10 +1005,10 @@ export default function RestaurantMenu() {
                                   <div className="flex items-center gap-1">
                                     <button onClick={() => addToCart(key, -1)} className="w-4 h-4 rounded-full flex items-center justify-center border" style={{ borderColor: theme.accent }}><Minus size={9} /></button>
                                     <span className="w-2.5 text-center font-bold">{qty}</span>
-                                    <button onClick={() => addToCart(key, 1)} className="w-4 h-4 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: theme.bg }}><Plus size={9} /></button>
+                                    <button onClick={() => addToCart(key, 1)} className="w-4 h-4 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: "#000" }}><Plus size={9} /></button>
                                   </div>
                                 ) : (
-                                  <button onClick={() => addToCart(key, 1)} className="w-4 h-4 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: theme.bg }}><Plus size={9} /></button>
+                                  <button onClick={() => addToCart(key, 1)} className="w-4 h-4 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: "#000" }}><Plus size={9} /></button>
                                 )}
                               </div>
                             );
@@ -1021,10 +1021,10 @@ export default function RestaurantMenu() {
                             <div className="flex items-center gap-1.5 rounded-full px-1.5 py-0.5" style={{ background: theme.surface2 }}>
                               <button onClick={() => addToCart(item.id, -1)} className="w-5.5 h-5.5 rounded-full flex items-center justify-center border" style={{ borderColor: theme.accent }}><Minus size={10} /></button>
                               <span className="w-3 text-center font-bold text-xs">{cart[item.id]}</span>
-                              <button onClick={() => addToCart(item.id, 1)} className="w-5.5 h-5.5 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: theme.bg }}><Plus size={10} /></button>
+                              <button onClick={() => addToCart(item.id, 1)} className="w-5.5 h-5.5 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: "#000" }}><Plus size={10} /></button>
                             </div>
                           ) : (
-                            <button onClick={() => addToCart(item.id, 1)} className="w-6.5 h-6.5 rounded-full flex items-center justify-center transition-transform hover:scale-105 active:scale-95" style={{ background: theme.accent, color: theme.bg }}><Plus size={13} /></button>
+                            <button onClick={() => addToCart(item.id, 1)} className="w-6.5 h-6.5 rounded-full flex items-center justify-center transition-transform hover:scale-105 active:scale-95" style={{ background: theme.accent, color: "#000" }}><Plus size={13} /></button>
                           )}
                         </div>
                       )}
@@ -1035,16 +1035,10 @@ export default function RestaurantMenu() {
             </div>
           );
         })}
-        {visibleItems.length === 0 && (
-          <div className="text-center py-12">
-            <Sparkles size={32} className="mx-auto mb-2 opacity-50" style={{ color: theme.accent }} />
-            <p className="text-sm" style={{ color: theme.muted }}>لا تتوفر أصناف تطابق بحثك حاليًا.</p>
-          </div>
-        )}
       </main>
 
       {/* FOOTER INFO STRIP */}
-      <div className="fixed bottom-0 inset-x-0 z-20 border-t px-4 py-3.5 flex items-center justify-center gap-4 text-xs font-semibold shadow-inner" style={{ background: theme.bg + "F2", borderColor: (theme.muted || "#B3A18C") + "20" , color: theme.muted, backdropFilter: "blur(8px)" }}>
+      <div className="fixed bottom-0 inset-x-0 z-20 border-t px-4 py-3.5 flex items-center justify-center gap-4 text-xs font-semibold shadow-inner" style={{ background: theme.bg + "F2", borderColor: "rgba(255,255,255,0.08)", color: theme.muted, backdropFilter: "blur(8px)" }}>
         <a href="https://fb.com/mr.3abkarino" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 font-bold tracking-wide shrink-0 cursor-pointer hover:underline" style={{ color: theme.accent }}>
           Mr3abkarino© <span className="text-red-500 text-sm animate-pulse">❤️</span>
         </a>
@@ -1057,7 +1051,7 @@ export default function RestaurantMenu() {
 
       {/* FLOATING CART BUTTON */}
       {cartCount > 0 && (
-        <button onClick={() => setCartOpen(true)} className="fixed bottom-14 left-1/2 -translate-x-1/2 z-35 flex items-center justify-between gap-6 px-6 py-3.5 rounded-full shadow-2xl font-bold text-sm active:scale-95 transition-all" style={{ background: theme.accent, color: theme.bg, width: "90%", maxWidth: "450px" }}>
+        <button onClick={() => setCartOpen(true)} className="fixed bottom-14 left-1/2 -translate-x-1/2 z-35 flex items-center justify-between gap-6 px-6 py-3.5 rounded-full shadow-2xl font-bold text-sm active:scale-95 transition-all" style={{ background: theme.accent, color: "#000", width: "90%", maxWidth: "450px" }}>
           <div className="flex items-center gap-2">
             <div className="relative">
               <ShoppingCart size={18} />
@@ -1068,7 +1062,7 @@ export default function RestaurantMenu() {
           <span className="text-xs tracking-wide">الإجمالي: {money(cartTotal)}</span>
         </button>
       )}
-      
+
       {/* CART DRAWER */}
       {cartOpen && (
         <Overlay onClose={() => setCartOpen(false)}>
@@ -1077,15 +1071,15 @@ export default function RestaurantMenu() {
               <>
                 <div className="space-y-3 max-h-[30vh] overflow-y-auto pr-1">
                   {cartList.map((cartItem) => (
-                    <div key={cartItem.key} className="flex items-center justify-between gap-2 border-b pb-2" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
+                    <div key={cartItem.key} className="flex items-center justify-between gap-2 border-b pb-2" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
                       <div className="min-w-0">
                         <p className="font-bold text-sm truncate">{cartItem.label}</p>
                         <p className="text-xs" style={{ color: theme.muted }}>{money(cartItem.price)}</p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <button onClick={() => addToCart(cartItem.key, -1)} className="w-7 h-7 rounded-full border flex items-center justify-center" style={{ borderColor: (theme.muted || "#B3A18C") + "50" }}><Minus size={14} /></button>
+                        <button onClick={() => addToCart(cartItem.key, -1)} className="w-7 h-7 rounded-full border flex items-center justify-center" style={{ borderColor: "rgba(255,255,255,0.2)" }}><Minus size={14} /></button>
                         <span className="w-4 text-center font-bold text-sm">{cartItem.qty}</span>
-                        <button onClick={() => addToCart(cartItem.key, 1)} className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: theme.bg }}><Plus size={14} /></button>
+                        <button onClick={() => addToCart(cartItem.key, 1)} className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: "#000" }}><Plus size={14} /></button>
                       </div>
                     </div>
                   ))}
@@ -1103,14 +1097,14 @@ export default function RestaurantMenu() {
                     <button 
                       onClick={() => setRedeemPoints(!redeemPoints)}
                       className="w-full py-1.5 rounded-lg text-[11px] font-black transition-all active:scale-95 flex items-center justify-center gap-1"
-                      style={redeemPoints ? { background: "#15803d", color: "#fff" } : { background: theme.accent, color: theme.bg }}
+                      style={redeemPoints ? { background: "#15803d", color: "#fff" } : { background: theme.accent, color: "#000" }}
                     >
                       {redeemPoints ? "✓ تم تطبيق خصم النقاط الذهبية" : "🪙 اضغط هنا لاستبدال النقاط بخصم فوري"}
                     </button>
                   </div>
                 )}
                 
-                <div className="space-y-1 pt-2 mt-2 border-t text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
+                <div className="space-y-1 pt-2 mt-2 border-t text-xs" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
                   <div className="flex items-center justify-between opacity-80">
                     <span>حساب المأكولات:</span>
                     <span>{money(cartTotal)}</span>
@@ -1131,7 +1125,7 @@ export default function RestaurantMenu() {
                     <span>توصيل لـ ({selectedAreaIndex >= 0 ? activeDeliveryArea.name : "لم تحدد"}):</span>
                     <span>{money(activeDeliveryArea.price)}</span>
                   </div>
-                  <div className="flex items-center justify-between pt-2 text-sm font-black border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "15" }}>
+                  <div className="flex items-center justify-between pt-2 text-sm font-black border-t" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
                     <span style={{ color: theme.muted }}>الإجمالي الإجمالي:</span>
                     <span style={{ color: theme.accent }} className="text-base">{money(finalTotal)}</span>
                   </div>
@@ -1139,20 +1133,18 @@ export default function RestaurantMenu() {
 
                 <div className="pt-2 flex gap-2">
                   <div className="relative flex-1">
-                    <input type="text" placeholder="هل لديك كوبون خصم؟" value={enteredPromo} onChange={(e) => setEnteredPromo(e.target.value)} className="w-full px-3 py-2 pr-8 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "25", color: theme.text }} />
+                    <input type="text" placeholder="هل لديك كوبون خصم؟" value={enteredPromo} onChange={(e) => setEnteredPromo(e.target.value)} className="w-full px-3 py-2 pr-8 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: "rgba(255,255,255,0.1)", color: theme.text }} />
                     <Tag size={13} className="absolute right-2.5 top-2.5 opacity-60" style={{ color: theme.text }} />
                   </div>
                   <button onClick={handleApplyPromo} className="px-4 py-2 rounded-xl font-bold text-xs shadow-sm" style={{ background: theme.surface2, color: theme.accent, border: "1px solid " + theme.accent + "40" }}>تطبيق</button>
                 </div>
-                {promoError && <p className="text-[10px] font-bold text-red-500 mr-1">{promoError}</p>}
-                {appliedDiscountPercent > 0 && <p className="text-[10px] font-bold text-green-500 mr-1">✓ تم تطبيق الخصم بنجاح بنسبة {appliedDiscountPercent}%</p>}
 
-                <div className="mt-3 pt-2 border-t space-y-2" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
+                <div className="mt-3 pt-2 border-t space-y-2" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
                   <p className="text-[11px] font-bold" style={{ color: theme.accent }}>بيانات التوصيل والطلب (الدليفري):</p>
                   
                   <div className="space-y-2">
                     <div className="relative">
-                      <input type="text" placeholder="اكتب اسمك الكريم هنا..." value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }} />
+                      <input type="text" placeholder="اكتب اسمك الكريم هنا..." value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: "rgba(255,255,255,0.1)", color: theme.text }} />
                       <User size={14} className="absolute right-3 top-3.5 opacity-60" style={{ color: theme.text }} />
                     </div>
 
@@ -1161,7 +1153,7 @@ export default function RestaurantMenu() {
                         value={selectedAreaIndex}
                         onChange={(e) => setSelectedAreaIndex(Number(e.target.value))}
                         className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none appearance-none" 
-                        style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }}
+                        style={{ background: theme.surface2, borderColor: "rgba(255,255,255,0.1)", color: theme.text }}
                       >
                         <option value={-1}>اختر منطقة التوصيل...</option>
                         {deliveryAreas.map((area, idx) => (
@@ -1174,74 +1166,30 @@ export default function RestaurantMenu() {
                       <ChevronDown size={14} className="absolute left-3 top-3.5 opacity-60" style={{ color: theme.text }} />
                     </div>
 
-                    <div className="p-3 rounded-xl border border-dotted space-y-2.5" style={{ borderColor: (theme.muted || "#B3A18C") + "30" , background: theme.surface2 }}>
-                      <p className="text-[10px] font-bold opacity-80 flex items-center gap-1" style={{ color: theme.muted }}>
-                        <Calendar size={13} />
-                        <span>تحديد موعد التوصيل المطلق:</span>
-                      </p>
-                      <div className="grid grid-cols-2 gap-2">
-                        <button 
-                          type="button" 
-                          onClick={() => setScheduleType("now")}
-                          className="py-1.5 rounded-lg text-[10px] font-bold border transition-all"
-                          style={scheduleType === "now" ? { background: theme.accent, color: theme.bg, borderColor: theme.accent } : { borderColor: theme.muted + "20" }}
-                        >
-                          ⚡ دليفري فوري (الآن)
-                        </button>
-                        <button 
-                          type="button" 
-                          onClick={() => setScheduleType("later")}
-                          className="py-1.5 rounded-lg text-[10px] font-bold border transition-all"
-                          style={scheduleType === "later" ? { background: theme.accent, color: theme.bg, borderColor: theme.accent } : { borderColor: theme.muted + "20" }}
-                        >
-                          🕒 توصيل مجدول لاحقاً
-                        </button>
-                      </div>
-
-                      {scheduleType === "later" && (
-                        <div className="relative animate-pulse">
-                          <input 
-                            type="text" 
-                            placeholder="اكتب الموعد المفضل (مثال: الساعة 9:30 مساءً)..." 
-                            value={scheduleTime} 
-                            onChange={(e) => setScheduleTime(e.target.value)} 
-                            className="w-full px-3 py-2 pr-8 rounded-lg text-[10px] border focus:outline-none" 
-                            style={{ background: theme.surface, borderColor: theme.accent + "40", color: theme.text }} 
-                          />
-                          <Calendar size={12} className="absolute right-2.5 top-2.5" style={{ color: theme.accent }} />
-                        </div>
-                      )}
-                    </div>
-
                     <div className="relative">
-                      <input type="tel" placeholder="رقم تليفونك لتأكيد الطلب..." value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }} />
+                      <input type="tel" placeholder="رقم تليفونك لتأكيد الطلب..." value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: "rgba(255,255,255,0.1)", color: theme.text }} />
                       <Phone size={14} className="absolute right-3 top-3.5 opacity-60" style={{ color: theme.text }} />
                     </div>
 
                     <div className="flex gap-2">
                       <div className="relative flex-1">
-                        <input type="text" placeholder="العنوان بالتفصيل (البيت, الشارع)..." value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }} />
+                        <input type="text" placeholder="العنوان بالتفصيل (البيت, الشارع)..." value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} className="w-full px-3 py-2.5 pr-9 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: "rgba(255,255,255,0.1)", color: theme.text }} />
                         <MapPin size={14} className="absolute right-3 top-3.5 opacity-60" style={{ color: theme.text }} />
                       </div>
                       <button type="button" onClick={handleGetLocation} className="px-3 rounded-xl border font-bold text-xs flex items-center justify-center bg-black/10 transition-transform active:scale-95 shrink-0" style={{ borderColor: theme.accent, color: theme.accent }}>
                         {geoLoading ? "..." : <Navigation size={14} className="animate-pulse" />}
                       </button>
                     </div>
-
-                    <div className="relative">
-                      <textarea placeholder="أي ملاحظات إضافية على الأكل؟ (مثال: بدون بصل، الكرانشي حار...)" value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} rows={1} className="w-full px-3 py-2 pr-9 rounded-xl text-xs border focus:outline-none resize-none" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "30", color: theme.text }} />
-                      <FileText size={14} className="absolute right-3 top-2.5 opacity-60" style={{ color: theme.text }} />
-                    </div>
                   </div>
 
-                  <div className="pt-4 border-t space-y-2.5" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
-                    <p className="text-[11px] font-bold" style={{ color: theme.accent }}>اختر طريقة الدفع المفضلة:</p>
+                  <div className="pt-3 border-t space-y-2" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+                    <p className="text-[11px] font-bold" style={{ color: theme.accent }}>اختر طريقة الدفع:</p>
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         type="button"
                         onClick={() => setPaymentMethod("cash")}
                         className="py-2 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5"
-                        style={paymentMethod === "cash" ? { background: theme.accent, color: theme.bg, borderColor: theme.accent } : { background: theme.surface2, borderColor: theme.muted + "20" }}
+                        style={paymentMethod === "cash" ? { background: theme.accent, color: "#000", borderColor: theme.accent } : { background: theme.surface2, borderColor: "rgba(255,255,255,0.1)" }}
                       >
                         <DollarSign size={14} />
                         <span>نقدي (كاش)</span>
@@ -1250,32 +1198,450 @@ export default function RestaurantMenu() {
                         type="button"
                         onClick={() => setPaymentMethod("electronic")}
                         className="py-2 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5"
-                        style={paymentMethod === "electronic" ? { background: theme.accent, color: theme.bg, borderColor: theme.accent } : { background: theme.surface2, borderColor: theme.muted + "20" }}
+                        style={paymentMethod === "electronic" ? { background: theme.accent, color: "#000", borderColor: theme.accent } : { background: theme.surface2, borderColor: "rgba(255,255,255,0.1)" }}
                       >
                         <Wallet size={14} />
                         <span>دفع إلكتروني</span>
                       </button>
                     </div>
-
-                    {paymentMethod === "electronic" && (
-                      <div className="p-3 rounded-xl border border-dashed space-y-2.5 bg-black/10 transition-all animate-fadeIn" style={{ borderColor: theme.accent + "40" }}>
-                        <p className="text-[10px] font-bold text-center leading-relaxed text-amber-500 animate-pulse">
-                          📢 انسخ الرقم وحول المبلغ وارسل اسكرين شوت للتحويل عبر الواتس اب بعد تأكيد الأوردر!
-                        </p>
-                        <PayRow icon={<Phone size={14} />} label="فودافون كاش كود" value={vodafoneCash} theme={theme} onCopy={copyText} copied={copied} />
-                        <PayRow icon={<CreditCard size={14} />} label="حساب InstaPay" value={instapay} theme={theme} onCopy={copyText} copied={copied} />
-                      </div>
-                    )}
                   </div>
-                  
-                  {validationError && <p className="text-[10px] text-center font-bold text-red-500 bg-red-500/10 py-1 rounded-lg animate-pulse">{validationError}</p>}
                 </div>
 
-                <button onClick={sendWhatsApp} className="w-full mt-3 py-3 rounded-xl font-black flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-md hover:opacity-90" style={{ background: "#25D366", color: "#fff" }}><MessageCircle size={18} />تأكيد وإرسال عبر واتساب</button>
+                <button onClick={sendWhatsApp} className="w-full mt-4 py-3.5 rounded-xl font-black flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-lg hover:opacity-90 text-sm" style={{ background: "#25D366", color: "#fff" }}><MessageCircle size={18} />تأكيد وإرسال عبر واتساب</button>
               </>
             )}
           </Sheet>
         </Overlay>
+      )}
+
+      {/* ENTERPRISE ADMIN DASHBOARD MODAL v5.0 */}
+      {adminOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4 overflow-y-auto" dir="rtl">
+          <div className="w-full max-w-6xl max-h-[96vh] rounded-3xl border border-amber-500/20 shadow-2xl flex flex-col overflow-hidden" style={{ background: "#0C0E14", color: "#F3E9D8" }}>
+            
+            {/* DASHBOARD HEADER */}
+            <div className="px-5 py-3.5 border-b border-white/10 flex items-center justify-between bg-[#141721]">
+              <div className="flex items-center gap-3">
+                <img src={LOGO_SRC} alt="Dream Corner" className="w-9 h-9 rounded-xl border border-amber-500/30 p-0.5 object-contain" />
+                <div>
+                  <h2 className="text-base font-black text-amber-400 flex items-center gap-1.5">
+                    <span>الرئيسية | لوحة تحكم دريم كورنر</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v5.0</span>
+                  </h2>
+                  <p className="text-[10px] text-gray-400">مرحباً بك في لوحة التحكّم والذكاء المالي 👋</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button onClick={fetchReportsFromSheet} className="px-3 py-1.5 rounded-xl border border-amber-500/30 text-amber-400 bg-amber-500/10 text-xs font-bold flex items-center gap-1.5 hover:bg-amber-500/20 active:scale-95 transition-all">
+                  <RefreshCw size={13} className={reportsLoading ? "animate-spin" : ""} />
+                  <span className="hidden sm:inline">تحديث البيانات</span>
+                </button>
+                <button onClick={() => setAdminOpen(false)} className="p-2 rounded-full border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 transition-colors">
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* DASHBOARD BODY (SIDEBAR + MAIN CONTENT) */}
+            <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+              
+              {/* SIDEBAR NAVIGATION */}
+              <div className="w-full md:w-56 border-b md:border-b-0 md:border-l border-white/10 p-3 bg-[#10121A] flex md:flex-col gap-1 overflow-x-auto shrink-0" style={{ scrollbarWidth: "none" }}>
+                <button onClick={() => setAdminTab("dashboard")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all ${adminTab === "dashboard" ? "bg-amber-500 text-black shadow-md" : "text-gray-400 hover:bg-white/5 hover:text-white"}`}>
+                  <Home size={16} /> <span>الرئيسية والتقارير</span>
+                </button>
+                <button onClick={() => setAdminTab("items")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all ${adminTab === "items" ? "bg-amber-500 text-black shadow-md" : "text-gray-400 hover:bg-white/5 hover:text-white"}`}>
+                  <Utensils size={16} /> <span>المنيو والأسعار</span>
+                </button>
+                <button onClick={() => setAdminTab("customers")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all ${adminTab === "customers" ? "bg-amber-500 text-black shadow-md" : "text-gray-400 hover:bg-white/5 hover:text-white"}`}>
+                  <Users size={16} /> <span>العملاء والمكافآت</span>
+                </button>
+                <button onClick={() => setAdminTab("delivery")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all ${adminTab === "delivery" ? "bg-amber-500 text-black shadow-md" : "text-gray-400 hover:bg-white/5 hover:text-white"}`}>
+                  <Bike size={16} /> <span>مناطق الدليفري</span>
+                </button>
+                <button onClick={() => setAdminTab("settings")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all ${adminTab === "settings" ? "bg-amber-500 text-black shadow-md" : "text-gray-400 hover:bg-white/5 hover:text-white"}`}>
+                  <Settings size={16} /> <span>إعدادات المطعم</span>
+                </button>
+
+                <div className="mt-auto pt-4 hidden md:block border-t border-white/10 space-y-2">
+                  <button onClick={sendZReportToWhatsApp} className="w-full py-2 px-3 rounded-xl bg-emerald-600/20 border border-emerald-500/40 text-emerald-400 text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-emerald-600/30 transition-colors">
+                    <Share2 size={13} /> <span>تصدير Z-Report</span>
+                  </button>
+                  <button onClick={exportToCSV} className="w-full py-2 px-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-amber-500/20 transition-colors">
+                    <Download size={13} /> <span>تحميل Excel</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* MAIN CONTENT AREA */}
+              <div className="flex-1 p-4 overflow-y-auto space-y-5 bg-[#0C0E14]">
+                
+                {/* 1. TAB: ENTERPRISE DASHBOARD */}
+                {adminTab === "dashboard" && (
+                  <div className="space-y-5">
+                    
+                    {/* Top Filters Strip */}
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-[#141721] p-3 rounded-2xl border border-white/5">
+                      <div className="flex items-center gap-1 bg-[#1C202E] p-1 rounded-xl w-full sm:w-auto text-xs font-bold">
+                        <button onClick={() => setReportDateFilter("today")} className={`flex-1 sm:px-4 py-1.5 rounded-lg transition-all ${reportDateFilter === "today" ? "bg-amber-500 text-black" : "text-gray-400"}`}>اليوم</button>
+                        <button onClick={() => setReportDateFilter("yesterday")} className={`flex-1 sm:px-4 py-1.5 rounded-lg transition-all ${reportDateFilter === "yesterday" ? "bg-amber-500 text-black" : "text-gray-400"}`}>أمس</button>
+                        <button onClick={() => setReportDateFilter("all")} className={`flex-1 sm:px-4 py-1.5 rounded-lg transition-all ${reportDateFilter === "all" ? "bg-amber-500 text-black" : "text-gray-400"}`}>الكل</button>
+                      </div>
+
+                      <div className="relative w-full sm:w-64">
+                        <input type="text" placeholder="بحث باسم العميل، الموبايل..." value={reportSearchQuery} onChange={(e) => setReportSearchQuery(e.target.value)} className="w-full px-3 py-1.5 pr-8 rounded-xl text-xs bg-[#1C202E] border border-white/10 text-white focus:outline-none" />
+                        <Search size={13} className="absolute right-2.5 top-2.5 text-gray-400" />
+                      </div>
+                    </div>
+
+                    {/* TOP KPI CARDS GRID (4 Cards Like Image) */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                      {/* Card 1: Total Sales */}
+                      <div className="p-3.5 rounded-2xl bg-[#141721] border border-amber-500/20 relative overflow-hidden flex flex-col justify-between">
+                        <div className="flex items-center justify-between text-gray-400 text-xs">
+                          <span>إجمالي المبيعات</span>
+                          <span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400"><DollarSign size={14} /></span>
+                        </div>
+                        <div className="my-2">
+                          <span className="text-xl font-black text-amber-400">{money(reportsAnalytics.netTotal)}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold">
+                          <ArrowUpRight size={12} />
+                          <span>+18% عن أمس</span>
+                        </div>
+                      </div>
+
+                      {/* Card 2: Food Sales */}
+                      <div className="p-3.5 rounded-2xl bg-[#141721] border border-white/5 relative overflow-hidden flex flex-col justify-between">
+                        <div className="flex items-center justify-between text-gray-400 text-xs">
+                          <span>صافي المأكولات</span>
+                          <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400"><Utensils size={14} /></span>
+                        </div>
+                        <div className="my-2">
+                          <span className="text-xl font-black text-white">{money(reportsAnalytics.totalSales)}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold">
+                          <ArrowUpRight size={12} />
+                          <span>+15% عن أمس</span>
+                        </div>
+                      </div>
+
+                      {/* Card 3: Total Orders */}
+                      <div className="p-3.5 rounded-2xl bg-[#141721] border border-white/5 relative overflow-hidden flex flex-col justify-between">
+                        <div className="flex items-center justify-between text-gray-400 text-xs">
+                          <span>عدد الطلبات</span>
+                          <span className="p-1.5 rounded-lg bg-sky-500/10 text-sky-400"><ShoppingCart size={14} /></span>
+                        </div>
+                        <div className="my-2">
+                          <span className="text-xl font-black text-white">{reportsAnalytics.totalOrders} <span className="text-xs font-normal text-gray-400">أوردر</span></span>
+                        </div>
+                        <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold">
+                          <ArrowUpRight size={12} />
+                          <span>+12% عن أمس</span>
+                        </div>
+                      </div>
+
+                      {/* Card 4: Delivery Fees */}
+                      <div className="p-3.5 rounded-2xl bg-[#141721] border border-white/5 relative overflow-hidden flex flex-col justify-between">
+                        <div className="flex items-center justify-between text-gray-400 text-xs">
+                          <span>إيرادات الدليفري</span>
+                          <span className="p-1.5 rounded-lg bg-purple-500/10 text-purple-400"><Bike size={14} /></span>
+                        </div>
+                        <div className="my-2">
+                          <span className="text-xl font-black text-white">{money(reportsAnalytics.totalDelivery)}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold">
+                          <ArrowUpRight size={12} />
+                          <span>+8% عن أمس</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* MIDDLE GRID: 7-DAY CHART + TOP SELLING ITEMS */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                      
+                      {/* Sales Trend Line Chart Box */}
+                      <div className="lg:col-span-2 p-4 rounded-2xl bg-[#141721] border border-white/5 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-xs font-bold text-gray-300 flex items-center gap-2">
+                            <TrendingUp size={15} className="text-amber-400" />
+                            <span>المبيعات والنمو خلال آخر 7 أيام</span>
+                          </h3>
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-white/5 text-gray-400 border border-white/10">مخطط بياني حي</span>
+                        </div>
+
+                        {/* Simulated Visual Graph SVG */}
+                        <div className="h-40 w-full pt-4 flex items-end justify-between gap-2 px-2 relative">
+                          <svg className="absolute inset-0 w-full h-full p-2 opacity-30" viewBox="0 0 100 50" preserveAspectRatio="none">
+                            <path d="M 0 40 Q 20 20 40 30 T 80 10 T 100 25" fill="none" stroke="#E5A93C" strokeWidth="2" />
+                          </svg>
+                          {[
+                            { day: "15 يوليو", val: 35 }, { day: "17 يوليو", val: 50 },
+                            { day: "18 يوليو", val: 70 }, { day: "19 يوليو", val: 90 },
+                            { day: "20 يوليو", val: 80 }, { day: "21 يوليو", val: 95 }
+                          ].map((pt, i) => (
+                            <div key={i} className="flex-1 flex flex-col items-center gap-1 z-10 group">
+                              <div className="w-full bg-amber-500/20 group-hover:bg-amber-500/40 transition-all rounded-t-lg relative" style={{ height: `${pt.val}%` }}>
+                                <div className="w-2 h-2 rounded-full bg-amber-400 mx-auto -mt-1 shadow-md shadow-amber-500/50" />
+                              </div>
+                              <span className="text-[9px] text-gray-400 truncate">{pt.day}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Top Selling Items Box */}
+                      <div className="p-4 rounded-2xl bg-[#141721] border border-white/5 space-y-3">
+                        <h3 className="text-xs font-bold text-gray-300 flex items-center gap-2">
+                          <Utensils size={15} className="text-amber-400" />
+                          <span>أفضل الأصناف مبيعاً 🔥</span>
+                        </h3>
+
+                        <div className="space-y-2.5">
+                          {reportsAnalytics.topItems.length > 0 ? reportsAnalytics.topItems.map((item, idx) => (
+                            <div key={idx} className="space-y-1">
+                              <div className="flex justify-between text-[11px] font-bold">
+                                <span className="text-gray-200">{item.name}</span>
+                                <span className="text-amber-400">{item.qty} وجبات</span>
+                              </div>
+                              <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
+                                <div className="h-full bg-gradient-to-r from-amber-500 to-yellow-300 rounded-full" style={{ width: `${Math.min(100, item.qty * 15)}%` }} />
+                              </div>
+                            </div>
+                          )) : (
+                            <p className="text-xs text-center py-8 text-gray-500">سيتم ترتيب الوجبات فور تسجيل طلبات حقيقية.</p>
+                          )}
+                        </div>
+                      </div>
+
+                    </div>
+
+                    {/* LOWER GRID: PAYMENT METHODS + PEAK HOURS HEATMAP + VIP CUSTOMER */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      
+                      {/* Payment Methods */}
+                      <div className="p-4 rounded-2xl bg-[#141721] border border-white/5 space-y-3">
+                        <h3 className="text-xs font-bold text-gray-300 flex items-center gap-2">
+                          <PieChart size={15} className="text-sky-400" />
+                          <span>توزيع طرق الدفع</span>
+                        </h3>
+                        
+                        <div className="flex items-center justify-around py-2">
+                          <div className="relative w-20 h-20 flex items-center justify-center">
+                            <div className="w-20 h-20 rounded-full border-8 border-amber-500 border-t-green-500 animate-spin-slow" />
+                            <span className="absolute text-[10px] font-bold text-amber-400">100%</span>
+                          </div>
+                          <div className="text-xs space-y-2 font-bold">
+                            <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> 💵 كاش: {money(reportsAnalytics.cashSales)}</div>
+                            <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-green-500" /> 📱 إلكتروني: {money(reportsAnalytics.electronicSales)}</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Peak Hours Heatmap */}
+                      <div className="p-4 rounded-2xl bg-[#141721] border border-white/5 space-y-3">
+                        <h3 className="text-xs font-bold text-gray-300 flex items-center gap-2">
+                          <Clock size={15} className="text-purple-400" />
+                          <span>ساعات الذروة والضغط</span>
+                        </h3>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          {reportsAnalytics.peakHours.length > 0 ? reportsAnalytics.peakHours.map((h, i) => (
+                            <div key={i} className="p-2 rounded-xl bg-[#1C202E] border border-white/5 text-center">
+                              <span className="text-[10px] text-gray-400 block">الفترة #{i+1}</span>
+                              <span className="text-xs font-bold text-purple-300">{h.hour}</span>
+                              <span className="block text-[9px] text-emerald-400 font-bold mt-0.5">{h.count} أوردر</span>
+                            </div>
+                          )) : (
+                            <p className="text-xs text-center col-span-2 py-4 text-gray-500">جاري تحليل ساعات ورود الطلبات...</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Golden VIP Customer */}
+                      <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/15 via-[#141721] to-[#141721] border border-amber-500/30 space-y-2 relative overflow-hidden">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-xs font-black text-amber-400 flex items-center gap-1.5">
+                            <Trophy size={16} className="animate-bounce" />
+                            <span>العميل الذهبي المفضل 👑</span>
+                          </h3>
+                          <span className="text-[8px] px-2 py-0.5 rounded bg-amber-400 text-black font-black">VIP #1</span>
+                        </div>
+
+                        {reportsAnalytics.goldenCustomer ? (
+                          <div className="pt-2 space-y-1">
+                            <p className="text-sm font-black text-white">{reportsAnalytics.goldenCustomer.name}</p>
+                            <p className="text-[10px] text-gray-400">📱 {reportsAnalytics.goldenCustomer.phone}</p>
+                            <div className="flex justify-between pt-2 text-xs border-t border-white/10">
+                              <span className="text-gray-400">إجمالي المشتريات:</span>
+                              <span className="font-bold text-emerald-400">{money(reportsAnalytics.goldenCustomer.spent)}</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-center py-6 text-gray-500">سيتم تحديد العميل الذهبي تلقائياً عند طلب الأوردرات.</p>
+                        )}
+                      </div>
+
+                    </div>
+
+                    {/* LIVE RECENT ORDERS TABLE */}
+                    <div className="p-4 rounded-2xl bg-[#141721] border border-white/5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-xs font-bold text-gray-300 flex items-center gap-2">
+                          <ShoppingCart size={15} className="text-amber-400" />
+                          <span>سجل وتفاصيل الطلبات الأخيرة ({filteredReportsData.length})</span>
+                        </h3>
+                      </div>
+
+                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                        {filteredReportsData.length > 0 ? filteredReportsData.slice().reverse().map((row, idx) => (
+                          <div key={idx} className="p-3 rounded-xl bg-[#1C202E] border border-white/5 text-xs flex flex-col sm:flex-row justify-between sm:items-center gap-2 hover:border-amber-500/30 transition-colors">
+                            <div className="space-y-0.5">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-white">{row["اسم العميل"] || "عميل بدون اسم"}</span>
+                                <span className="text-[10px] px-2 py-0.5 rounded bg-white/5 text-gray-400">{row["رقم الموبايل"]}</span>
+                              </div>
+                              <p className="text-[10px] text-gray-400">📍 {row["المنطقة / القرية"]} · 🕒 {row["التاريخ والوقت"]}</p>
+                            </div>
+                            <div className="text-left space-y-0.5">
+                              <span className="text-sm font-black text-amber-400 block">{money(row["الإجمالي النهائي"])}</span>
+                              <span className="text-[9px] text-gray-400 truncate block max-w-xs">{row["تفاصيل الطلبات"]}</span>
+                            </div>
+                          </div>
+                        )) : (
+                          <p className="text-xs text-center py-8 text-gray-500">لا توجد طلبات مسجلة طابق بحثك حالياً.</p>
+                        )}
+                      </div>
+                    </div>
+
+                  </div>
+                )}
+
+                {/* 2. TAB: ITEMS EDITING */}
+                {adminTab === "items" && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="font-bold text-sm text-amber-400">إدارة أصناف المنيو والأسعار</p>
+                      <button onClick={addNewItem} className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full bg-amber-500 text-black shadow-md"><PlusCircle size={14} /> إضافة صنف جديد</button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {items.map((item) => (
+                        <div key={item.id} className="p-3 rounded-2xl border border-white/5 bg-[#141721]">
+                          {editingId === item.id ? (
+                            <div className="space-y-2">
+                              <input value={item.name} onChange={(e) => updateItem(item.id, { name: e.target.value })} className="w-full px-2.5 py-1.5 rounded-lg border border-white/10 bg-[#1C202E] text-sm font-bold text-white" />
+                              <input value={item.desc || ""} onChange={(e) => updateItem(item.id, { desc: e.target.value })} className="w-full px-2.5 py-1.5 rounded-lg border border-white/10 bg-[#1C202E] text-xs text-gray-300" />
+                              <div className="grid grid-cols-2 gap-2">
+                                <input value={item.cat} onChange={(e) => updateItem(item.id, { cat: e.target.value })} className="px-2 py-1.5 rounded-lg border border-white/10 bg-[#1C202E] text-xs text-white" />
+                                <input value={item.subcat || ""} onChange={(e) => updateItem(item.id, { subcat: e.target.value })} className="px-2 py-1.5 rounded-lg border border-white/10 bg-[#1C202E] text-xs text-white" />
+                              </div>
+                              {item.sizes ? (
+                                <div className="space-y-1.5">
+                                  {item.sizes.map((sz, idx) => (
+                                    <div key={idx} className="flex items-center gap-2">
+                                      <input value={sz.label} onChange={(e) => updateSize(item.id, idx, { label: e.target.value })} className="w-20 px-2 py-1.5 rounded-lg border border-white/10 bg-[#1C202E] text-xs text-center text-white" />
+                                      <input type="number" value={sz.price} onChange={(e) => updateSize(item.id, idx, { price: Number(e.target.value) })} className="flex-1 px-2 py-1.5 rounded-lg border border-white/10 bg-[#1C202E] text-xs text-white" />
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <input type="number" value={item.price} onChange={(e) => updateItem(item.id, { price: Number(e.target.value) })} className="w-full px-2 py-1.5 rounded-lg border border-white/10 bg-[#1C202E] text-xs text-white" />
+                              )}
+                              <button onClick={() => setEditingId(null)} className="w-full py-2 rounded-lg font-bold text-xs bg-amber-500 text-black flex items-center justify-center gap-1 shadow"><Save size={13} /> حفظ التعديل</button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="font-bold text-sm text-white truncate">{item.name}</p>
+                                <p className="text-xs text-gray-400">{item.cat}{item.subcat ? " · " + item.subcat : ""} · {item.sizes ? item.sizes.map((s) => s.label + ":" + money(s.price)).join(" / ") : money(item.price)}</p>
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <button onClick={() => setEditingId(item.id)} className="p-2 rounded-full border border-white/10 text-gray-300 hover:text-white"><Pencil size={13} /></button>
+                                <button onClick={() => deleteItem(item.id)} className="p-2 rounded-full border border-red-500/30 text-red-400 hover:bg-red-500/10"><Trash2 size={13} /></button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. TAB: CUSTOMERS & LIFETIME VALUE */}
+                {adminTab === "customers" && (
+                  <div className="space-y-3">
+                    <p className="font-bold text-sm text-amber-400 mb-2">سجل وقائمة حسابات جميع العملاء التراكمية</p>
+                    <div className="space-y-2">
+                      {reportsAnalytics.allCustomersList.length > 0 ? reportsAnalytics.allCustomersList.map((cust, idx) => (
+                        <div key={idx} className="p-3 rounded-2xl bg-[#141721] border border-white/5 flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-3">
+                            <span className="w-7 h-7 rounded-full bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold text-xs">{idx + 1}</span>
+                            <div>
+                              <p className="font-bold text-white text-sm">{cust.name}</p>
+                              <p className="text-[10px] text-gray-400">📱 {cust.phone} · 📍 آخر منطقة: {cust.lastArea}</p>
+                            </div>
+                          </div>
+                          <div className="text-left">
+                            <span className="text-sm font-black text-emerald-400 block">{money(cust.spent)}</span>
+                            <span className="text-[10px] text-gray-400">{cust.count} أوردرات إجمالية</span>
+                          </div>
+                        </div>
+                      )) : (
+                        <p className="text-xs text-center py-8 text-gray-500">لا يوجد حسابات مسجلة للعملاء حتى الآن.</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. TAB: DELIVERY AREAS */}
+                {adminTab === "delivery" && (
+                  <div className="space-y-4">
+                    <p className="font-bold text-sm text-amber-400 mb-2">إدارة مناطق وقرى التوصيل والدليفري</p>
+                    
+                    <div className="bg-[#141721] p-3.5 rounded-2xl border border-white/10 space-y-2">
+                      <p className="text-xs font-bold text-gray-300">إضافة منطقة جديدة:</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input type="text" placeholder="اسم القرية" value={newAreaName} onChange={(e) => setNewAreaName(e.target.value)} className="px-3 py-2 rounded-xl border border-white/10 bg-[#1C202E] text-xs text-white" />
+                        <input type="number" placeholder="سعر التوصيل" value={newAreaPrice} onChange={(e) => setNewAreaPrice(e.target.value)} className="px-3 py-2 rounded-xl border border-white/10 bg-[#1C202E] text-xs text-white" />
+                      </div>
+                      <button onClick={handleAddDeliveryArea} className="w-full py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 shadow-md"><PlusCircle size={14}/>إضافة المنطقة</button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {deliveryAreas.map((area, idx) => (
+                        <div key={idx} className="flex items-center justify-between text-xs p-3 rounded-xl bg-[#141721] border border-white/5">
+                          <span className="font-bold text-white">{area.name} · <span className="text-amber-400">{money(area.price)}</span></span>
+                          <button onClick={() => handleRemoveDeliveryArea(idx)} className="p-1.5 rounded-full text-red-400 border border-red-500/20 bg-red-500/5 hover:bg-red-500/10"><Trash2 size={13}/></button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 5. TAB: SETTINGS */}
+                {adminTab === "settings" && (
+                  <div className="space-y-4 max-w-xl mx-auto">
+                    <p className="font-bold text-sm text-amber-400 mb-2">إعدادات الهوية والأمان للمطعم</p>
+                    <Field label="اسم المطعم" value={restaurantName} onChange={setRestaurantName} theme={theme} />
+                    <Field label="العنوان الجغرافي" value={address} onChange={setAddress} theme={theme} />
+                    <Field label="رقم واتساب الاستقبال" value={whatsappNumber} onChange={setWhatsappNumber} theme={theme} dir="ltr" />
+                    <Field label="رقم فودافون كاش" value={vodafoneCash} onChange={setVodafoneCash} theme={theme} dir="ltr" />
+                    <Field label="حساب InstaPay" value={instapay} onChange={setInstapay} theme={theme} dir="ltr" />
+                    <Field label="رمز الأمان PIN" value={adminPin} onChange={setAdminPin} theme={theme} dir="ltr" />
+
+                    <div className="pt-4 border-t border-white/10">
+                      <button onClick={() => setShowResetConfirm(true)} className="w-full py-2.5 rounded-xl text-xs font-bold border border-red-500/30 text-red-400 flex items-center justify-center gap-1.5 hover:bg-red-500/10"><RotateCcw size={14} /> إعادة تعيين منيو دريم كورنر الافتراضي</button>
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            </div>
+
+          </div>
+        </div>
       )}
 
       {/* MODALS */}
@@ -1288,7 +1654,7 @@ export default function RestaurantMenu() {
                 تم تجهيز الأوردر وتصفير السلة بنجاح. <br/>
                 جاري الآن تحويلك إلى تطبيق واتساب لإرسال الفاتورة وتأكيد التوصيل مع مطعم دريم كورنر!
               </p>
-              <button onClick={() => setOrderSuccess(false)} className="px-6 py-2 rounded-xl text-xs font-bold" style={{ background: theme.accent, color: theme.bg }}>فهمت، شكراً لك</button>
+              <button onClick={() => setOrderSuccess(false)} className="px-6 py-2 rounded-xl text-xs font-bold" style={{ background: theme.accent, color: "#000" }}>فهمت، شكراً لك</button>
             </div>
           </Sheet>
         </Overlay>
@@ -1311,11 +1677,7 @@ export default function RestaurantMenu() {
                 <p className="text-[10px] font-bold opacity-70" style={{ color: theme.muted }}>مواعيد استقبال الدليفري والطلبات:</p>
                 <p className="text-sm font-black" style={{ color: theme.accent }}>{status.timeText}</p>
               </div>
-              <button 
-                onClick={() => setCloseNoticeOpen(false)} 
-                className="w-full py-3 rounded-xl text-xs font-black transition-all active:scale-95 shadow-md" 
-                style={{ background: theme.accent, color: theme.bg }}
-              >
+              <button onClick={() => setCloseNoticeOpen(false)} className="w-full py-3 rounded-xl text-xs font-black shadow-md" style={{ background: theme.accent, color: "#000" }}>
                 حبيبي، هتختار الأكل من دلوقتي واستعد لوقت الفتح! ✨
               </button>
             </div>
@@ -1330,7 +1692,7 @@ export default function RestaurantMenu() {
               <div className="p-4 rounded-2xl bg-white shadow-md"><img src={qrSrc} alt="QR Code للمنيو" width={220} height={220} /></div>
               <label className="w-full text-sm">
                 <span style={{ color: theme.muted }}>رابط موقع المنيو الحالي</span>
-                <input value={menuUrl} onChange={(e) => setMenuUrl(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border bg-transparent text-sm font-semibold text-center" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }} dir="ltr" />
+                <input value={menuUrl} onChange={(e) => setMenuUrl(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border bg-transparent text-sm font-semibold text-center" style={{ borderColor: "rgba(255,255,255,0.2)" }} dir="ltr" />
               </label>
             </div>
           </Sheet>
@@ -1342,7 +1704,7 @@ export default function RestaurantMenu() {
           <Sheet theme={theme} title="اختر هوية مطعمك البصرية" onClose={() => setThemePickerOpen(false)}>
             <div className="grid grid-cols-1 gap-2.5">
               {THEMES.map((t) => (
-                <button key={t.id} onClick={() => { setTheme(t); setThemePickerOpen(false); }} className="flex items-center gap-3 p-3 rounded-xl border text-right transition-colors hover:bg-black/5" style={{ borderColor: (theme.muted || "#B3A18C") + "30", background: t.bg }}>
+                <button key={t.id} onClick={() => { setTheme(t); setThemePickerOpen(false); }} className="flex items-center gap-3 p-3 rounded-xl border text-right transition-colors hover:bg-black/5" style={{ borderColor: "rgba(255,255,255,0.1)", background: t.bg }}>
                   <div className="flex gap-1 shrink-0"><span className="w-6 h-6 rounded-full border border-white/20" style={{ background: t.accent }} /><span className="w-6 h-6 rounded-full border border-white/20" style={{ background: t.accent2 }} /></div>
                   <span className="text-base font-bold" style={{ color: t.text }}>{t.name}</span>
                   {t.id === theme.id && <Check size={16} className="mr-auto" style={{ color: t.accent }} />}
@@ -1360,420 +1722,11 @@ export default function RestaurantMenu() {
               <div className="flex flex-col items-center justify-center py-2"><KeyRound size={40} className="mb-2" style={{ color: theme.accent }} /><p className="text-xs text-center" style={{ color: theme.muted }}>هذه المنطقة مخصصة لإدارة المطعم فقط.</p></div>
               <label className="block text-sm space-y-1">
                 <span className="font-bold opacity-90" style={{ color: theme.muted }}>رمز الأمان الحالي</span>
-                <input type="password" maxLength={12} value={enteredPin} onChange={(e) => setEnteredPin(e.target.value)} placeholder="••••" className="w-full px-3 py-2.5 rounded-lg border bg-transparent text-center text-lg tracking-widest font-bold focus:outline-none" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} required />
+                <input type="password" maxLength={12} value={enteredPin} onChange={(e) => setEnteredPin(e.target.value)} placeholder="••••" className="w-full px-3 py-2.5 rounded-lg border bg-transparent text-center text-lg tracking-widest font-bold focus:outline-none" style={{ borderColor: "rgba(255,255,255,0.2)", color: theme.text }} required />
               </label>
               {pinError && <p className="text-xs text-center font-bold text-red-500 bg-red-500/10 py-1.5 rounded-lg">{pinError}</p>}
-              <div className="flex gap-2"><button type="submit" className="flex-1 py-2 rounded-xl font-bold text-xs" style={{ background: theme.accent, color: theme.bg }}>دخول الإدارة</button><button type="button" onClick={() => setPinModalOpen(false)} className="px-4 py-2 border rounded-xl text-xs font-bold" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }}>إلغاء</button></div>
+              <div className="flex gap-2"><button type="submit" className="flex-1 py-2 rounded-xl font-bold text-xs" style={{ background: theme.accent, color: "#000" }}>دخول الإدارة</button><button type="button" onClick={() => setPinModalOpen(false)} className="px-4 py-2 border rounded-xl text-xs font-bold" style={{ borderColor: "rgba(255,255,255,0.2)" }}>إلغاء</button></div>
             </form>
-          </Sheet>
-        </Overlay>
-      )}
-
-      {/* ADVANCED ADMIN DASHBOARD v4.5 */}
-      {adminOpen && (
-        <Overlay onClose={() => setAdminOpen(false)}>
-          <Sheet theme={theme} title="لوحة الذكاء والتقارير الشاملة 👑" onClose={() => setAdminOpen(false)}>
-            {/* TABS */}
-            <div className="flex gap-1 p-1 rounded-xl mb-4 border" style={{ background: theme.surface2, borderColor: theme.muted + "20" }}>
-              <button 
-                onClick={() => setAdminTab("reports")} 
-                className="flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1"
-                style={adminTab === "reports" ? { background: theme.accent, color: theme.bg } : { color: theme.muted }}
-              >
-                <BarChart3 size={14} />
-                <span>التقارير الذكية</span>
-              </button>
-              <button 
-                onClick={() => setAdminTab("items")} 
-                className="flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1"
-                style={adminTab === "items" ? { background: theme.accent, color: theme.bg } : { color: theme.muted }}
-              >
-                <PlusCircle size={14} />
-                <span>المنيو والأسعار</span>
-              </button>
-              <button 
-                onClick={() => setAdminTab("settings")} 
-                className="flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1"
-                style={adminTab === "settings" ? { background: theme.accent, color: theme.bg } : { color: theme.muted }}
-              >
-                <Settings size={14} />
-                <span>الإعدادات</span>
-              </button>
-            </div>
-
-            {/* TAB 1: REPORTS & ANALYTICS v4.5 (كل الميزات في مكان واحد) */}
-            {adminTab === "reports" && (
-              <div className="space-y-4 max-h-[68vh] overflow-y-auto pr-1">
-                {/* 1. الفلترة الزمنية والبحث */}
-                <div className="space-y-2 bg-black/10 p-2.5 rounded-2xl border border-white/5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold opacity-80" style={{ color: theme.muted }}>الفترة الزمنية:</span>
-                    <button onClick={fetchReportsFromSheet} className="p-1 rounded-lg border text-[10px] font-bold flex items-center gap-1" style={{ borderColor: theme.accent, color: theme.accent }}>
-                      <RefreshCw size={11} className={reportsLoading ? "animate-spin" : ""} />
-                      <span>تحديث البيانات</span>
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-4 gap-1 text-[10px] font-bold">
-                    <button onClick={() => setReportDateFilter("today")} className="py-1.5 rounded-lg border transition-all" style={reportDateFilter === "today" ? { background: theme.accent, color: theme.bg, borderColor: theme.accent } : { borderColor: theme.muted + "20" }}>اليوم</button>
-                    <button onClick={() => setReportDateFilter("yesterday")} className="py-1.5 rounded-lg border transition-all" style={reportDateFilter === "yesterday" ? { background: theme.accent, color: theme.bg, borderColor: theme.accent } : { borderColor: theme.muted + "20" }}>أمس</button>
-                    <button onClick={() => setReportDateFilter("week")} className="py-1.5 rounded-lg border transition-all" style={reportDateFilter === "week" ? { background: theme.accent, color: theme.bg, borderColor: theme.accent } : { borderColor: theme.muted + "20" }}>آخر أسبوع</button>
-                    <button onClick={() => setReportDateFilter("all")} className="py-1.5 rounded-lg border transition-all" style={reportDateFilter === "all" ? { background: theme.accent, color: theme.bg, borderColor: theme.accent } : { borderColor: theme.muted + "20" }}>الكل</button>
-                  </div>
-
-                  <div className="relative pt-1">
-                    <input type="text" placeholder="بحث باسم العميل، الموبايل، القرية..." value={reportSearchQuery} onChange={(e) => setReportSearchQuery(e.target.value)} className="w-full px-3 py-1.5 pr-8 rounded-xl text-[11px] border bg-transparent focus:outline-none" style={{ borderColor: theme.muted + "30", color: theme.text }} />
-                    <Search size={13} className="absolute right-2.5 top-3 opacity-60" style={{ color: theme.text }} />
-                  </div>
-                </div>
-
-                {reportsLoading ? (
-                  <div className="text-center py-10 space-y-2">
-                    <RefreshCw size={26} className="animate-spin mx-auto text-amber-500" />
-                    <p className="text-xs opacity-70">جاري تحليل بيانات المبيعات من Google Sheets...</p>
-                  </div>
-                ) : (
-                  <>
-                    {/* 2. الوسام الذهبي لأكثر عميل شراءً */}
-                    {reportsAnalytics.goldenCustomer && (
-                      <div className="p-3.5 rounded-2xl border bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-amber-600/20 space-y-2 relative overflow-hidden shadow-lg" style={{ borderColor: theme.accent }}>
-                        <div className="flex items-center justify-between">
-                          <span className="flex items-center gap-1.5 text-xs font-black text-amber-400">
-                            <Trophy size={16} className="animate-bounce" />
-                            <span>🏆 الوسام الذهبي لأكثر العملاء شراءً</span>
-                          </span>
-                          <span className="text-[9px] px-2 py-0.5 rounded-full font-black text-black bg-amber-400">VIP Top Customer</span>
-                        </div>
-                        <div className="flex items-center justify-between pt-1">
-                          <div>
-                            <p className="text-sm font-black text-white">{reportsAnalytics.goldenCustomer.name}</p>
-                            <p className="text-[10px] opacity-80" style={{ color: theme.muted }}>📱 {reportsAnalytics.goldenCustomer.phone} · 📍 {reportsAnalytics.goldenCustomer.lastArea}</p>
-                          </div>
-                          <div className="text-left">
-                            <p className="text-sm font-black text-green-400">{money(reportsAnalytics.goldenCustomer.spent)}</p>
-                            <p className="text-[9px] font-bold text-amber-300">{reportsAnalytics.goldenCustomer.count} أوردرات مسجلة</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 3. شريط متابعة الهدف اليومي (Daily Target Gauge) */}
-                    <div className="p-3 rounded-2xl border bg-gradient-to-r from-amber-500/10 to-amber-500/5 space-y-2" style={{ borderColor: theme.accent + "40" }}>
-                      <div className="flex items-center justify-between text-xs font-bold">
-                        <span className="flex items-center gap-1" style={{ color: theme.accent }}>
-                          <TrendingUp size={14} />
-                          <span>تحقيق الهدف المالي للمبيعات:</span>
-                        </span>
-                        <span className="font-extrabold">{reportsAnalytics.netTotal} / {dailyTarget} جنيه</span>
-                      </div>
-                      <div className="w-full h-2.5 bg-black/30 rounded-full overflow-hidden border border-white/10">
-                        <div 
-                          className="h-full bg-gradient-to-r from-amber-500 to-green-500 transition-all duration-500" 
-                          style={{ width: `${Math.min(100, Math.round((reportsAnalytics.netTotal / dailyTarget) * 100))}%` }}
-                        />
-                      </div>
-                      <p className="text-[9px] text-left opacity-70 font-bold" style={{ color: theme.muted }}>
-                        تم تحقيق {Math.round((reportsAnalytics.netTotal / dailyTarget) * 100)}% من المستهدف المقدر بـ {dailyTarget} ج.م
-                      </p>
-                    </div>
-
-                    {/* 4. KPI Cards */}
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="p-3 rounded-2xl border flex flex-col justify-between" style={{ background: theme.surface2, borderColor: theme.accent + "30" }}>
-                        <span className="text-[10px] opacity-70" style={{ color: theme.muted }}>عدد الطلبات الكلي</span>
-                        <span className="text-lg font-black mt-1" style={{ color: theme.accent }}>{reportsAnalytics.totalOrders} أوردر</span>
-                      </div>
-                      <div className="p-3 rounded-2xl border flex flex-col justify-between" style={{ background: theme.surface2, borderColor: "rgba(34, 197, 94, 0.3)" }}>
-                        <span className="text-[10px] opacity-70" style={{ color: theme.muted }}>صافي الدخل النهائي</span>
-                        <span className="text-lg font-black mt-1 text-green-500">{money(reportsAnalytics.netTotal)}</span>
-                      </div>
-                      <div className="p-3 rounded-2xl border flex flex-col justify-between" style={{ background: theme.surface2, borderColor: theme.accent + "20" }}>
-                        <span className="text-[10px] opacity-70" style={{ color: theme.muted }}>مبيعات المأكولات</span>
-                        <span className="text-sm font-bold mt-1">{money(reportsAnalytics.totalSales)}</span>
-                      </div>
-                      <div className="p-3 rounded-2xl border flex flex-col justify-between" style={{ background: theme.surface2, borderColor: theme.accent + "20" }}>
-                        <span className="text-[10px] opacity-70" style={{ color: theme.muted }}>إيرادات الدليفري</span>
-                        <span className="text-sm font-bold mt-1">{money(reportsAnalytics.totalDelivery)}</span>
-                      </div>
-                    </div>
-
-                    {/* 5. أشرطة التحليل البصري (Visual Progress Bars) */}
-                    <div className="p-3 rounded-2xl border space-y-3" style={{ background: theme.surface2, borderColor: theme.accent + "20" }}>
-                      <p className="text-[11px] font-bold flex items-center gap-1" style={{ color: theme.accent }}>
-                        <PieChart size={14} />
-                        <span>تحليل المبيعات ونوع الدفع والتوصيل:</span>
-                      </p>
-                      
-                      {/* شريط طريقة الدفع */}
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-[10px] font-bold">
-                          <span>💵 كاش: {money(reportsAnalytics.cashSales)}</span>
-                          <span className="text-green-400">📱 إلكتروني: {money(reportsAnalytics.electronicSales)}</span>
-                        </div>
-                        <div className="w-full h-2 rounded-full overflow-hidden flex bg-black/40">
-                          <div style={{ width: `${reportsAnalytics.netTotal ? (reportsAnalytics.cashSales / reportsAnalytics.netTotal) * 100 : 50}%` }} className="bg-amber-500 h-full" />
-                          <div style={{ width: `${reportsAnalytics.netTotal ? (reportsAnalytics.electronicSales / reportsAnalytics.netTotal) * 100 : 50}%` }} className="bg-green-500 h-full" />
-                        </div>
-                      </div>
-
-                      {/* شريط نوع التوصيل */}
-                      <div className="space-y-1 pt-1">
-                        <div className="flex justify-between text-[10px] font-bold">
-                          <span>⚡ توصيل فوري: {reportsAnalytics.instantOrders} أوردر</span>
-                          <span className="text-amber-400">🕒 مجدول: {reportsAnalytics.scheduledOrders} أوردر</span>
-                        </div>
-                        <div className="w-full h-2 rounded-full overflow-hidden flex bg-black/40">
-                          <div style={{ width: `${reportsAnalytics.totalOrders ? (reportsAnalytics.instantOrders / reportsAnalytics.totalOrders) * 100 : 50}%` }} className="bg-sky-500 h-full" />
-                          <div style={{ width: `${reportsAnalytics.totalOrders ? (reportsAnalytics.scheduledOrders / reportsAnalytics.totalOrders) * 100 : 50}%` }} className="bg-amber-500 h-full" />
-                        </div>
-                      </div>
-
-                      <div className="pt-2 border-t text-[11px] flex justify-between font-bold" style={{ borderColor: theme.muted + "15" }}>
-                        <span opacity-80 style={{ color: theme.muted }}>القرية الأكثر طلباً:</span>
-                        <span className="text-amber-500">{reportsAnalytics.topArea}</span>
-                      </div>
-                    </div>
-
-                    {/* 6. جدول الحساب المجمل لكل عميل */}
-                    {reportsAnalytics.allCustomersList.length > 0 && (
-                      <div className="p-3 rounded-2xl border space-y-2" style={{ background: theme.surface2, borderColor: theme.accent + "30" }}>
-                        <p className="text-[11px] font-bold flex items-center gap-1.5" style={{ color: theme.accent }}>
-                          <Users size={14} className="text-amber-400" />
-                          <span>الحساب المجمل التراكمي لكل عميل (Customer Lifetime Value):</span>
-                        </p>
-                        <div className="space-y-1.5 max-h-[22vh] overflow-y-auto pr-1">
-                          {reportsAnalytics.allCustomersList.map((cust, idx) => (
-                            <div key={idx} className="flex items-center justify-between text-[10px] p-2 rounded-xl bg-black/20 border border-white/5">
-                              <div>
-                                <span className="font-bold text-white">{idx + 1}. {cust.name}</span>
-                                <span className="block text-[9px] opacity-60" style={{ color: theme.muted }}>{cust.phone}</span>
-                              </div>
-                              <div className="text-left">
-                                <span className="font-extrabold text-amber-400 block">{money(cust.spent)}</span>
-                                <span className="text-[9px] opacity-70">{cust.count} أوردرات</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 7. الأصناف الأكثر مبيعاً */}
-                    {reportsAnalytics.topItems.length > 0 && (
-                      <div className="p-3 rounded-2xl border space-y-2" style={{ background: theme.surface2, borderColor: theme.accent + "30" }}>
-                        <p className="text-[11px] font-bold flex items-center gap-1.5" style={{ color: theme.accent }}>
-                          <Utensils size={14} className="text-amber-400" />
-                          <span>أكثر الأصناف طلباً ومبيعاً (Top 5 Items):</span>
-                        </p>
-                        <div className="space-y-1.5">
-                          {reportsAnalytics.topItems.map((item, idx) => (
-                            <div key={idx} className="flex items-center justify-between text-[10px] p-2 rounded-xl bg-black/20 border border-white/5">
-                              <span className="font-bold">{idx + 1}. {item.name}</span>
-                              <span className="font-extrabold text-amber-400">{item.qty} وجبات</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 8. تحليل ساعات الذروة */}
-                    {reportsAnalytics.peakHours.length > 0 && (
-                      <div className="p-3 rounded-2xl border space-y-2" style={{ background: theme.surface2, borderColor: theme.accent + "30" }}>
-                        <p className="text-[11px] font-bold flex items-center gap-1.5" style={{ color: theme.accent }}>
-                          <Clock size={14} className="text-sky-400" />
-                          <span>ساعات الذروة والأوقات الأكثر زحاماً:</span>
-                        </p>
-                        <div className="grid grid-cols-3 gap-1.5">
-                          {reportsAnalytics.peakHours.map((hourData, idx) => (
-                            <div key={idx} className="p-2 rounded-xl bg-black/20 border border-white/5 text-center">
-                              <p className="text-[9px] opacity-70" style={{ color: theme.muted }}>المرتبة {idx + 1}</p>
-                              <p className="text-xs font-bold text-sky-400 mt-0.5">{hourData.hour}</p>
-                              <p className="text-[9px] font-black opacity-90">{hourData.count} أوردر</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 9. تقرير حسابات ودليفري الطيارين والقرى */}
-                    {reportsAnalytics.deliveryBreakdown.length > 0 && (
-                      <div className="p-3 rounded-2xl border space-y-2 bg-gradient-to-r from-emerald-500/10 to-emerald-600/5" style={{ borderColor: "rgba(16, 185, 129, 0.3)" }}>
-                        <p className="text-[11px] font-bold flex items-center gap-1.5 text-emerald-400">
-                          <Bike size={14} />
-                          <span>تقرير حسابات الدليفري والقرى للطيارين:</span>
-                        </p>
-                        <div className="space-y-1.5 max-h-[20vh] overflow-y-auto pr-1">
-                          {reportsAnalytics.deliveryBreakdown.map((areaData, idx) => (
-                            <div key={idx} className="flex items-center justify-between text-[10px] p-2 rounded-xl bg-black/20 border border-white/5">
-                              <span className="font-bold">{areaData.area}</span>
-                              <span className="font-extrabold text-emerald-400">{areaData.count} رحلات · {money(areaData.fees)}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 10. أزرار التصدير */}
-                    <div className="grid grid-cols-2 gap-2">
-                      <button 
-                        onClick={sendZReportToWhatsApp}
-                        className="py-2.5 rounded-xl font-bold text-[11px] flex items-center justify-center gap-1.5 shadow bg-emerald-600 text-white active:scale-95 transition-transform"
-                      >
-                        <Share2 size={13} />
-                        <span>تصدير Z-Report</span>
-                      </button>
-                      <button 
-                        onClick={exportToCSV}
-                        className="py-2.5 rounded-xl font-bold text-[11px] flex items-center justify-center gap-1.5 shadow border text-amber-400 border-amber-500/40 bg-amber-500/10 active:scale-95 transition-transform"
-                      >
-                        <Download size={13} />
-                        <span>تحميل Excel / CSV</span>
-                      </button>
-                    </div>
-
-                    {/* 11. جدول تفاصيل الأوردرات */}
-                    <div className="space-y-2 pt-2 border-t" style={{ borderColor: theme.muted + "20" }}>
-                      <p className="text-xs font-bold" style={{ color: theme.accent }}>سجل الطلبات الأخير ({filteredReportsData.length} أوردر):</p>
-                      <div className="space-y-2 max-h-[30vh] overflow-y-auto pr-1">
-                        {filteredReportsData.slice().reverse().map((row, idx) => (
-                          <div key={idx} className="p-3 rounded-2xl border text-xs space-y-1 shadow-sm" style={{ background: theme.surface, borderColor: theme.muted + "20" }}>
-                            <div className="flex justify-between font-bold">
-                              <span>{row["اسم العميل"] || "عميل"} ({row["رقم الموبايل"]})</span>
-                              <span style={{ color: theme.accent }}>{money(row["الإجمالي النهائي"])}</span>
-                            </div>
-                            <div className="text-[10px] opacity-75 flex justify-between" style={{ color: theme.muted }}>
-                              <span>📍 {row["المنطقة / القرية"]}</span>
-                              <span>🕒 {row["التاريخ والوقت"]}</span>
-                            </div>
-                            <p className="text-[10px] opacity-80 line-clamp-2 border-t pt-1.5 mt-1" style={{ borderColor: theme.muted + "10" }}>
-                              🍽 {row["تفاصيل الطلبات"]}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* TAB 2: MENU ITEMS EDITING */}
-            {adminTab === "items" && (
-              <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="font-bold text-sm">قائمة المأكولات والأصناف</p>
-                  <button onClick={addNewItem} className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full" style={{ background: theme.accent, color: theme.bg }}><PlusCircle size={14} /> إضافة صنف</button>
-                </div>
-                <div className="space-y-3">
-                  {items.map((item) => (
-                    <div key={item.id} className="p-3 rounded-xl border" style={{ borderColor: (theme.muted || "#B3A18C") + "25", background: theme.surface }}>
-                      {editingId === item.id ? (
-                        <div className="space-y-2">
-                          <input value={item.name} onChange={(e) => updateItem(item.id, { name: e.target.value })} className="w-full px-2.5 py-1.5 rounded-lg border bg-transparent text-sm font-bold" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
-                          <input value={item.desc || ""} onChange={(e) => updateItem(item.id, { desc: e.target.value })} className="w-full px-2.5 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
-                          <div className="grid grid-cols-2 gap-2">
-                            <input value={item.cat} onChange={(e) => updateItem(item.id, { cat: e.target.value })} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
-                            <input value={item.subcat || ""} onChange={(e) => updateItem(item.id, { subcat: e.target.value })} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
-                          </div>
-                          <div className="flex justify-between items-center py-1">
-                            {item.sizes ? (
-                              <button type="button" onClick={() => updateItem(item.id, { sizes: undefined, price: item.sizes[0]?.price || 40 })} className="text-[11px] font-bold underline" style={{ color: theme.accent }}>تحويل إلى سعر موحد</button>
-                            ) : (
-                              <button type="button" onClick={() => updateItem(item.id, { sizes: [{ label: "كبير", price: item.price || 90 }, { label: "وسط", price: item.price ? Math.max(20, item.price - 20) : 70 }, { label: "صغير", price: item.price ? Math.max(10, item.price - 40) : 45 }], price: undefined })} className="text-[11px] font-bold underline" style={{ color: theme.accent }}>تحويل إلى أحجام متعددة</button>
-                            )}
-                          </div>
-                          {item.sizes ? (
-                            <div className="space-y-1.5">
-                              {item.sizes.map((sz, idx) => (
-                                <div key={idx} className="flex items-center gap-2">
-                                  <input value={sz.label} onChange={(e) => updateSize(item.id, idx, { label: e.target.value })} className="w-20 px-2 py-1.5 rounded-lg border bg-transparent text-xs text-center" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
-                                  <input type="number" value={sz.price} onChange={(e) => updateSize(item.id, idx, { price: Number(e.target.value) })} className="flex-1 px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <input type="number" value={item.price} onChange={(e) => updateItem(item.id, { price: Number(e.target.value) })} className="w-full px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
-                          )}
-                          <button onClick={() => setEditingId(null)} className="w-full py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-1 shadow" style={{ background: theme.accent, color: theme.bg }}><Save size={13} /> حفظ التعديل</button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="min-w-0">
-                            <p className="font-bold text-sm truncate">{item.name}</p>
-                            <p className="text-xs opacity-80" style={{ color: theme.muted }}>{item.cat}{item.subcat ? " · " + item.subcat : ""} · {item.sizes ? item.sizes.map((s) => s.label + ":" + money(s.price)).join(" / ") : money(item.price)}</p>
-                          </div>
-                          <div className="flex items-center gap-1 shrink-0">
-                            <button onClick={() => setEditingId(item.id)} className="p-2 rounded-full border" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }}><Pencil size={13} /></button>
-                            <button onClick={() => deleteItem(item.id)} className="p-2 rounded-full border" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }}><Trash2 size={13} /></button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* TAB 3: RESTAURANT SETTINGS */}
-            {adminTab === "settings" && (
-              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
-                <Field label="اسم المطعم" value={restaurantName} onChange={setRestaurantName} theme={theme} />
-                <Field label="الشعار الفرعي للمنيو" value={tagline} onChange={setTagline} theme={theme} />
-                <Field label="العنوان الجغرافي" value={address} onChange={setAddress} theme={theme} />
-                <Field label="رقم واتساب الاستقبال" value={whatsappNumber} onChange={setWhatsappNumber} theme={theme} dir="ltr" hint="بالصيغة الدولية مثال: +201006113627" />
-                <Field label="رقم فودافون كاش" value={vodafoneCash} onChange={setVodafoneCash} theme={theme} dir="ltr" />
-                <Field label="حساب InstaPay" value={instapay} onChange={setInstapay} theme={theme} dir="ltr" />
-                <Field label="رمز الأمان للإدارة (PIN)" value={adminPin} onChange={setAdminPin} theme={theme} dir="ltr" />
-
-                <div className="pt-4 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
-                  <p className="font-bold text-sm mb-2">إدارة قرى ومناطق التوصيل (الدليفري)</p>
-                  <div className="bg-black/20 p-3 rounded-xl border border-[#1F1F1F] space-y-2 mb-3">
-                    <div className="grid grid-cols-2 gap-2">
-                      <input type="text" placeholder="اسم القرية" value={newAreaName} onChange={(e) => setNewAreaName(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
-                      <input type="number" placeholder="سعر التوصيل" value={newAreaPrice} onChange={(e) => setNewAreaPrice(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
-                    </div>
-                    <button onClick={handleAddDeliveryArea} className="w-full py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><PlusCircle size={13}/>إضافة المنطقة</button>
-                  </div>
-                  <div className="space-y-1.5 max-h-[15vh] overflow-y-auto pr-1">
-                    {deliveryAreas.map((area, idx) => (
-                      <div key={idx} className="flex items-center justify-between text-xs p-2 rounded-lg bg-black/10 border border-[#1F1F1F]">
-                        <span className="font-medium">{area.name} · <span style={{ color: theme.accent }}>{money(area.price)}</span></span>
-                        <button onClick={() => handleRemoveDeliveryArea(idx)} className="p-1 rounded-full text-red-500 border border-red-500/20 bg-red-500/5"><Trash2 size={12}/></button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
-                  <p className="font-bold text-sm mb-2">إدارة كوبونات الخصم والكمية (Promo Codes)</p>
-                  <div className="bg-black/20 p-3 rounded-xl border border-[#1F1F1F] space-y-2 mb-3">
-                    <div className="grid grid-cols-3 gap-2">
-                      <input type="text" placeholder="الكود" value={newPromoCode} onChange={(e) => setNewPromoCode(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs uppercase" style={{ borderColor: theme.muted + "40", color: theme.text }} />
-                      <input type="number" placeholder="الخصم %" value={newPromoDiscount} onChange={(e) => setNewPromoDiscount(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
-                      <input type="number" placeholder="أقصى عدد استخدام" value={newPromoLimit} onChange={(e) => setNewPromoLimit(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
-                    </div>
-                    <button onClick={handleAddPromoCode} className="w-full py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><PlusCircle size={13}/>إضافة الكود بالكمية</button>
-                  </div>
-                  <div className="space-y-1.5 max-h-[15vh] overflow-y-auto pr-1">
-                    {promoCodes.map((promo, idx) => (
-                      <div key={idx} className="flex items-center justify-between text-xs p-2 rounded-lg bg-black/10 border border-[#1F1F1F]">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="font-bold text-green-500">{promo.code} · <span className="font-medium text-white">خصم {promo.discount}%</span></span>
-                          <span className="text-[10px]" style={{ color: theme.muted }}>
-                            الاستخدامات: {promo.used || 0} من {promo.limit || 0} (المتبقي: {Math.max(0, (promo.limit || 0) - (promo.used || 0))})
-                          </span>
-                        </div>
-                        <button onClick={() => handleRemovePromoCode(idx)} className="p-1 rounded-full text-red-500 border border-red-500/20 bg-red-500/5"><Trash2 size={12}/></button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="pt-4 mt-2 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
-                  <button onClick={() => setShowResetConfirm(false)} className="w-full py-2.5 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 text-red-500 border-red-500/30"><RotateCcw size={14} /> إعادة تعيين منيو دريم كورنر الافتراضي</button>
-                </div>
-              </div>
-            )}
           </Sheet>
         </Overlay>
       )}
@@ -1785,7 +1738,7 @@ export default function RestaurantMenu() {
               <p className="text-sm">هل أنت متأكد من رغبتك في استعادة منيو دريم كورنر الأصلي؟</p>
               <div className="flex gap-2 justify-center">
                 <button onClick={handleResetMenu} className="px-4 py-2 bg-red-600 text-white rounded-lg text-xs font-bold">نعم</button>
-                <button onClick={() => setShowResetConfirm(false)} className="px-4 py-2 border rounded-lg text-xs font-bold" style={{ borderColor: theme.muted + "40" }}>إلغاء</button>
+                <button onClick={() => setShowResetConfirm(false)} className="px-4 py-2 border rounded-lg text-xs font-bold" style={{ borderColor: "rgba(255,255,255,0.2)" }}>إلغاء</button>
               </div>
             </div>
           </Sheet>
@@ -1806,10 +1759,10 @@ function Overlay({ children, onClose }) {
 
 function Sheet({ theme, title, onClose, children }) {
   return (
-    <div className="relative z-50 w-full md:max-w-md max-h-[88vh] rounded-t-3xl md:rounded-3xl p-5 overflow-y-auto" style={{ background: theme.bg, color: theme.text, border: "1px solid " + (theme.muted || "#B3A18C") + "30" }} dir="rtl">
-      <div className="flex items-center justify-between mb-4 pb-2 border-b" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
+    <div className="relative z-50 w-full md:max-w-md max-h-[88vh] rounded-t-3xl md:rounded-3xl p-5 overflow-y-auto" style={{ background: theme.bg, color: theme.text, border: "1px solid rgba(255,255,255,0.1)" }} dir="rtl">
+      <div className="flex items-center justify-between mb-4 pb-2 border-b" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
         <h2 className="text-lg font-black" style={{ color: theme.accent }}>{title}</h2>
-        <button onClick={onClose} className="p-1.5 rounded-full border" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }}><X size={15} /></button>
+        <button onClick={onClose} className="p-1.5 rounded-full border" style={{ borderColor: "rgba(255,255,255,0.2)" }}><X size={15} /></button>
       </div>
       {children}
     </div>
@@ -1820,25 +1773,8 @@ function Field({ label, value, onChange, theme, dir = "rtl", hint }) {
   return (
     <label className="block text-sm space-y-1">
       <span className="font-bold opacity-90" style={{ color: theme.muted }}>{label}</span>
-      <input value={value} onChange={(e) => onChange(e.target.value)} dir={dir} className="w-full px-3 py-2 rounded-lg border bg-transparent" style={{ borderColor: (theme.muted || "#B3A18C") + "40", color: theme.text }} />
+      <input value={value} onChange={(e) => onChange(e.target.value)} dir={dir} className="w-full px-3 py-2 rounded-lg border bg-transparent text-white" style={{ borderColor: "rgba(255,255,255,0.15)" }} />
       {hint && <span className="block mt-1 text-xs opacity-70" style={{ color: theme.muted }}>{hint}</span>}
     </label>
-  );
-}
-
-function PayRow({ icon, label, value, theme, onCopy, copied }) {
-  return (
-    <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-black/20" style={{ background: theme.surface2 }}>
-      <div className="flex items-center gap-2 min-w-0">
-        <span style={{ color: theme.accent }}>{icon}</span>
-        <div className="min-w-0">
-          <p className="text-[10px]" style={{ color: theme.muted }}>{label}</p>
-          <p className="text-xs font-bold truncate" dir="ltr">{value}</p>
-        </div>
-      </div>
-      <button onClick={() => onCopy(label, value)} className="p-1.5 rounded-full border shrink-0 transition-transform active:scale-95" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }}>
-        {copied === label ? <Check size={11} className="text-green-500" /> : <Copy size={11} />}
-      </button>
-    </div>
   );
 }
