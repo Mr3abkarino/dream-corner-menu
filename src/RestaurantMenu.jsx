@@ -3,11 +3,11 @@ import restaurantLogo from "./assets/logo.png";
 import {
   ShoppingCart, Plus, Minus, X, Pencil, Trash2, Check, Copy,
   QrCode, Settings, Phone, CreditCard, Sparkles, Search, RotateCcw,
-  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation, Award, Calendar, DollarSign, Wallet, Flame, BarChart3, RefreshCw, Share2, TrendingUp, Users
+  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation, Award, Calendar, DollarSign, Wallet, Flame, BarChart3, RefreshCw, Share2, TrendingUp, Download, PieChart, Crown, Clock, CheckCircle2
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "4.0"; // النسخة الذهبية: ربط Google Sheets + لوحة تقارير ومبيعات متكاملة
+const MENU_VERSION = "4.2"; // التحديث الذهبي الشامل لصفحة التقارير والتحليلات
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbybuw8CuUGV-hf_ecUyevpGB5YioMKCdeOP3PxSKKuzGgMmtcfbHyrd0F81eJg3Z_U/exec";
 
 const THEMES = [
@@ -182,12 +182,14 @@ export default function RestaurantMenu() {
   const [pinError, setPinError] = useState("");
   const [logoClicks, setLogoClicks] = useState(0);
 
-  // حالة التقارير
+  // حالات التقارير والفلترة
   const [reportsData, setReportsData] = useState([]);
   const [reportsLoading, setReportsLoading] = useState(false);
-  
-  const saveTimer = useRef(null);
+  const [reportDateFilter, setReportDateFilter] = useState("all"); // 'today', 'yesterday', 'week', 'all'
+  const [reportSearchQuery, setReportSearchQuery] = useState("");
+  const [dailyTarget, setDailyTarget] = useState(3000); // هدف المبيعات اليومي
 
+  const saveTimer = useRef(null);
   const status = checkRestaurantStatus();
   const findItem = (id) => items.find((i) => i.id === id);
 
@@ -257,9 +259,54 @@ export default function RestaurantMenu() {
     }
   }, [adminOpen, adminTab]);
 
+  // تصفية بيانات التقارير بناءً على التاريخ والبحث
+  const filteredReportsData = useMemo(() => {
+    if (!reportsData || reportsData.length === 0) return [];
+
+    const now = new Date();
+    const todayStr = now.toLocaleDateString("ar-EG");
+
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toLocaleDateString("ar-EG");
+
+    const weekAgo = new Date(now);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+
+    return reportsData.filter(row => {
+      const dateStr = row["التاريخ والوقت"] || "";
+      
+      // فلتر التاريخ
+      let passesDate = true;
+      if (reportDateFilter === "today") {
+        passesDate = dateStr.includes(todayStr) || dateStr.startsWith(todayStr);
+      } else if (reportDateFilter === "yesterday") {
+        passesDate = dateStr.includes(yesterdayStr) || dateStr.startsWith(yesterdayStr);
+      }
+
+      // فلتر البحث
+      let passesSearch = true;
+      if (reportSearchQuery.trim()) {
+        const q = reportSearchQuery.trim().toLowerCase();
+        const name = (row["اسم العميل"] || "").toLowerCase();
+        const phone = (row["رقم الموبايل"] || "").toLowerCase();
+        const area = (row["المنطقة / القرية"] || "").toLowerCase();
+        const itemsText = (row["تفاصيل الطلبات"] || "").toLowerCase();
+        passesSearch = name.includes(q) || phone.includes(q) || area.includes(q) || itemsText.includes(q);
+      }
+
+      return passesDate && passesSearch;
+    });
+  }, [reportsData, reportDateFilter, reportSearchQuery]);
+
+  // إحصائيات تحليلات التقارير المتقدمة الشاملة
   const reportsAnalytics = useMemo(() => {
-    if (!reportsData || reportsData.length === 0) {
-      return { totalOrders: 0, totalSales: 0, totalDelivery: 0, netTotal: 0, cashSales: 0, electronicSales: 0, topArea: "لا يوجد" };
+    if (!filteredReportsData || filteredReportsData.length === 0) {
+      return {
+        totalOrders: 0, totalSales: 0, totalDelivery: 0, netTotal: 0,
+        cashSales: 0, electronicSales: 0, instantOrders: 0, scheduledOrders: 0,
+        topArea: "لا يوجد", topCustomers: []
+      };
     }
     
     let totalSales = 0;
@@ -267,26 +314,38 @@ export default function RestaurantMenu() {
     let netTotal = 0;
     let cashSales = 0;
     let electronicSales = 0;
+    let instantOrders = 0;
+    let scheduledOrders = 0;
+    
     const areasMap = {};
+    const customersMap = {};
 
-    reportsData.forEach(row => {
+    filteredReportsData.forEach(row => {
       const cartVal = Number(row["حساب الأكل الأصلي"]) || 0;
       const delVal = Number(row["مصاريف التوصيل"]) || 0;
       const finalVal = Number(row["الإجمالي النهائي"]) || 0;
       const area = row["المنطقة / القرية"] || "غير محدد";
       const pay = row["طريقة الدفع"] || "";
+      const sched = row["نوع وموعد التوصيل"] || "";
+      const custName = row["اسم العميل"] || "عميل بدون اسم";
+      const custPhone = row["رقم الموبايل"] || "";
 
       totalSales += cartVal;
       totalDelivery += delVal;
       netTotal += finalVal;
 
-      if (pay.includes("إلكتروني")) {
-        electronicSales += finalVal;
-      } else {
-        cashSales += finalVal;
-      }
+      if (pay.includes("إلكتروني")) electronicSales += finalVal;
+      else cashSales += finalVal;
+
+      if (sched.includes("مجدول")) scheduledOrders++;
+      else instantOrders++;
 
       areasMap[area] = (areasMap[area] || 0) + 1;
+
+      const custKey = custName + " (" + custPhone + ")";
+      if (!customersMap[custKey]) customersMap[custKey] = { name: custName, phone: custPhone, count: 0, spent: 0 };
+      customersMap[custKey].count += 1;
+      customersMap[custKey].spent += finalVal;
     });
 
     let topArea = "غير محدد";
@@ -298,16 +357,49 @@ export default function RestaurantMenu() {
       }
     });
 
+    const topCustomers = Object.values(customersMap)
+      .sort((a, b) => b.spent - a.spent)
+      .slice(0, 3);
+
     return {
-      totalOrders: reportsData.length,
+      totalOrders: filteredReportsData.length,
       totalSales,
       totalDelivery,
       netTotal,
       cashSales,
       electronicSales,
-      topArea: topArea + " (" + maxCount + " أوردر)"
+      instantOrders,
+      scheduledOrders,
+      topArea: topArea + " (" + maxCount + " أوردر)",
+      topCustomers
     };
-  }, [reportsData]);
+  }, [filteredReportsData]);
+
+  const exportToCSV = () => {
+    if (!filteredReportsData || filteredReportsData.length === 0) return;
+    
+    const headers = ["التاريخ والوقت", "اسم العميل", "رقم الموبايل", "المنطقة / القرية", "العنوان", "طريقة الدفع", "تفاصيل الطلبات", "الإجمالي النهائي"];
+    const rows = filteredReportsData.map(r => [
+      `"${r["التاريخ والوقت"] || ""}"`,
+      `"${r["اسم العميل"] || ""}"`,
+      `"${r["رقم الموبايل"] || ""}"`,
+      `"${r["المنطقة / القرية"] || ""}"`,
+      `"${r["العنوان بالتفصيل"] || ""}"`,
+      `"${r["طريقة الدفع"] || ""}"`,
+      `"${r["تفاصيل الطلبات"] || ""}"`,
+      `"${r["الإجمالي النهائي"] || 0}"`
+    ]);
+
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `تقارير_مبيعات_دريم_كورنر_${new Date().toLocaleDateString("ar-EG")}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const handleLogoClickLocal = () => {
     setLogoClicks((prev) => {
@@ -441,10 +533,7 @@ export default function RestaurantMenu() {
   };
 
   const categories = useMemo(() => ["الكل", ...new Set(items.map((i) => i.cat))], [items]);
-
-  const bestSellerItems = useMemo(() => {
-    return items.filter(item => item.isBestSeller);
-  }, [items]);
+  const bestSellerItems = useMemo(() => items.filter(item => item.isBestSeller), [items]);
 
   const visibleItems = useMemo(() => {
     return items.filter((item) => {
@@ -720,7 +809,7 @@ export default function RestaurantMenu() {
         </div>
       </header>
 
-      {/* ===================== SOCIAL MEDIA BAR IN MIDDLE ===================== */}
+      {/* ===================== SOCIAL MEDIA BAR ===================== */}
       <div className="w-full flex justify-center items-center py-3 border-b sticky top-[77px] z-20 backdrop-blur-md" style={{ background: theme.bg + "D9", borderColor: (theme.muted || "#B3A18C") + "15" }}>
         <div className="flex items-center gap-4 px-4 py-1.5 rounded-full shadow-inner border" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "20" }}>
           
@@ -1237,10 +1326,10 @@ export default function RestaurantMenu() {
         </Overlay>
       )}
 
-      {/* ===================== ADMIN DASHBOARD WITH REPORTS ===================== */}
+      {/* ===================== ADVANCED ADMIN DASHBOARD ===================== */}
       {adminOpen && (
         <Overlay onClose={() => setAdminOpen(false)}>
-          <Sheet theme={theme} title="لوحة إدارة دريم كورنر 👑" onClose={() => setAdminOpen(false)}>
+          <Sheet theme={theme} title="لوحة القيادة والتقارير الشاملة 👑" onClose={() => setAdminOpen(false)}>
             {/* أزرار التبويبات العلوي للإدارة */}
             <div className="flex gap-1 p-1 rounded-xl mb-4 border" style={{ background: theme.surface2, borderColor: theme.muted + "20" }}>
               <button 
@@ -1249,7 +1338,7 @@ export default function RestaurantMenu() {
                 style={adminTab === "reports" ? { background: theme.accent, color: theme.bg } : { color: theme.muted }}
               >
                 <BarChart3 size={14} />
-                <span>التقارير</span>
+                <span>التقارير الشاملة</span>
               </button>
               <button 
                 onClick={() => setAdminTab("items")} 
@@ -1269,88 +1358,167 @@ export default function RestaurantMenu() {
               </button>
             </div>
 
-            {/* TAB 1: REPORTS & ANALYTICS */}
+            {/* TAB 1: ADVANCED REPORTS & ANALYTICS */}
             {adminTab === "reports" && (
-              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold opacity-80" style={{ color: theme.muted }}>تقارير المبيعات المسجلة أوتوماتيكياً:</span>
-                  <button onClick={fetchReportsFromSheet} className="p-1.5 rounded-lg border text-xs font-bold flex items-center gap-1" style={{ borderColor: theme.accent, color: theme.accent }}>
-                    <RefreshCw size={12} className={reportsLoading ? "animate-spin" : ""} />
-                    <span>تحديث</span>
-                  </button>
+              <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
+                {/* 1. الفلترة الزمنية والبحث */}
+                <div className="space-y-2 bg-black/10 p-2.5 rounded-2xl border border-white/5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold opacity-80" style={{ color: theme.muted }}>الفترة الزمنية:</span>
+                    <button onClick={fetchReportsFromSheet} className="p-1 rounded-lg border text-[10px] font-bold flex items-center gap-1" style={{ borderColor: theme.accent, color: theme.accent }}>
+                      <RefreshCw size={11} className={reportsLoading ? "animate-spin" : ""} />
+                      <span>تحديث الحسابات</span>
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-1 text-[10px] font-bold">
+                    <button onClick={() => setReportDateFilter("today")} className="py-1.5 rounded-lg border transition-all" style={reportDateFilter === "today" ? { background: theme.accent, color: theme.bg, borderColor: theme.accent } : { borderColor: theme.muted + "20" }}>اليوم</button>
+                    <button onClick={() => setReportDateFilter("yesterday")} className="py-1.5 rounded-lg border transition-all" style={reportDateFilter === "yesterday" ? { background: theme.accent, color: theme.bg, borderColor: theme.accent } : { borderColor: theme.muted + "20" }}>أمس</button>
+                    <button onClick={() => setReportDateFilter("week")} className="py-1.5 rounded-lg border transition-all" style={reportDateFilter === "week" ? { background: theme.accent, color: theme.bg, borderColor: theme.accent } : { borderColor: theme.muted + "20" }}>آخر أسبوع</button>
+                    <button onClick={() => setReportDateFilter("all")} className="py-1.5 rounded-lg border transition-all" style={reportDateFilter === "all" ? { background: theme.accent, color: theme.bg, borderColor: theme.accent } : { borderColor: theme.muted + "20" }}>الكل</button>
+                  </div>
+
+                  <div className="relative pt-1">
+                    <input type="text" placeholder="بحث باسم العميل، الموبايل، القرية..." value={reportSearchQuery} onChange={(e) => setReportSearchQuery(e.target.value)} className="w-full px-3 py-1.5 pr-8 rounded-xl text-[11px] border bg-transparent focus:outline-none" style={{ borderColor: theme.muted + "30", color: theme.text }} />
+                    <Search size={13} className="absolute right-2.5 top-3 opacity-60" style={{ color: theme.text }} />
+                  </div>
                 </div>
 
                 {reportsLoading ? (
-                  <div className="text-center py-8 space-y-2">
-                    <RefreshCw size={24} className="animate-spin mx-auto text-amber-500" />
-                    <p className="text-xs opacity-70">جاري جلب إحصائيات الأوردرات من Google Sheets...</p>
+                  <div className="text-center py-10 space-y-2">
+                    <RefreshCw size={26} className="animate-spin mx-auto text-amber-500" />
+                    <p className="text-xs opacity-70">جاري سحب تحليلات المبيعات من Google Sheets...</p>
                   </div>
                 ) : (
                   <>
-                    {/* KPI Cards */}
+                    {/* 2. شريط متابعة الهدف اليومي (Daily Target Gauge) */}
+                    <div className="p-3 rounded-2xl border bg-gradient-to-r from-amber-500/10 to-amber-500/5 space-y-2" style={{ borderColor: theme.accent + "40" }}>
+                      <div className="flex items-center justify-between text-xs font-bold">
+                        <span className="flex items-center gap-1" style={{ color: theme.accent }}>
+                          <TrendingUp size={14} />
+                          <span>تحقيق الهدف المالي للمبيعات:</span>
+                        </span>
+                        <span className="font-extrabold">{reportsAnalytics.netTotal} / {dailyTarget} جنيه</span>
+                      </div>
+                      <div className="w-full h-2.5 bg-black/30 rounded-full overflow-hidden border border-white/10">
+                        <div 
+                          className="h-full bg-gradient-to-r from-amber-500 to-green-500 transition-all duration-500" 
+                          style={{ width: `${Math.min(100, Math.round((reportsAnalytics.netTotal / dailyTarget) * 100))}%` }}
+                        />
+                      </div>
+                      <p className="text-[9px] text-left opacity-70 font-bold" style={{ color: theme.muted }}>
+                        تم تحقيق {Math.round((reportsAnalytics.netTotal / dailyTarget) * 100)}% من المستهدف المقدر بـ {dailyTarget} ج.م
+                      </p>
+                    </div>
+
+                    {/* 3. الكروت الإحصائية الرئيسية (KPI Cards) */}
                     <div className="grid grid-cols-2 gap-2">
-                      <div className="p-3 rounded-xl border flex flex-col justify-between" style={{ background: theme.surface2, borderColor: theme.accent + "30" }}>
-                        <span className="text-[10px] opacity-70" style={{ color: theme.muted }}>إجمالي عدد الطلبات</span>
+                      <div className="p-3 rounded-2xl border flex flex-col justify-between" style={{ background: theme.surface2, borderColor: theme.accent + "30" }}>
+                        <span className="text-[10px] opacity-70" style={{ color: theme.muted }}>عدد الطلبات الكلي</span>
                         <span className="text-lg font-black mt-1" style={{ color: theme.accent }}>{reportsAnalytics.totalOrders} أوردر</span>
                       </div>
-                      <div className="p-3 rounded-xl border flex flex-col justify-between" style={{ background: theme.surface2, borderColor: theme.accent + "30" }}>
-                        <span className="text-[10px] opacity-70" style={{ color: theme.muted }}>صافي المبيعات الكلي</span>
+                      <div className="p-3 rounded-2xl border flex flex-col justify-between" style={{ background: theme.surface2, borderColor: "rgba(34, 197, 94, 0.3)" }}>
+                        <span className="text-[10px] opacity-70" style={{ color: theme.muted }}>صافي الدخل النهائي</span>
                         <span className="text-lg font-black mt-1 text-green-500">{money(reportsAnalytics.netTotal)}</span>
                       </div>
-                      <div className="p-3 rounded-xl border flex flex-col justify-between" style={{ background: theme.surface2, borderColor: theme.accent + "30" }}>
-                        <span className="text-[10px] opacity-70" style={{ color: theme.muted }}>حساب الأكل الأصلي</span>
+                      <div className="p-3 rounded-2xl border flex flex-col justify-between" style={{ background: theme.surface2, borderColor: theme.accent + "20" }}>
+                        <span className="text-[10px] opacity-70" style={{ color: theme.muted }}>مبيعات المأكولات</span>
                         <span className="text-sm font-bold mt-1">{money(reportsAnalytics.totalSales)}</span>
                       </div>
-                      <div className="p-3 rounded-xl border flex flex-col justify-between" style={{ background: theme.surface2, borderColor: theme.accent + "30" }}>
+                      <div className="p-3 rounded-2xl border flex flex-col justify-between" style={{ background: theme.surface2, borderColor: theme.accent + "20" }}>
                         <span className="text-[10px] opacity-70" style={{ color: theme.muted }}>إيرادات الدليفري</span>
                         <span className="text-sm font-bold mt-1">{money(reportsAnalytics.totalDelivery)}</span>
                       </div>
                     </div>
 
-                    <div className="p-3 rounded-xl border space-y-2" style={{ background: theme.surface2, borderColor: theme.accent + "20" }}>
+                    {/* 4. أشرطة التحليل البصري (Visual Progress Bars) */}
+                    <div className="p-3 rounded-2xl border space-y-3" style={{ background: theme.surface2, borderColor: theme.accent + "20" }}>
                       <p className="text-[11px] font-bold flex items-center gap-1" style={{ color: theme.accent }}>
-                        <TrendingUp size={14} />
-                        <span>تحليلات إضافية:</span>
+                        <PieChart size={14} />
+                        <span>تحليل المبيعات ونوع الدفع والتوصيل:</span>
                       </p>
-                      <div className="text-xs space-y-1 opacity-90">
-                        <div className="flex justify-between">
-                          <span>القرية الأكثر طلباً:</span>
-                          <span className="font-bold text-amber-500">{reportsAnalytics.topArea}</span>
+                      
+                      {/* شريط طريقة الدفع */}
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-[10px] font-bold">
+                          <span>💵 كاش: {money(reportsAnalytics.cashSales)}</span>
+                          <span className="text-green-400">📱 إلكتروني: {money(reportsAnalytics.electronicSales)}</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span>مبيعات الكاش عند الاستلام:</span>
-                          <span className="font-bold">{money(reportsAnalytics.cashSales)}</span>
+                        <div className="w-full h-2 rounded-full overflow-hidden flex bg-black/40">
+                          <div style={{ width: `${reportsAnalytics.netTotal ? (reportsAnalytics.cashSales / reportsAnalytics.netTotal) * 100 : 50}%` }} className="bg-amber-500 h-full" />
+                          <div style={{ width: `${reportsAnalytics.netTotal ? (reportsAnalytics.electronicSales / reportsAnalytics.netTotal) * 100 : 50}%` }} className="bg-green-500 h-full" />
                         </div>
-                        <div className="flex justify-between">
-                          <span>مبيعات المحافظ الإلكترونية:</span>
-                          <span className="font-bold text-green-400">{money(reportsAnalytics.electronicSales)}</span>
+                      </div>
+
+                      {/* شريط نوع التوصيل */}
+                      <div className="space-y-1 pt-1">
+                        <div className="flex justify-between text-[10px] font-bold">
+                          <span>⚡ توصيل فوري: {reportsAnalytics.instantOrders} أوردر</span>
+                          <span className="text-amber-400">🕒 مجدول: {reportsAnalytics.scheduledOrders} أوردر</span>
                         </div>
+                        <div className="w-full h-2 rounded-full overflow-hidden flex bg-black/40">
+                          <div style={{ width: `${reportsAnalytics.totalOrders ? (reportsAnalytics.instantOrders / reportsAnalytics.totalOrders) * 100 : 50}%` }} className="bg-sky-500 h-full" />
+                          <div style={{ width: `${reportsAnalytics.totalOrders ? (reportsAnalytics.scheduledOrders / reportsAnalytics.totalOrders) * 100 : 50}%` }} className="bg-amber-500 h-full" />
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t text-[11px] flex justify-between font-bold" style={{ borderColor: theme.muted + "15" }}>
+                        <span opacity-80 style={{ color: theme.muted }}>القرية الأكثر طلباً:</span>
+                        <span className="text-amber-500">{reportsAnalytics.topArea}</span>
                       </div>
                     </div>
 
-                    <button 
-                      onClick={sendZReportToWhatsApp}
-                      className="w-full py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow bg-emerald-600 text-white"
-                    >
-                      <Share2 size={14} />
-                      <span>تصدير تقرير تقفيل الخزنة (Z-Report) للواتساب</span>
-                    </button>
+                    {/* 5. كارت كبار العملاء VIP */}
+                    {reportsAnalytics.topCustomers.length > 0 && (
+                      <div className="p-3 rounded-2xl border space-y-2 bg-gradient-to-r from-amber-500/10 to-amber-600/5" style={{ borderColor: theme.accent + "30" }}>
+                        <p className="text-[11px] font-bold flex items-center gap-1" style={{ color: theme.accent }}>
+                          <Crown size={14} className="text-amber-400" />
+                          <span>قائمة كبار العملاء (Top VIP Customers):</span>
+                        </p>
+                        <div className="space-y-1.5">
+                          {reportsAnalytics.topCustomers.map((cust, idx) => (
+                            <div key={idx} className="flex items-center justify-between text-[10px] p-2 rounded-xl bg-black/20 border border-white/5">
+                              <span className="font-bold">{idx + 1}. {cust.name} ({cust.phone})</span>
+                              <span className="font-extrabold text-amber-400">{cust.count} أوردرات · {money(cust.spent)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
-                    {/* جدول الطلبات بالتفصيل */}
+                    {/* أزرار التصدير والإجراءات السريعة */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <button 
+                        onClick={sendZReportToWhatsApp}
+                        className="py-2.5 rounded-xl font-bold text-[11px] flex items-center justify-center gap-1.5 shadow bg-emerald-600 text-white active:scale-95 transition-transform"
+                      >
+                        <Share2 size={13} />
+                        <span>تصدير Z-Report</span>
+                      </button>
+                      <button 
+                        onClick={exportToCSV}
+                        className="py-2.5 rounded-xl font-bold text-[11px] flex items-center justify-center gap-1.5 shadow border text-amber-400 border-amber-500/40 bg-amber-500/10 active:scale-95 transition-transform"
+                      >
+                        <Download size={13} />
+                        <span>تحميل Excel / CSV</span>
+                      </button>
+                    </div>
+
+                    {/* 6. جدول تفاصيل الأوردرات الأخيرة */}
                     <div className="space-y-2 pt-2 border-t" style={{ borderColor: theme.muted + "20" }}>
-                      <p className="text-xs font-bold" style={{ color: theme.accent }}>سجل الطلبات الأخيرة:</p>
+                      <p className="text-xs font-bold" style={{ color: theme.accent }}>سجل الطلبات الأخير ({filteredReportsData.length} أوردر):</p>
                       <div className="space-y-2 max-h-[30vh] overflow-y-auto pr-1">
-                        {reportsData.slice().reverse().map((row, idx) => (
-                          <div key={idx} className="p-2.5 rounded-xl border text-xs space-y-1" style={{ background: theme.surface, borderColor: theme.muted + "20" }}>
+                        {filteredReportsData.slice().reverse().map((row, idx) => (
+                          <div key={idx} className="p-3 rounded-2xl border text-xs space-y-1 shadow-sm" style={{ background: theme.surface, borderColor: theme.muted + "20" }}>
                             <div className="flex justify-between font-bold">
                               <span>{row["اسم العميل"] || "عميل"} ({row["رقم الموبايل"]})</span>
                               <span style={{ color: theme.accent }}>{money(row["الإجمالي النهائي"])}</span>
                             </div>
-                            <div className="text-[10px] opacity-70 flex justify-between" style={{ color: theme.muted }}>
+                            <div className="text-[10px] opacity-75 flex justify-between" style={{ color: theme.muted }}>
                               <span>📍 {row["المنطقة / القرية"]}</span>
                               <span>🕒 {row["التاريخ والوقت"]}</span>
                             </div>
-                            <p className="text-[10px] opacity-80 line-clamp-1 border-t pt-1 mt-1" style={{ borderColor: theme.muted + "10" }}>
+                            <p className="text-[10px] opacity-80 line-clamp-2 border-t pt-1.5 mt-1" style={{ borderColor: theme.muted + "10" }}>
                               🍽 {row["تفاصيل الطلبات"]}
                             </p>
                           </div>
@@ -1511,7 +1679,7 @@ function Overlay({ children, onClose }) {
 
 function Sheet({ theme, title, onClose, children }) {
   return (
-    <div className="relative z-50 w-full md:max-w-md max-h-[85vh] rounded-t-3xl md:rounded-3xl p-5 overflow-y-auto" style={{ background: theme.bg, color: theme.text, border: "1px solid " + (theme.muted || "#B3A18C") + "30" }} dir="rtl">
+    <div className="relative z-50 w-full md:max-w-md max-h-[88vh] rounded-t-3xl md:rounded-3xl p-5 overflow-y-auto" style={{ background: theme.bg, color: theme.text, border: "1px solid " + (theme.muted || "#B3A18C") + "30" }} dir="rtl">
       <div className="flex items-center justify-between mb-4 pb-2 border-b" style={{ borderColor: (theme.muted || "#B3A18C") + "20" }}>
         <h2 className="text-lg font-black" style={{ color: theme.accent }}>{title}</h2>
         <button onClick={onClose} className="p-1.5 rounded-full border" style={{ borderColor: (theme.muted || "#B3A18C") + "40" }}><X size={15} /></button>
