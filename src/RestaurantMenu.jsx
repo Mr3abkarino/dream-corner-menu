@@ -7,12 +7,8 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "16.0"; // v16.0: إصلاح خطأ Build esbuild على Vercel بنسبة 100%
+const MENU_VERSION = "17.0"; // v17.0: إصلاح الشاشة البيضاء في لوحة الإدارة
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbybuw8CuUGV-hf_ecUyevpGB5YioMKCdeOP3PxSKKuzGgMmtcfbHyrd0F81eJg3Z_U/exec";
-
-const THEMES = [
-  { id: "brand", name: "هوية دريم كورنر الملكية", bg: "#08090C", surface: "#111319", surface2: "#1A1D26", accent: "#E5A93C", accent2: "#8B1E1E", text: "#FFFFFF", muted: "#9A92A6" }
-];
 
 const DEFAULT_DELIVERY_AREAS = [
   { name: "البرامون (داخل البلد)", price: 10 },
@@ -74,7 +70,7 @@ const DEFAULT_MENU = [
   { id: "d4", cat: "المشروبات", name: "مياة معدنية صغيرة", price: 6 }
 ];
 
-const money = (n) => Number(n).toLocaleString("en-US") + " جنيه";
+const money = (n) => Number(n || 0).toLocaleString("en-US") + " جنيه";
 
 const checkRestaurantStatus = () => {
   const now = new Date();
@@ -102,11 +98,9 @@ const copyTextToClipboard = (text) => {
 };
 
 export default function RestaurantMenu() {
-  const theme = THEMES[0];
   const [restaurantName, setRestaurantName] = useState("دريم كورنر");
   const [tagline, setTagline] = useState("PIZZA & SANDWICHES — طعم يفرق .. جودة تليق بك");
   const [address, setAddress] = useState("البرامون، بجوار عيادة الدكتورة إلهام العشري");
-  const [menuUrl, setMenuUrl] = useState("https://dream-corner-menu-4nfj.vercel.app");
   const [whatsappNumber, setWhatsappNumber] = useState("+201006113627");
   const [vodafoneCash, setVodafoneCash] = useState("01023590020");
   const [instapay, setInstapay] = useState("zxzwd@instapay");
@@ -128,7 +122,6 @@ export default function RestaurantMenu() {
   const [cartOpen, setCartOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [adminTab, setAdminTab] = useState("dashboard");
-  const [editingId, setEditingId] = useState(null);
   const [copied, setCopied] = useState("");
   const [closeNoticeOpen, setCloseNoticeOpen] = useState(false);
   const [animateCart, setAnimateCart] = useState(false);
@@ -136,8 +129,6 @@ export default function RestaurantMenu() {
   const [deliveryAreas, setDeliveryAreas] = useState(DEFAULT_DELIVERY_AREAS);
   const [newAreaName, setNewAreaName] = useState("");
   const [newAreaPrice, setNewAreaPrice] = useState("");
-  
-  const [promoCodes, setPromoCodes] = useState(DEFAULT_PROMO_CODES);
 
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -172,17 +163,6 @@ export default function RestaurantMenu() {
 
   const status = checkRestaurantStatus();
   const findItem = (id) => items.find((i) => i.id === id);
-
-  // مسح كامل لأي ذاكرة قديمة
-  useEffect(() => {
-    if (typeof window !== "undefined" && window.localStorage) {
-      const currentVersion = localStorage.getItem("menu-version");
-      if (currentVersion !== MENU_VERSION) {
-        localStorage.clear();
-        localStorage.setItem("menu-version", MENU_VERSION);
-      }
-    }
-  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.localStorage) {
@@ -239,7 +219,6 @@ export default function RestaurantMenu() {
   }, [selectedAreaIndex, deliveryAreas]);
 
   const discountAmount = useMemo(() => Math.round((cartTotal * appliedDiscountPercent) / 100), [cartTotal, appliedDiscountPercent]);
-
   const finalTotal = useMemo(() => Math.max(0, cartTotal - discountAmount) + activeDeliveryArea.price, [cartTotal, discountAmount, activeDeliveryArea]);
 
   const fetchReportsFromSheet = async () => {
@@ -256,7 +235,7 @@ export default function RestaurantMenu() {
   useEffect(() => { if (adminOpen) fetchReportsFromSheet(); }, [adminOpen]);
 
   const filteredReportsData = useMemo(() => {
-    if (!reportsData || reportsData.length === 0) return [];
+    if (!reportsData || !Array.isArray(reportsData) || reportsData.length === 0) return [];
     const now = new Date();
     const todayStr = now.toLocaleDateString("ar-EG");
     const yesterday = new Date(now);
@@ -264,7 +243,8 @@ export default function RestaurantMenu() {
     const yesterdayStr = yesterday.toLocaleDateString("ar-EG");
 
     return reportsData.filter(row => {
-      const dateStr = row["التاريخ والوقت"] || "";
+      if (!row) return false;
+      const dateStr = String(row["التاريخ والوقت"] || "");
       let passesDate = true;
       if (reportDateFilter === "today") passesDate = dateStr.includes(todayStr) || dateStr.startsWith(todayStr);
       else if (reportDateFilter === "yesterday") passesDate = dateStr.includes(yesterdayStr) || dateStr.startsWith(yesterdayStr);
@@ -272,14 +252,14 @@ export default function RestaurantMenu() {
       let passesSearch = true;
       if (reportSearchQuery.trim()) {
         const q = reportSearchQuery.trim().toLowerCase();
-        passesSearch = (row["اسم العميل"] || "").toLowerCase().includes(q) || (row["رقم الموبايل"] || "").toLowerCase().includes(q) || (row["المنطقة / القرية"] || "").toLowerCase().includes(q);
+        passesSearch = String(row["اسم العميل"] || "").toLowerCase().includes(q) || String(row["رقم الموبايل"] || "").toLowerCase().includes(q) || String(row["المنطقة / القرية"] || "").toLowerCase().includes(q);
       }
       return passesDate && passesSearch;
     });
   }, [reportsData, reportDateFilter, reportSearchQuery]);
 
   const reportsAnalytics = useMemo(() => {
-    if (!reportsData || reportsData.length === 0) {
+    if (!reportsData || !Array.isArray(reportsData) || reportsData.length === 0) {
       return { totalOrders: 0, totalSales: 0, totalDelivery: 0, netTotal: 0, cashSales: 0, electronicSales: 0, growthSalesPercent: 0, growthOrdersPercent: 0, topArea: "لا يوجد", goldenCustomer: null, allCustomersList: [], topItems: [], peakHours: [], sevenDaysChartData: [] };
     }
 
@@ -300,15 +280,16 @@ export default function RestaurantMenu() {
     }
 
     filteredReportsData.forEach(row => {
+      if (!row) return;
       const cartVal = Number(row["حساب الأكل الأصلي"]) || 0;
       const delVal = Number(row["مصاريف التوصيل"]) || 0;
       const finalVal = Number(row["الإجمالي النهائي"]) || 0;
-      const area = row["المنطقة / القرية"] || "غير محدد";
-      const pay = row["طريقة الدفع"] || "";
-      const custName = row["اسم العميل"] || "عميل بدون اسم";
-      const custPhone = row["رقم الموبايل"] || "";
-      const itemsText = row["تفاصيل الطلبات"] || "";
-      const timestamp = row["التاريخ والوقت"] || "";
+      const area = String(row["المنطقة / القرية"] || "غير محدد");
+      const pay = String(row["طريقة الدفع"] || "");
+      const custName = String(row["اسم العميل"] || "عميل بدون اسم");
+      const custPhone = String(row["رقم الموبايل"] || "");
+      const itemsText = String(row["تفاصيل الطلبات"] || "");
+      const timestamp = String(row["التاريخ والوقت"] || "");
 
       totalSales += cartVal; totalDelivery += delVal; netTotal += finalVal;
       if (pay.includes("إلكتروني")) electronicSales += finalVal; else cashSales += finalVal;
@@ -345,7 +326,8 @@ export default function RestaurantMenu() {
     });
 
     reportsData.forEach(row => {
-      const dateStr = row["التاريخ والوقت"] || "";
+      if (!row) return;
+      const dateStr = String(row["التاريخ والوقت"] || "");
       const finalVal = Number(row["الإجمالي النهائي"]) || 0;
       if (dateStr.includes(todayStr) || dateStr.startsWith(todayStr)) { todayNetTotal += finalVal; todayOrdersCount++; }
       else if (dateStr.includes(yesterdayStr) || dateStr.startsWith(yesterdayStr)) { yesterdayNetTotal += finalVal; yesterdayOrdersCount++; }
@@ -371,6 +353,38 @@ export default function RestaurantMenu() {
     return { totalOrders: filteredReportsData.length, totalSales, totalDelivery, netTotal, cashSales, electronicSales, growthSalesPercent, growthOrdersPercent, topArea: topArea + " (" + maxCount + " أوردر)", goldenCustomer, allCustomersList: sortedCustomers, topItems, peakHours, sevenDaysChartData };
   }, [filteredReportsData, reportsData]);
 
+  // دالة تصدير ملف اكسل مصلحة بدون أخطاء
+  const exportToCSV = () => {
+    if (!filteredReportsData || filteredReportsData.length === 0) return;
+    const headers = ["التاريخ والوقت", "اسم العميل", "رقم الموبايل", "المنطقة / القرية", "العنوان", "طريقة الدفع", "تفاصيل الطلبات", "الإجمالي النهائي"];
+    const rows = filteredReportsData.map(r => [
+      `"${r["التاريخ والوقت"] || ""}"`,
+      `"${r["اسم العميل"] || ""}"`,
+      `"${r["رقم الموبايل"] || ""}"`,
+      `"${r["المنطقة / القرية"] || ""}"`,
+      `"${r["العنوان بالتفصيل"] || ""}"`,
+      `"${r["طريقة الدفع"] || ""}"`,
+      `"${r["تفاصيل الطلبات"] || ""}"`,
+      `"${r["الإجمالي النهائي"] || 0}"`
+    ]);
+
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `تقارير_مبيعات_دريم_كورنر_${new Date().toLocaleDateString("ar-EG")}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const sendZReportToWhatsApp = () => {
+    const zText = `📊 تقرير تقفيل الخزنة والوردية (Z-Report) - ${restaurantName}\n\n🛒 إجمالي الأوردرات: ${reportsAnalytics.totalOrders} أوردر\n💵 مبيعات المأكولات: ${money(reportsAnalytics.totalSales)}\n🛵 إيرادات التوصيل: ${money(reportsAnalytics.totalDelivery)}\n💰 صافي الدخل الكلي: ${money(reportsAnalytics.netTotal)}\n\n🏆 العميل الذهبي المفضل: ${reportsAnalytics.goldenCustomer ? reportsAnalytics.goldenCustomer.name + " (" + money(reportsAnalytics.goldenCustomer.spent) + ")" : "لا يوجد"}\n✨ التقرير مستخرج أوتوماتيكياً عبر Google Sheets!`;
+    const phone = whatsappNumber.replace(/[^\d+]/g, "");
+    window.open("https://wa.me/" + phone + "?text=" + encodeURIComponent(zText), "_blank");
+  };
+
   const handleLogoClickLocal = () => {
     setLogoClicks((prev) => {
       if (prev + 1 >= 3) { setPinModalOpen(true); return 0; }
@@ -394,9 +408,8 @@ export default function RestaurantMenu() {
   const handleApplyPromo = () => {
     const codeClean = enteredPromo.trim().toUpperCase();
     if (!codeClean) return;
-    const match = promoCodes.find(p => p.code.toUpperCase() === codeClean);
+    const match = DEFAULT_PROMO_CODES.find(p => p.code.toUpperCase() === codeClean);
     if (match) {
-      if (match.used >= match.limit) { setAppliedDiscountPercent(0); setPromoError("عذراً، تم استهلاك الحد الأقصى لاستخدام هذا الكوبون!"); return; }
       setAppliedDiscountPercent(match.discount); setPromoError("");
     } else { setAppliedDiscountPercent(0); setPromoError("كود الخصم غير صحيح أو منتهي الصلاحية!"); }
   };
@@ -915,7 +928,7 @@ export default function RestaurantMenu() {
                 <div>
                   <h2 className="text-base font-black text-amber-400 flex items-center gap-1.5">
                     <span>الرئيسية | لوحة تحكم دريم كورنر</span>
-                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v16.0</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v17.0</span>
                   </h2>
                   <p className="text-[10px] text-gray-400">مرحباً بك في لوحة التحكّم والذكاء المالي 👋</p>
                 </div>
@@ -1099,7 +1112,7 @@ export default function RestaurantMenu() {
                 )}
 
                 {adminTab === "settings" && (
-                  <div className="space-y-3 max-w-lg mx-auto text-xs space-y-3">
+                  <div className="space-y-3 max-w-lg mx-auto text-xs">
                     <p className="font-bold text-sm text-amber-400 mb-2">إعدادات الهوية والأمان والمحافظ</p>
                     <label className="block space-y-1"><span className="text-gray-300 font-bold">اسم المطعم:</span><input value={restaurantName} onChange={e => setRestaurantName(e.target.value)} className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
                     <label className="block space-y-1"><span className="text-gray-300 font-bold">الشعار الفرعي (Slogan):</span><input value={tagline} onChange={e => setTagline(e.target.value)} className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
