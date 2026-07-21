@@ -3,11 +3,11 @@ import restaurantLogo from "./assets/logo.png";
 import {
   ShoppingCart, Plus, Minus, X, Pencil, Trash2, Check, Copy,
   QrCode, Settings, Phone, CreditCard, Sparkles, Search, RotateCcw,
-  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation, Award, Calendar, DollarSign, Wallet, Flame, BarChart3, RefreshCw, Share2, TrendingUp, Download, PieChart, Crown, Clock, Bike, Utensils, Trophy, Gem, Users
+  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation, Award, Calendar, DollarSign, Wallet, Flame, BarChart3, RefreshCw, Share2, TrendingUp, Download, PieChart, Crown, Clock, Bike, Utensils, Trophy, Users
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "4.4"; // الإصدار v4.4: الوسام الذهبي لأكثر العملاء شراءً + الحساب المجمل لكل عميل
+const MENU_VERSION = "4.5"; // النسخة الشاملة الكاملة: تضم كل التحليلات والأشرطة والوسام الذهبي دون حذف أي عنصر
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbybuw8CuUGV-hf_ecUyevpGB5YioMKCdeOP3PxSKKuzGgMmtcfbHyrd0F81eJg3Z_U/exec";
 
 const THEMES = [
@@ -182,11 +182,12 @@ export default function RestaurantMenu() {
   const [pinError, setPinError] = useState("");
   const [logoClicks, setLogoClicks] = useState(0);
 
-  // حالات التقارير والعملاء v4.4
+  // حالات التقارير الشاملة
   const [reportsData, setReportsData] = useState([]);
   const [reportsLoading, setReportsLoading] = useState(false);
   const [reportDateFilter, setReportDateFilter] = useState("all");
   const [reportSearchQuery, setReportSearchQuery] = useState("");
+  const [dailyTarget, setDailyTarget] = useState(3000);
 
   const saveTimer = useRef(null);
   const status = checkRestaurantStatus();
@@ -292,7 +293,7 @@ export default function RestaurantMenu() {
     });
   }, [reportsData, reportDateFilter, reportSearchQuery]);
 
-  // إحصائيات تحليلات الوسام الذهبي والعملاء v4.4
+  // إحصائيات تحليلات v4.5 المتكاملة
   const reportsAnalytics = useMemo(() => {
     if (!filteredReportsData || filteredReportsData.length === 0) {
       return {
@@ -341,7 +342,6 @@ export default function RestaurantMenu() {
       areasMap[area].count += 1;
       areasMap[area].deliveryFees += delVal;
 
-      // تجميع حساب مجمل لكل عميل
       const custKey = custPhone ? custPhone.trim() : custName.trim();
       if (!customersMap[custKey]) {
         customersMap[custKey] = { name: custName, phone: custPhone, count: 0, spent: 0, lastArea: area };
@@ -390,11 +390,9 @@ export default function RestaurantMenu() {
       }
     });
 
-    // قائمة جميع العملاء مرتبة بالأعلى إنفاقاً
     const sortedCustomers = Object.values(customersMap)
       .sort((a, b) => b.spent - a.spent);
 
-    // صاحب الوسام الذهبي (العميل الأول)
     const goldenCustomer = sortedCustomers.length > 0 ? sortedCustomers[0] : null;
 
     const topItems = Object.entries(itemsMap)
@@ -1371,7 +1369,7 @@ export default function RestaurantMenu() {
         </Overlay>
       )}
 
-      {/* ADVANCED ADMIN DASHBOARD v4.4 */}
+      {/* ADVANCED ADMIN DASHBOARD v4.5 */}
       {adminOpen && (
         <Overlay onClose={() => setAdminOpen(false)}>
           <Sheet theme={theme} title="لوحة الذكاء والتقارير الشاملة 👑" onClose={() => setAdminOpen(false)}>
@@ -1403,7 +1401,7 @@ export default function RestaurantMenu() {
               </button>
             </div>
 
-            {/* TAB 1: REPORTS & ANALYTICS v4.4 */}
+            {/* TAB 1: REPORTS & ANALYTICS v4.5 (كل الميزات في مكان واحد) */}
             {adminTab === "reports" && (
               <div className="space-y-4 max-h-[68vh] overflow-y-auto pr-1">
                 {/* 1. الفلترة الزمنية والبحث */}
@@ -1436,7 +1434,7 @@ export default function RestaurantMenu() {
                   </div>
                 ) : (
                   <>
-                    {/* NEW FEATURE 1: الوسام الذهبي لأكثر عميل شراءً */}
+                    {/* 2. الوسام الذهبي لأكثر عميل شراءً */}
                     {reportsAnalytics.goldenCustomer && (
                       <div className="p-3.5 rounded-2xl border bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-amber-600/20 space-y-2 relative overflow-hidden shadow-lg" style={{ borderColor: theme.accent }}>
                         <div className="flex items-center justify-between">
@@ -1459,7 +1457,27 @@ export default function RestaurantMenu() {
                       </div>
                     )}
 
-                    {/* 2. KPI Cards */}
+                    {/* 3. شريط متابعة الهدف اليومي (Daily Target Gauge) */}
+                    <div className="p-3 rounded-2xl border bg-gradient-to-r from-amber-500/10 to-amber-500/5 space-y-2" style={{ borderColor: theme.accent + "40" }}>
+                      <div className="flex items-center justify-between text-xs font-bold">
+                        <span className="flex items-center gap-1" style={{ color: theme.accent }}>
+                          <TrendingUp size={14} />
+                          <span>تحقيق الهدف المالي للمبيعات:</span>
+                        </span>
+                        <span className="font-extrabold">{reportsAnalytics.netTotal} / {dailyTarget} جنيه</span>
+                      </div>
+                      <div className="w-full h-2.5 bg-black/30 rounded-full overflow-hidden border border-white/10">
+                        <div 
+                          className="h-full bg-gradient-to-r from-amber-500 to-green-500 transition-all duration-500" 
+                          style={{ width: `${Math.min(100, Math.round((reportsAnalytics.netTotal / dailyTarget) * 100))}%` }}
+                        />
+                      </div>
+                      <p className="text-[9px] text-left opacity-70 font-bold" style={{ color: theme.muted }}>
+                        تم تحقيق {Math.round((reportsAnalytics.netTotal / dailyTarget) * 100)}% من المستهدف المقدر بـ {dailyTarget} ج.م
+                      </p>
+                    </div>
+
+                    {/* 4. KPI Cards */}
                     <div className="grid grid-cols-2 gap-2">
                       <div className="p-3 rounded-2xl border flex flex-col justify-between" style={{ background: theme.surface2, borderColor: theme.accent + "30" }}>
                         <span className="text-[10px] opacity-70" style={{ color: theme.muted }}>عدد الطلبات الكلي</span>
@@ -1479,7 +1497,44 @@ export default function RestaurantMenu() {
                       </div>
                     </div>
 
-                    {/* NEW FEATURE 2: جدول الحساب المجمل لكل عميل */}
+                    {/* 5. أشرطة التحليل البصري (Visual Progress Bars) */}
+                    <div className="p-3 rounded-2xl border space-y-3" style={{ background: theme.surface2, borderColor: theme.accent + "20" }}>
+                      <p className="text-[11px] font-bold flex items-center gap-1" style={{ color: theme.accent }}>
+                        <PieChart size={14} />
+                        <span>تحليل المبيعات ونوع الدفع والتوصيل:</span>
+                      </p>
+                      
+                      {/* شريط طريقة الدفع */}
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-[10px] font-bold">
+                          <span>💵 كاش: {money(reportsAnalytics.cashSales)}</span>
+                          <span className="text-green-400">📱 إلكتروني: {money(reportsAnalytics.electronicSales)}</span>
+                        </div>
+                        <div className="w-full h-2 rounded-full overflow-hidden flex bg-black/40">
+                          <div style={{ width: `${reportsAnalytics.netTotal ? (reportsAnalytics.cashSales / reportsAnalytics.netTotal) * 100 : 50}%` }} className="bg-amber-500 h-full" />
+                          <div style={{ width: `${reportsAnalytics.netTotal ? (reportsAnalytics.electronicSales / reportsAnalytics.netTotal) * 100 : 50}%` }} className="bg-green-500 h-full" />
+                        </div>
+                      </div>
+
+                      {/* شريط نوع التوصيل */}
+                      <div className="space-y-1 pt-1">
+                        <div className="flex justify-between text-[10px] font-bold">
+                          <span>⚡ توصيل فوري: {reportsAnalytics.instantOrders} أوردر</span>
+                          <span className="text-amber-400">🕒 مجدول: {reportsAnalytics.scheduledOrders} أوردر</span>
+                        </div>
+                        <div className="w-full h-2 rounded-full overflow-hidden flex bg-black/40">
+                          <div style={{ width: `${reportsAnalytics.totalOrders ? (reportsAnalytics.instantOrders / reportsAnalytics.totalOrders) * 100 : 50}%` }} className="bg-sky-500 h-full" />
+                          <div style={{ width: `${reportsAnalytics.totalOrders ? (reportsAnalytics.scheduledOrders / reportsAnalytics.totalOrders) * 100 : 50}%` }} className="bg-amber-500 h-full" />
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t text-[11px] flex justify-between font-bold" style={{ borderColor: theme.muted + "15" }}>
+                        <span opacity-80 style={{ color: theme.muted }}>القرية الأكثر طلباً:</span>
+                        <span className="text-amber-500">{reportsAnalytics.topArea}</span>
+                      </div>
+                    </div>
+
+                    {/* 6. جدول الحساب المجمل لكل عميل */}
                     {reportsAnalytics.allCustomersList.length > 0 && (
                       <div className="p-3 rounded-2xl border space-y-2" style={{ background: theme.surface2, borderColor: theme.accent + "30" }}>
                         <p className="text-[11px] font-bold flex items-center gap-1.5" style={{ color: theme.accent }}>
@@ -1503,7 +1558,7 @@ export default function RestaurantMenu() {
                       </div>
                     )}
 
-                    {/* الأصناف الأكثر مبيعاً */}
+                    {/* 7. الأصناف الأكثر مبيعاً */}
                     {reportsAnalytics.topItems.length > 0 && (
                       <div className="p-3 rounded-2xl border space-y-2" style={{ background: theme.surface2, borderColor: theme.accent + "30" }}>
                         <p className="text-[11px] font-bold flex items-center gap-1.5" style={{ color: theme.accent }}>
@@ -1521,7 +1576,7 @@ export default function RestaurantMenu() {
                       </div>
                     )}
 
-                    {/* تحليل ساعات الذروة */}
+                    {/* 8. تحليل ساعات الذروة */}
                     {reportsAnalytics.peakHours.length > 0 && (
                       <div className="p-3 rounded-2xl border space-y-2" style={{ background: theme.surface2, borderColor: theme.accent + "30" }}>
                         <p className="text-[11px] font-bold flex items-center gap-1.5" style={{ color: theme.accent }}>
@@ -1540,7 +1595,7 @@ export default function RestaurantMenu() {
                       </div>
                     )}
 
-                    {/* تقرير حسابات ودليفري الطيارين والقرى */}
+                    {/* 9. تقرير حسابات ودليفري الطيارين والقرى */}
                     {reportsAnalytics.deliveryBreakdown.length > 0 && (
                       <div className="p-3 rounded-2xl border space-y-2 bg-gradient-to-r from-emerald-500/10 to-emerald-600/5" style={{ borderColor: "rgba(16, 185, 129, 0.3)" }}>
                         <p className="text-[11px] font-bold flex items-center gap-1.5 text-emerald-400">
@@ -1558,7 +1613,7 @@ export default function RestaurantMenu() {
                       </div>
                     )}
 
-                    {/* أزرار التصدير */}
+                    {/* 10. أزرار التصدير */}
                     <div className="grid grid-cols-2 gap-2">
                       <button 
                         onClick={sendZReportToWhatsApp}
@@ -1576,7 +1631,7 @@ export default function RestaurantMenu() {
                       </button>
                     </div>
 
-                    {/* جدول تفاصيل الأوردرات */}
+                    {/* 11. جدول تفاصيل الأوردرات */}
                     <div className="space-y-2 pt-2 border-t" style={{ borderColor: theme.muted + "20" }}>
                       <p className="text-xs font-bold" style={{ color: theme.accent }}>سجل الطلبات الأخير ({filteredReportsData.length} أوردر):</p>
                       <div className="space-y-2 max-h-[30vh] overflow-y-auto pr-1">
