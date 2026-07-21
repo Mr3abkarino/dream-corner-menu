@@ -7,11 +7,11 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "6.5"; // دمج كامل ومطلق: كل شغلنا الأصلي والتحليلات + الستايل البصري العالمي الجبار
+const MENU_VERSION = "7.0"; // الإصدار الذهبي v7.0: ضبط كافة الملاحظات وإعادة صفحة التقارير الكاملة v4.5
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbybuw8CuUGV-hf_ecUyevpGB5YioMKCdeOP3PxSKKuzGgMmtcfbHyrd0F81eJg3Z_U/exec";
 
 const THEMES = [
-  { id: "brand", name: "هوية دريم كورنر الملكية", bg: "#08090C", surface: "#111319", surface2: "#1A1D26", accent: "#E5A93C", accent2: "#8B1E1E", text: "#FFFFFF", muted: "#9A92A6" }
+  { id: "brand", name: "هوية دريم كورنر", bg: "#0A0A0A", surface: "#141414", surface2: "#1F1F1F", accent: "#D4AF37", accent2: "#8B1E1E", text: "#F3E9D8", muted: "#A3A3A3" }
 ];
 
 const DEFAULT_DELIVERY_AREAS = [
@@ -30,10 +30,10 @@ const DEFAULT_PROMO_CODES = [
   { code: "DREAM", discount: 15, limit: 1, used: 0 }
 ];
 
-const DEFAULT_OFFERS = [
-  { id: "off1", title: "اشتري 2 بيتزا", desc: "واحصل على الثالثة مجاناً", tag: "عرض خاص", bg: "from-amber-900/60 to-red-950/80" },
-  { id: "off2", title: "خصم 20% بكود DREAM", desc: "على جميع أنواع البيتزا الحجم الكبير", tag: "كوبون خصم", bg: "from-amber-800/60 to-amber-950/80" },
-  { id: "off3", title: "مشروب مجاني 🥤", desc: "عند الطلب بقيمة فوق 250 جنيه", tag: "هدية دريم", bg: "from-emerald-900/60 to-teal-950/80" }
+const COMING_SOON_OFFERS = [
+  { id: "off1", title: "انتظروا قريباً ⏳", desc: "أقوى العروض الحصرية قادمة لكم", tag: "عرض خاص", bg: "from-amber-900/60 to-red-950/80" },
+  { id: "off2", title: "انتظروا قريباً ⏳", desc: "خصومات وكوبونات مميزة على جميع الطلبات", tag: "كوبون خصم", bg: "from-amber-800/60 to-amber-950/80" },
+  { id: "off3", title: "انتظروا قريباً ⏳", desc: "مفاجآت وهدايا دريم كورنر الخاصة", tag: "هدية دريم", bg: "from-emerald-900/60 to-teal-950/80" }
 ];
 
 const DEFAULT_MENU = [
@@ -138,7 +138,7 @@ export default function RestaurantMenu() {
   const [cart, setCart] = useState({});
   const [cartOpen, setCartOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
-  const [adminTab, setAdminTab] = useState("dashboard"); // 'dashboard' | 'items' | 'settings' | 'customers' | 'delivery'
+  const [adminTab, setAdminTab] = useState("reports"); // 'reports' | 'items' | 'settings'
   const [qrOpen, setQrOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [copied, setCopied] = useState("");
@@ -184,11 +184,12 @@ export default function RestaurantMenu() {
   const [pinError, setPinError] = useState("");
   const [logoClicks, setLogoClicks] = useState(0);
 
-  // حالات التقارير الشاملة والديناميكية
+  // حالات التقارير الشاملة
   const [reportsData, setReportsData] = useState([]);
   const [reportsLoading, setReportsLoading] = useState(false);
   const [reportDateFilter, setReportDateFilter] = useState("all");
   const [reportSearchQuery, setReportSearchQuery] = useState("");
+  const [dailyTarget, setDailyTarget] = useState(3000);
 
   const saveTimer = useRef(null);
   const status = checkRestaurantStatus();
@@ -255,10 +256,10 @@ export default function RestaurantMenu() {
   };
 
   useEffect(() => {
-    if (adminOpen) {
+    if (adminOpen && adminTab === "reports") {
       fetchReportsFromSheet();
     }
-  }, [adminOpen]);
+  }, [adminOpen, adminTab]);
 
   const filteredReportsData = useMemo(() => {
     if (!reportsData || reportsData.length === 0) return [];
@@ -294,46 +295,28 @@ export default function RestaurantMenu() {
     });
   }, [reportsData, reportDateFilter, reportSearchQuery]);
 
-  // تحليلات ومؤشرات ومقارنات حقيقية 100% من الشيت
+  // إحصائيات تقارير اللوحة الشاملة بالكامل v4.5
   const reportsAnalytics = useMemo(() => {
-    if (!reportsData || reportsData.length === 0) {
+    if (!filteredReportsData || filteredReportsData.length === 0) {
       return {
         totalOrders: 0, totalSales: 0, totalDelivery: 0, netTotal: 0,
-        cashSales: 0, electronicSales: 0, growthSalesPercent: 0, growthOrdersPercent: 0,
-        topArea: "لا يوجد", goldenCustomer: null, allCustomersList: [], topItems: [], peakHours: [],
-        sevenDaysChartData: []
+        cashSales: 0, electronicSales: 0, instantOrders: 0, scheduledOrders: 0,
+        topArea: "لا يوجد", goldenCustomer: null, allCustomersList: [], topItems: [], peakHours: [], deliveryBreakdown: []
       };
     }
-
-    const now = new Date();
-    const todayStr = now.toLocaleDateString("ar-EG");
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toLocaleDateString("ar-EG");
-
+    
     let totalSales = 0;
     let totalDelivery = 0;
     let netTotal = 0;
     let cashSales = 0;
     let electronicSales = 0;
-
-    let todayNetTotal = 0;
-    let todayOrdersCount = 0;
-    let yesterdayNetTotal = 0;
-    let yesterdayOrdersCount = 0;
-
+    let instantOrders = 0;
+    let scheduledOrders = 0;
+    
     const areasMap = {};
     const customersMap = {};
     const itemsMap = {};
     const hoursMap = {};
-    const daysMap = {};
-
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
-      const dStr = d.toLocaleDateString("ar-EG", { month: "short", day: "numeric" });
-      daysMap[dStr] = 0;
-    }
 
     filteredReportsData.forEach(row => {
       const cartVal = Number(row["حساب الأكل الأصلي"]) || 0;
@@ -341,6 +324,7 @@ export default function RestaurantMenu() {
       const finalVal = Number(row["الإجمالي النهائي"]) || 0;
       const area = row["المنطقة / القرية"] || "غير محدد";
       const pay = row["طريقة الدفع"] || "";
+      const sched = row["نوع وموعد التوصيل"] || "";
       const custName = row["اسم العميل"] || "عميل بدون اسم";
       const custPhone = row["رقم الموبايل"] || "";
       const itemsText = row["تفاصيل الطلبات"] || "";
@@ -353,8 +337,12 @@ export default function RestaurantMenu() {
       if (pay.includes("إلكتروني")) electronicSales += finalVal;
       else cashSales += finalVal;
 
+      if (sched.includes("مجدول")) scheduledOrders++;
+      else instantOrders++;
+
       if (!areasMap[area]) areasMap[area] = { count: 0, deliveryFees: 0 };
       areasMap[area].count += 1;
+      areasMap[area].deliveryFees += delVal;
 
       const custKey = custPhone ? custPhone.trim() : custName.trim();
       if (!customersMap[custKey]) {
@@ -362,6 +350,7 @@ export default function RestaurantMenu() {
       }
       customersMap[custKey].count += 1;
       customersMap[custKey].spent += finalVal;
+      customersMap[custKey].lastArea = area;
 
       if (itemsText) {
         const parts = itemsText.split("|");
@@ -387,33 +376,12 @@ export default function RestaurantMenu() {
           const period = timeMatch[2] ? timeMatch[2].toUpperCase() : "";
           if ((period === "م" || period === "PM") && hour < 12) hour += 12;
           if ((period === "ص" || period === "AM") && hour === 12) hour = 0;
-          const hourLabel = hour >= 12 ? `${hour === 12 ? 12 : hour - 12} م` : `${hour === 0 ? 12 : hour} ص`;
+          
+          const hourLabel = hour >= 12 ? `${hour === 12 ? 12 : hour - 12} مساءً` : `${hour === 0 ? 12 : hour} صباحاً`;
           hoursMap[hourLabel] = (hoursMap[hourLabel] || 0) + 1;
         }
       }
     });
-
-    reportsData.forEach(row => {
-      const dateStr = row["التاريخ والوقت"] || "";
-      const finalVal = Number(row["الإجمالي النهائي"]) || 0;
-
-      if (dateStr.includes(todayStr) || dateStr.startsWith(todayStr)) {
-        todayNetTotal += finalVal;
-        todayOrdersCount++;
-      } else if (dateStr.includes(yesterdayStr) || dateStr.startsWith(yesterdayStr)) {
-        yesterdayNetTotal += finalVal;
-        yesterdayOrdersCount++;
-      }
-
-      Object.keys(daysMap).forEach(dayKey => {
-        if (dateStr.includes(dayKey)) {
-          daysMap[dayKey] += finalVal;
-        }
-      });
-    });
-
-    const growthSalesPercent = yesterdayNetTotal > 0 ? Math.round(((todayNetTotal - yesterdayNetTotal) / yesterdayNetTotal) * 100) : (todayNetTotal > 0 ? 100 : 0);
-    const growthOrdersPercent = yesterdayOrdersCount > 0 ? Math.round(((todayOrdersCount - yesterdayOrdersCount) / yesterdayOrdersCount) * 100) : (todayOrdersCount > 0 ? 100 : 0);
 
     let topArea = "غير محدد";
     let maxCount = 0;
@@ -435,14 +403,11 @@ export default function RestaurantMenu() {
     const peakHours = Object.entries(hoursMap)
       .map(([hour, count]) => ({ hour, count }))
       .sort((a, b) => b.count - a.count)
-      .slice(0, 4);
+      .slice(0, 3);
 
-    const maxChartVal = Math.max(...Object.values(daysMap), 1);
-    const sevenDaysChartData = Object.entries(daysMap).map(([day, val]) => ({
-      day,
-      val,
-      heightPercent: Math.max(10, Math.round((val / maxChartVal) * 100))
-    }));
+    const deliveryBreakdown = Object.entries(areasMap)
+      .map(([area, data]) => ({ area, count: data.count, fees: data.deliveryFees }))
+      .sort((a, b) => b.count - a.count);
 
     return {
       totalOrders: filteredReportsData.length,
@@ -451,16 +416,16 @@ export default function RestaurantMenu() {
       netTotal,
       cashSales,
       electronicSales,
-      growthSalesPercent,
-      growthOrdersPercent,
+      instantOrders,
+      scheduledOrders,
       topArea: topArea + " (" + maxCount + " أوردر)",
       goldenCustomer,
       allCustomersList: sortedCustomers,
       topItems,
       peakHours,
-      sevenDaysChartData
+      deliveryBreakdown
     };
-  }, [filteredReportsData, reportsData]);
+  }, [filteredReportsData]);
 
   const exportToCSV = () => {
     if (!filteredReportsData || filteredReportsData.length === 0) return;
@@ -805,7 +770,7 @@ export default function RestaurantMenu() {
       {/* HEADER */}
       <header className="sticky top-0 z-30 bg-[#0C0E14]/90 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center justify-between">
         <div onClick={handleLogoClickLocal} className="cursor-pointer flex items-center gap-2">
-          <img src={LOGO_SRC} alt="Dream Corner" className="w-9 h-9 object-contain" />
+          <img src={LOGO_SRC} alt="Dream Corner" className="w-9 h-9 object-contain border border-amber-500/20 rounded-full p-0.5" />
           <div className="text-right">
             <span className="text-sm font-black text-amber-400 tracking-wider block leading-none">{restaurantName}</span>
             <span className="text-[8px] text-amber-200/60 font-bold uppercase tracking-widest">DREAM CORNER</span>
@@ -814,7 +779,7 @@ export default function RestaurantMenu() {
 
         <div className="flex items-center gap-2">
           {isAdmin && (
-            <button onClick={() => setAdminOpen(true)} className="px-3 py-1.5 rounded-xl border border-amber-500/50 text-amber-400 bg-amber-500/10 text-xs font-bold flex items-center gap-1">
+            <button onClick={() => setAdminOpen(true)} className="px-3 py-1.5 rounded-xl border border-amber-500/50 text-amber-400 bg-amber-500/10 text-xs font-bold flex items-center gap-1 animate-pulse">
               <LayoutGrid size={15} /> <span>لوحة التحكم</span>
             </button>
           )}
@@ -840,7 +805,7 @@ export default function RestaurantMenu() {
         </div>
       )}
 
-      {/* HERO BANNER SECTION */}
+      {/* HERO BANNER SECTION (مع إضافة حالة العمل مفتوح/مغلق) */}
       <section className="relative w-full h-60 sm:h-72 overflow-hidden flex items-center justify-center">
         <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1200&q=80" alt="Delicious Pizza" className="absolute inset-0 w-full h-full object-cover opacity-30 scale-105" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#08090C] via-[#08090C]/60 to-transparent" />
@@ -850,6 +815,10 @@ export default function RestaurantMenu() {
           <p className="text-xs sm:text-sm text-gray-300 font-bold opacity-90">{tagline}</p>
 
           <div className="flex flex-wrap items-center justify-center gap-2 pt-2 text-[10px] font-bold">
+            {/* الشارة المطلوبة: حالة المطعم حسب مواعيد العمل */}
+            <span className="px-3 py-1 rounded-full bg-black/70 border border-white/10 font-black flex items-center gap-1" style={{ color: status.isOpen ? "#22c55e" : "#ef4444" }}>
+              {status.text}
+            </span>
             <span className="px-3 py-1 rounded-full bg-black/60 border border-white/10 text-gray-200 flex items-center gap-1">
               <Bike size={12} className="text-amber-400" /> توصيل سريع لجميع القرى
             </span>
@@ -888,10 +857,10 @@ export default function RestaurantMenu() {
         </div>
       </div>
 
-      {/* OFFERS SLIDER */}
+      {/* OFFERS SLIDER (تم التحديث لـ: انتظروا قريباً) */}
       <section className="max-w-3xl mx-auto px-4 pt-5">
         <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
-          {DEFAULT_OFFERS.map((off) => (
+          {COMING_SOON_OFFERS.map((off) => (
             <div key={off.id} className={`w-[260px] sm:w-[290px] shrink-0 p-3.5 rounded-3xl bg-gradient-to-r ${off.bg} border border-amber-500/30 flex items-center justify-between shadow-xl`}>
               <div className="space-y-1">
                 <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-400 text-black font-black">{off.tag}</span>
@@ -930,7 +899,6 @@ export default function RestaurantMenu() {
                   {item.sizes ? (
                     item.sizes.slice(0, 2).map((sz) => {
                       const key = item.id + "::" + sz.label;
-                      const qty = cart[key] || 0;
                       return (
                         <div key={sz.label} className="flex items-center justify-between text-[9px] bg-[#1A1D26] p-1 px-2 rounded-xl">
                           <span className="text-gray-300 font-bold">{sz.label}</span>
@@ -1064,7 +1032,7 @@ export default function RestaurantMenu() {
         </a>
       </footer>
 
-      {/* FULL FEATURED CART DRAWER (شغلنا الأصلي بالكامل) */}
+      {/* CART DRAWER MODAL */}
       {cartOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="w-full max-w-md bg-[#111319] border border-white/10 rounded-t-3xl sm:rounded-3xl p-5 space-y-4 max-h-[88vh] overflow-y-auto" dir="rtl">
@@ -1073,7 +1041,6 @@ export default function RestaurantMenu() {
               <button onClick={() => setCartOpen(false)} className="p-1 rounded-full bg-white/10"><X size={16} /></button>
             </div>
 
-            {/* قائمة الأصناف المختارة */}
             <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
               {cartList.map((cartItem) => (
                 <div key={cartItem.key} className="flex items-center justify-between text-xs p-2.5 bg-[#1A1D26] rounded-xl">
@@ -1090,7 +1057,6 @@ export default function RestaurantMenu() {
               ))}
             </div>
 
-            {/* محفظة النقاط الذهبية */}
             {userPoints > 0 && (
               <div className="p-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 space-y-1.5">
                 <div className="flex items-center justify-between text-xs font-bold text-amber-300">
@@ -1103,7 +1069,6 @@ export default function RestaurantMenu() {
               </div>
             )}
 
-            {/* الحساب والتوصيل */}
             <div className="space-y-1 pt-2 border-t border-white/10 text-xs">
               <div className="flex justify-between text-gray-300"><span>حساب المأكولات:</span><span>{money(cartTotal)}</span></div>
               {discountAmount > 0 && <div className="flex justify-between text-emerald-400"><span>خصم الكوبون (-{appliedDiscountPercent}%):</span><span>-{money(discountAmount)}</span></div>}
@@ -1112,14 +1077,12 @@ export default function RestaurantMenu() {
               <div className="flex justify-between pt-2 text-sm font-black border-t border-white/10"><span>الإجمالي النهائي:</span><span className="text-amber-400">{money(finalTotal)}</span></div>
             </div>
 
-            {/* كوبون الخصم */}
             <div className="flex gap-2">
               <input type="text" placeholder="كوبون خصم؟" value={enteredPromo} onChange={e => setEnteredPromo(e.target.value)} className="flex-1 px-3 py-1.5 rounded-xl bg-[#1A1D26] border border-white/10 text-xs text-white uppercase" />
               <button onClick={handleApplyPromo} className="px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold text-xs">تطبيق</button>
             </div>
             {promoError && <p className="text-[10px] text-red-400 font-bold">{promoError}</p>}
 
-            {/* بيانات الدليفري والموعد المطلوب واللوكيشن */}
             <div className="space-y-2 pt-2 border-t border-white/10 text-xs">
               <input type="text" placeholder="اسمك الكريم..." value={customerName} onChange={e => setCustomerName(e.target.value)} className="w-full p-2 rounded-xl bg-[#1A1D26] border border-white/10 text-white" />
               <input type="tel" placeholder="رقم تليفونك..." value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} className="w-full p-2 rounded-xl bg-[#1A1D26] border border-white/10 text-white" />
@@ -1129,9 +1092,8 @@ export default function RestaurantMenu() {
                 {deliveryAreas.map((a, i) => <option key={i} value={i}>{a.name} (+{money(a.price)})</option>)}
               </select>
 
-              {/* الموعد المطلق */}
               <div className="p-2 rounded-xl bg-[#1A1D26] space-y-1.5">
-                <p className="text-[10px] text-gray-400 font-bold">موعد التوصيل:</p>
+                <p className="text-[10px] text-gray-400 font-bold">موعد التوصيل المطلق:</p>
                 <div className="grid grid-cols-2 gap-1.5 text-[10px]">
                   <button type="button" onClick={() => setScheduleType("now")} className={`py-1 rounded-lg border ${scheduleType === "now" ? "bg-amber-400 text-black font-bold" : "border-white/10"}`}>⚡ فوري الآن</button>
                   <button type="button" onClick={() => setScheduleType("later")} className={`py-1 rounded-lg border ${scheduleType === "later" ? "bg-amber-400 text-black font-bold" : "border-white/10"}`}>🕒 مجدول لاحقاً</button>
@@ -1139,7 +1101,6 @@ export default function RestaurantMenu() {
                 {scheduleType === "later" && <input type="text" placeholder="الموعد (مثال: الساعة 9:30 مساءً)..." value={scheduleTime} onChange={e => setScheduleTime(e.target.value)} className="w-full p-1.5 mt-1 rounded-lg bg-[#111319] text-[10px] text-white border border-amber-500/30" />}
               </div>
 
-              {/* العنوان والـ GPS */}
               <div className="flex gap-1.5">
                 <input type="text" placeholder="العنوان بالتفصيل..." value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} className="flex-1 p-2 rounded-xl bg-[#1A1D26] border border-white/10 text-white" />
                 <button type="button" onClick={handleGetLocation} className="px-2.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 flex items-center justify-center">
@@ -1147,7 +1108,6 @@ export default function RestaurantMenu() {
                 </button>
               </div>
 
-              {/* طرق الدفع */}
               <div className="grid grid-cols-2 gap-1.5 pt-1">
                 <button type="button" onClick={() => setPaymentMethod("cash")} className={`py-1.5 rounded-xl border text-[10px] font-bold ${paymentMethod === "cash" ? "bg-amber-400 text-black" : "border-white/10 text-gray-300"}`}>💵 كاش</button>
                 <button type="button" onClick={() => setPaymentMethod("electronic")} className={`py-1.5 rounded-xl border text-[10px] font-bold ${paymentMethod === "electronic" ? "bg-amber-400 text-black" : "border-white/10 text-gray-300"}`}>📱 دفع إلكتروني</button>
@@ -1170,302 +1130,135 @@ export default function RestaurantMenu() {
         </div>
       )}
 
-      {/* ENTERPRISE ADMIN DASHBOARD MODAL (كل تحليلاتنا ومؤشراتنا الشغالة 100%) */}
+      {/* FULL ADMIN DASHBOARD MODAL (شاشة التقارير واللوحة الإدارية الشاملة v4.5 بالكامل) */}
       {adminOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4 overflow-y-auto" dir="rtl">
-          <div className="w-full max-w-6xl max-h-[96vh] rounded-3xl border border-amber-500/20 shadow-2xl flex flex-col overflow-hidden" style={{ background: "#0C0E14", color: "#F3E9D8" }}>
+          <div className="w-full max-w-2xl max-h-[90vh] rounded-3xl border border-amber-500/30 bg-[#0C0E14] text-[#F3E9D8] p-5 overflow-y-auto space-y-4">
             
-            {/* DASHBOARD HEADER */}
-            <div className="px-5 py-3.5 border-b border-white/10 flex items-center justify-between bg-[#141721]">
-              <div className="flex items-center gap-3">
-                <img src={LOGO_SRC} alt="Dream Corner" className="w-9 h-9 rounded-xl border border-amber-500/30 p-0.5 object-contain" />
-                <div>
-                  <h2 className="text-base font-black text-amber-400 flex items-center gap-1.5">
-                    <span>الرئيسية | لوحة تحكم دريم كورنر</span>
-                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v6.5</span>
-                  </h2>
-                  <p className="text-[10px] text-gray-400">مرحباً بك في لوحة التحكّم والذكاء المالي 👋</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button onClick={fetchReportsFromSheet} className="px-3 py-1.5 rounded-xl border border-amber-500/30 text-amber-400 bg-amber-500/10 text-xs font-bold flex items-center gap-1.5 hover:bg-amber-500/20 transition-all">
-                  <RefreshCw size={13} className={reportsLoading ? "animate-spin" : ""} />
-                  <span className="hidden sm:inline">تحديث البيانات</span>
-                </button>
-                <button onClick={() => setAdminOpen(false)} className="p-2 rounded-full border border-white/10 text-gray-400 hover:text-white transition-colors">
-                  <X size={18} />
-                </button>
-              </div>
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <h2 className="text-base font-black text-amber-400 flex items-center gap-2">
+                <span>لوحة الذكاء والتقارير الشاملة 👑</span>
+              </h2>
+              <button onClick={() => setAdminOpen(false)} className="p-1 rounded-full bg-white/10 text-gray-300"><X size={16} /></button>
             </div>
 
-            {/* DASHBOARD BODY (SIDEBAR + CONTENT) */}
-            <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-              
-              {/* SIDEBAR */}
-              <div className="w-full md:w-56 border-b md:border-b-0 md:border-l border-white/10 p-3 bg-[#10121A] flex md:flex-col gap-1 overflow-x-auto shrink-0">
-                <button onClick={() => setAdminTab("dashboard")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all ${adminTab === "dashboard" ? "bg-amber-500 text-black" : "text-gray-400"}`}>
-                  <Home size={16} /> <span>الرئيسية والتقارير</span>
-                </button>
-                <button onClick={() => setAdminTab("items")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all ${adminTab === "items" ? "bg-amber-500 text-black" : "text-gray-400"}`}>
-                  <Utensils size={16} /> <span>المنيو والأسعار</span>
-                </button>
-                <button onClick={() => setAdminTab("customers")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all ${adminTab === "customers" ? "bg-amber-500 text-black" : "text-gray-400"}`}>
-                  <Users size={16} /> <span>العملاء والمكافآت</span>
-                </button>
-                <button onClick={() => setAdminTab("delivery")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all ${adminTab === "delivery" ? "bg-amber-500 text-black" : "text-gray-400"}`}>
-                  <Bike size={16} /> <span>مناطق الدليفري</span>
-                </button>
-                <button onClick={() => setAdminTab("settings")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all ${adminTab === "settings" ? "bg-amber-500 text-black" : "text-gray-400"}`}>
-                  <Settings size={16} /> <span>إعدادات المطعم</span>
-                </button>
+            {/* TABS */}
+            <div className="flex gap-1 p-1 rounded-xl bg-[#1C202E] border border-white/10">
+              <button onClick={() => setAdminTab("reports")} className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${adminTab === "reports" ? "bg-amber-500 text-black" : "text-gray-400"}`}>التقارير الشاملة</button>
+              <button onClick={() => setAdminTab("items")} className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${adminTab === "items" ? "bg-amber-500 text-black" : "text-gray-400"}`}>المنيو والأسعار</button>
+              <button onClick={() => setAdminTab("settings")} className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${adminTab === "settings" ? "bg-amber-500 text-black" : "text-gray-400"}`}>الإعدادات</button>
+            </div>
 
-                <div className="mt-auto pt-4 hidden md:block border-t border-white/10 space-y-2">
-                  <button onClick={sendZReportToWhatsApp} className="w-full py-2 px-3 rounded-xl bg-emerald-600/20 border border-emerald-500/40 text-emerald-400 text-xs font-bold flex items-center justify-center gap-1.5">
-                    <Share2 size={13} /> <span>تصدير Z-Report</span>
-                  </button>
-                  <button onClick={exportToCSV} className="w-full py-2 px-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center justify-center gap-1.5">
-                    <Download size={13} /> <span>تحميل Excel</span>
-                  </button>
+            {/* TAB 1: REPORTS */}
+            {adminTab === "reports" && (
+              <div className="space-y-4">
+                <div className="space-y-2 bg-[#141721] p-2.5 rounded-2xl border border-white/5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-gray-400">الفترة الزمنية:</span>
+                    <button onClick={fetchReportsFromSheet} className="p-1 px-2.5 rounded-lg border border-amber-500/40 text-amber-400 text-[10px] font-bold flex items-center gap-1">
+                      <RefreshCw size={11} className={reportsLoading ? "animate-spin" : ""} />
+                      <span>تحديث الحسابات</span>
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-1 text-[10px] font-bold">
+                    <button onClick={() => setReportDateFilter("today")} className={`py-1.5 rounded-lg border ${reportDateFilter === "today" ? "bg-amber-400 text-black font-bold" : "border-white/10 text-gray-400"}`}>اليوم</button>
+                    <button onClick={() => setReportDateFilter("yesterday")} className={`py-1.5 rounded-lg border ${reportDateFilter === "yesterday" ? "bg-amber-400 text-black font-bold" : "border-white/10 text-gray-400"}`}>أمس</button>
+                    <button onClick={() => setReportDateFilter("all")} className={`py-1.5 rounded-lg border col-span-2 ${reportDateFilter === "all" ? "bg-amber-400 text-black font-bold" : "border-white/10 text-gray-400"}`}>الكل</button>
+                  </div>
+
+                  <input type="text" placeholder="بحث باسم العميل، الموبايل، القرية..." value={reportSearchQuery} onChange={(e) => setReportSearchQuery(e.target.value)} className="w-full px-3 py-1.5 rounded-xl text-[11px] bg-[#1C202E] border border-white/10 text-white focus:outline-none" />
                 </div>
-              </div>
 
-              {/* CONTENT AREA */}
-              <div className="flex-1 p-4 overflow-y-auto space-y-5 bg-[#0C0E14]">
-                
-                {adminTab === "dashboard" && (
-                  <div className="space-y-5">
-                    
-                    {/* Filters */}
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-[#141721] p-3 rounded-2xl border border-white/5">
-                      <div className="flex items-center gap-1 bg-[#1C202E] p-1 rounded-xl text-xs font-bold">
-                        <button onClick={() => setReportDateFilter("today")} className={`px-4 py-1.5 rounded-lg ${reportDateFilter === "today" ? "bg-amber-500 text-black" : "text-gray-400"}`}>اليوم</button>
-                        <button onClick={() => setReportDateFilter("yesterday")} className={`px-4 py-1.5 rounded-lg ${reportDateFilter === "yesterday" ? "bg-amber-500 text-black" : "text-gray-400"}`}>أمس</button>
-                        <button onClick={() => setReportDateFilter("all")} className={`px-4 py-1.5 rounded-lg ${reportDateFilter === "all" ? "bg-amber-500 text-black" : "text-gray-400"}`}>الكل</button>
-                      </div>
-
-                      <div className="relative w-full sm:w-64">
-                        <input type="text" placeholder="بحث باسم العميل، الموبايل..." value={reportSearchQuery} onChange={(e) => setReportSearchQuery(e.target.value)} className="w-full px-3 py-1.5 pr-8 rounded-xl text-xs bg-[#1C202E] border border-white/10 text-white focus:outline-none" />
-                        <Search size={13} className="absolute right-2.5 top-2.5 text-gray-400" />
-                      </div>
-                    </div>
-
-                    {/* KPI CARDS WITH REAL CALCULATED GROWTH */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                      <div className="p-3.5 rounded-2xl bg-[#141721] border border-amber-500/20 flex flex-col justify-between">
-                        <span className="text-gray-400 text-xs">إجمالي المبيعات</span>
-                        <span className="text-xl font-black text-amber-400 my-2">{money(reportsAnalytics.netTotal)}</span>
-                        <span className={`text-[10px] font-bold ${reportsAnalytics.growthSalesPercent >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-                          {reportsAnalytics.growthSalesPercent >= 0 ? `+${reportsAnalytics.growthSalesPercent}% عن أمس` : `${reportsAnalytics.growthSalesPercent}% عن أمس`}
-                        </span>
-                      </div>
-
-                      <div className="p-3.5 rounded-2xl bg-[#141721] border border-white/5 flex flex-col justify-between">
-                        <span className="text-gray-400 text-xs">صافي المأكولات</span>
-                        <span className="text-xl font-black text-white my-2">{money(reportsAnalytics.totalSales)}</span>
-                        <span className="text-[10px] text-emerald-400 font-bold">محسوب حقيقي من الشيت</span>
-                      </div>
-
-                      <div className="p-3.5 rounded-2xl bg-[#141721] border border-white/5 flex flex-col justify-between">
-                        <span className="text-gray-400 text-xs">عدد الطلبات</span>
-                        <span className="text-xl font-black text-white my-2">{reportsAnalytics.totalOrders} أوردر</span>
-                        <span className={`text-[10px] font-bold ${reportsAnalytics.growthOrdersPercent >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-                          {reportsAnalytics.growthOrdersPercent >= 0 ? `+${reportsAnalytics.growthOrdersPercent}% عن أمس` : `${reportsAnalytics.growthOrdersPercent}% عن أمس`}
-                        </span>
-                      </div>
-
-                      <div className="p-3.5 rounded-2xl bg-[#141721] border border-white/5 flex flex-col justify-between">
-                        <span className="text-gray-400 text-xs">إيرادات الدليفري</span>
-                        <span className="text-xl font-black text-white my-2">{money(reportsAnalytics.totalDelivery)}</span>
-                        <span className="text-[10px] text-emerald-400 font-bold">محسوب حقيقي من الشيت</span>
-                      </div>
-                    </div>
-
-                    {/* DYNAMIC 7-DAY CHART + TOP ITEMS */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                      
-                      {/* REAL CHART */}
-                      <div className="lg:col-span-2 p-4 rounded-2xl bg-[#141721] border border-white/5 space-y-3">
-                        <h3 className="text-xs font-bold text-gray-300 flex items-center gap-2">
-                          <TrendingUp size={15} className="text-amber-400" />
-                          <span>المبيعات الفعلية خلال آخر 7 أيام (حقيقي من الشيت)</span>
-                        </h3>
-
-                        <div className="h-44 w-full pt-4 flex items-end justify-between gap-2 px-2 relative border-b border-white/10 pb-2">
-                          {reportsAnalytics.sevenDaysChartData.map((pt, i) => (
-                            <div key={i} className="flex-1 flex flex-col items-center gap-1 z-10 group h-full justify-end">
-                              <span className="text-[8px] font-bold text-amber-300 opacity-0 group-hover:opacity-100 transition-opacity">{money(pt.val)}</span>
-                              <div className="w-full bg-gradient-to-t from-amber-500/30 to-amber-400 rounded-t-lg" style={{ height: `${pt.heightPercent}%` }}>
-                                <div className="w-2 h-2 rounded-full bg-amber-400 mx-auto -mt-1 shadow-md shadow-amber-500/50" />
-                              </div>
-                              <span className="text-[9px] text-gray-400 truncate mt-1">{pt.day}</span>
-                            </div>
-                          ))}
+                {reportsLoading ? (
+                  <div className="text-center py-8 space-y-2"><RefreshCw size={24} className="animate-spin mx-auto text-amber-400" /><p className="text-xs text-gray-400">جاري سحب تحليلات المبيعات من Google Sheets...</p></div>
+                ) : (
+                  <>
+                    {/* الوسام الذهبي */}
+                    {reportsAnalytics.goldenCustomer && (
+                      <div className="p-3 rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-amber-600/20 space-y-1">
+                        <div className="flex items-center justify-between text-xs font-black text-amber-400">
+                          <span className="flex items-center gap-1"><Trophy size={15} /><span>🏆 الوسام الذهبي لأكثر العملاء شراءً</span></span>
+                          <span className="text-[8px] px-2 py-0.5 rounded-full bg-amber-400 text-black">VIP #1</span>
+                        </div>
+                        <div className="flex justify-between pt-1 text-xs">
+                          <div><p className="font-bold text-white">{reportsAnalytics.goldenCustomer.name}</p><p className="text-[10px] text-gray-400">📱 {reportsAnalytics.goldenCustomer.phone}</p></div>
+                          <div className="text-left"><p className="font-black text-emerald-400">{money(reportsAnalytics.goldenCustomer.spent)}</p><p className="text-[9px] text-amber-300">{reportsAnalytics.goldenCustomer.count} أوردرات</p></div>
                         </div>
                       </div>
+                    )}
 
-                      {/* TOP SELLING ITEMS */}
-                      <div className="p-4 rounded-2xl bg-[#141721] border border-white/5 space-y-3">
-                        <h3 className="text-xs font-bold text-gray-300 flex items-center gap-2">
-                          <Utensils size={15} className="text-amber-400" />
-                          <span>أفضل الأصناف مبيعاً 🔥</span>
-                        </h3>
-
-                        <div className="space-y-2.5">
-                          {reportsAnalytics.topItems.length > 0 ? reportsAnalytics.topItems.map((item, idx) => (
-                            <div key={idx} className="space-y-1">
-                              <div className="flex justify-between text-[11px] font-bold">
-                                <span className="text-gray-200">{item.name}</span>
-                                <span className="text-amber-400">{item.qty} وجبات</span>
-                              </div>
-                              <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
-                                <div className="h-full bg-gradient-to-r from-amber-500 to-yellow-300 rounded-full" style={{ width: `${Math.min(100, item.qty * 15)}%` }} />
-                              </div>
-                            </div>
-                          )) : (
-                            <p className="text-xs text-center py-8 text-gray-500">جاري تسجيل الوجبات الأكثر مبيعاً...</p>
-                          )}
-                        </div>
-                      </div>
-
+                    {/* شريط الهدف المالي */}
+                    <div className="p-3 rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-amber-500/5 space-y-1.5">
+                      <div className="flex justify-between text-xs font-bold"><span className="text-amber-400 flex items-center gap-1"><TrendingUp size={14} /><span>تحقيق الهدف المالي:</span></span><span>{reportsAnalytics.netTotal} / {dailyTarget} جنيه</span></div>
+                      <div className="w-full h-2 bg-black/40 rounded-full overflow-hidden border border-white/10"><div className="h-full bg-gradient-to-r from-amber-500 to-emerald-500" style={{ width: `${Math.min(100, Math.round((reportsAnalytics.netTotal / dailyTarget) * 100))}%` }} /></div>
+                      <p className="text-[9px] text-gray-400 font-bold">تم تحقيق {Math.round((reportsAnalytics.netTotal / dailyTarget) * 100)}% من المستهدف المقدر بـ {dailyTarget} ج.م</p>
                     </div>
 
-                    {/* PAYMENT METHODS + PEAK HOURS + GOLDEN VIP */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      
-                      <div className="p-4 rounded-2xl bg-[#141721] border border-white/5 space-y-3">
-                        <h3 className="text-xs font-bold text-gray-300 flex items-center gap-2"><PieChart size={15} className="text-sky-400" /><span>توزيع طرق الدفع</span></h3>
-                        <div className="text-xs space-y-2 font-bold py-2">
-                          <p>💵 كاش: <span className="text-amber-400">{money(reportsAnalytics.cashSales)}</span></p>
-                          <p>📱 إلكتروني: <span className="text-emerald-400">{money(reportsAnalytics.electronicSales)}</span></p>
-                        </div>
-                      </div>
-
-                      <div className="p-4 rounded-2xl bg-[#141721] border border-white/5 space-y-3">
-                        <h3 className="text-xs font-bold text-gray-300 flex items-center gap-2"><Clock size={15} className="text-purple-400" /><span>ساعات الذروة</span></h3>
-                        <div className="grid grid-cols-2 gap-2">
-                          {reportsAnalytics.peakHours.map((h, i) => (
-                            <div key={i} className="p-2 rounded-xl bg-[#1C202E] text-center">
-                              <span className="text-xs font-bold text-purple-300 block">{h.hour}</span>
-                              <span className="text-[9px] text-emerald-400 font-bold">{h.count} أوردر</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/15 via-[#141721] to-[#141721] border border-amber-500/30 space-y-2">
-                        <h3 className="text-xs font-black text-amber-400 flex items-center gap-1.5"><Trophy size={16} /><span>العميل الذهبي 👑</span></h3>
-                        {reportsAnalytics.goldenCustomer && (
-                          <div className="pt-1 text-xs">
-                            <p className="font-bold text-white">{reportsAnalytics.goldenCustomer.name}</p>
-                            <p className="text-[10px] text-gray-400">📱 {reportsAnalytics.goldenCustomer.phone}</p>
-                            <p className="text-emerald-400 font-bold pt-1">{money(reportsAnalytics.goldenCustomer.spent)} إجمالي المشتريات</p>
-                          </div>
-                        )}
-                      </div>
-
-                    </div>
-
-                  </div>
-                )}
-
-                {/* ITEMS EDITING */}
-                {adminTab === "items" && (
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center mb-3">
-                      <p className="font-bold text-sm text-amber-400">تعديل أصناف المنيو</p>
-                      <button onClick={addNewItem} className="px-3 py-1.5 rounded-full bg-amber-500 text-black text-xs font-bold flex items-center gap-1"><PlusCircle size={14}/> إضافة صنف</button>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {items.map(item => (
-                        <div key={item.id} className="p-3 rounded-2xl bg-[#141721] border border-white/5 text-xs">
-                          {editingId === item.id ? (
-                            <div className="space-y-2">
-                              <input value={item.name} onChange={e => updateItem(item.id, { name: e.target.value })} className="w-full p-1.5 rounded bg-[#1C202E] text-white font-bold" />
-                              <input value={item.desc || ""} onChange={e => updateItem(item.id, { desc: e.target.value })} className="w-full p-1.5 rounded bg-[#1C202E] text-gray-300" />
-                              <button onClick={() => setEditingId(null)} className="w-full py-1 bg-amber-500 text-black font-bold rounded">حفظ</button>
-                            </div>
-                          ) : (
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <p className="font-bold text-white text-sm">{item.name}</p>
-                                <p className="text-amber-400">{item.sizes ? item.sizes.map(s => s.label + ":" + money(s.price)).join(" / ") : money(item.price)}</p>
-                              </div>
-                              <div className="flex gap-1">
-                                <button onClick={() => setEditingId(item.id)} className="p-1.5 rounded-full bg-white/5"><Pencil size={12}/></button>
-                                <button onClick={() => deleteItem(item.id)} className="p-1.5 rounded-full bg-red-500/10 text-red-400"><Trash2 size={12}/></button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* CUSTOMERS */}
-                {adminTab === "customers" && (
-                  <div className="space-y-2">
-                    <p className="font-bold text-sm text-amber-400 mb-2">قائمة حسابات جميع العملاء التراكمية</p>
-                    {reportsAnalytics.allCustomersList.map((cust, idx) => (
-                      <div key={idx} className="p-3 rounded-2xl bg-[#141721] border border-white/5 flex justify-between text-xs">
-                        <div>
-                          <p className="font-bold text-white">{idx + 1}. {cust.name}</p>
-                          <p className="text-[10px] text-gray-400">📱 {cust.phone}</p>
-                        </div>
-                        <div className="text-left">
-                          <span className="font-black text-emerald-400 block">{money(cust.spent)}</span>
-                          <span className="text-[10px] text-gray-400">{cust.count} أوردرات</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* DELIVERY */}
-                {adminTab === "delivery" && (
-                  <div className="space-y-3">
-                    <p className="font-bold text-sm text-amber-400 mb-2">إدارة مناطق وقرى التوصيل</p>
-                    <div className="flex gap-2">
-                      <input type="text" placeholder="اسم القرية" value={newAreaName} onChange={e => setNewAreaName(e.target.value)} className="flex-1 p-2 rounded-xl bg-[#141721] text-xs text-white" />
-                      <input type="number" placeholder="سعر التوصيل" value={newAreaPrice} onChange={e => setNewAreaPrice(e.target.value)} className="w-24 p-2 rounded-xl bg-[#141721] text-xs text-white" />
-                      <button onClick={handleAddDeliveryArea} className="px-4 bg-emerald-600 text-white rounded-xl text-xs font-bold">إضافة</button>
-                    </div>
+                    {/* KPI Cards */}
                     <div className="grid grid-cols-2 gap-2">
-                      {deliveryAreas.map((area, idx) => (
-                        <div key={idx} className="flex justify-between items-center p-2.5 rounded-xl bg-[#141721] text-xs">
-                          <span>{area.name} · <span className="text-amber-400">{money(area.price)}</span></span>
-                          <button onClick={() => handleRemoveDeliveryArea(idx)} className="text-red-400"><Trash2 size={12}/></button>
-                        </div>
-                      ))}
+                      <div className="p-3 rounded-2xl bg-[#141721] border border-amber-500/30"><span className="text-[10px] text-gray-400">عدد الطلبات الكلي</span><p className="text-lg font-black text-amber-400 mt-1">{reportsAnalytics.totalOrders} أوردر</p></div>
+                      <div className="p-3 rounded-2xl bg-[#141721] border border-emerald-500/30"><span className="text-[10px] text-gray-400">صافي الدخل النهائي</span><p className="text-lg font-black text-emerald-400 mt-1">{money(reportsAnalytics.netTotal)}</p></div>
+                      <div className="p-3 rounded-2xl bg-[#141721] border border-white/10"><span className="text-[10px] text-gray-400">مبيعات المأكولات</span><p className="text-xs font-bold text-white mt-1">{money(reportsAnalytics.totalSales)}</p></div>
+                      <div className="p-3 rounded-2xl bg-[#141721] border border-white/10"><span className="text-[10px] text-gray-400">إيرادات الدليفري</span><p className="text-xs font-bold text-white mt-1">{money(reportsAnalytics.totalDelivery)}</p></div>
                     </div>
-                  </div>
-                )}
 
-                {/* SETTINGS */}
-                {adminTab === "settings" && (
-                  <div className="space-y-3 max-w-md mx-auto text-xs">
-                    <p className="font-bold text-sm text-amber-400 mb-2">إعدادات الهوية والأمان</p>
-                    <label className="block space-y-1"><span className="text-gray-400">اسم المطعم:</span><input value={restaurantName} onChange={e => setRestaurantName(e.target.value)} className="w-full p-2 bg-[#141721] rounded-xl text-white" /></label>
-                    <label className="block space-y-1"><span className="text-gray-400">رمز الأمان PIN:</span><input value={adminPin} onChange={e => setAdminPin(e.target.value)} className="w-full p-2 bg-[#141721] rounded-xl text-white" /></label>
-                  </div>
-                )}
+                    {/* أشرطة التوزيع الملونة */}
+                    <div className="p-3 rounded-2xl bg-[#141721] border border-white/10 space-y-2.5">
+                      <p className="text-xs font-bold text-amber-400 flex items-center gap-1"><PieChart size={14} /><span>تحليل نوع الدفع والتوصيل:</span></p>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-[10px] font-bold"><span>💵 كاش: {money(reportsAnalytics.cashSales)}</span><span className="text-emerald-400">📱 إلكتروني: {money(reportsAnalytics.electronicSales)}</span></div>
+                        <div className="w-full h-2 rounded-full overflow-hidden flex bg-black/40"><div style={{ width: `${reportsAnalytics.netTotal ? (reportsAnalytics.cashSales / reportsAnalytics.netTotal) * 100 : 50}%` }} className="bg-amber-500 h-full" /><div style={{ width: `${reportsAnalytics.netTotal ? (reportsAnalytics.electronicSales / reportsAnalytics.netTotal) * 100 : 50}%` }} className="bg-emerald-500 h-full" /></div>
+                      </div>
+                      <div className="pt-1 text-[10px] flex justify-between font-bold border-t border-white/5"><span className="text-gray-400">القرية الأكثر طلباً:</span><span className="text-amber-400">{reportsAnalytics.topArea}</span></div>
+                    </div>
 
+                    {/* أزرار التصدير */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <button onClick={sendZReportToWhatsApp} className="py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs flex items-center justify-center gap-1"><Share2 size={13} /><span>تصدير Z-Report</span></button>
+                      <button onClick={exportToCSV} className="py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 font-bold text-xs flex items-center justify-center gap-1"><Download size={13} /><span>تحميل Excel</span></button>
+                    </div>
+
+                    {/* سجل الأوردرات الأخيرة */}
+                    <div className="space-y-2 pt-2 border-t border-white/10">
+                      <p className="text-xs font-bold text-amber-400">سجل الطلبات الأخير ({filteredReportsData.length} أوردر):</p>
+                      <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
+                        {filteredReportsData.slice().reverse().map((row, idx) => (
+                          <div key={idx} className="p-2.5 rounded-xl bg-[#141721] border border-white/5 text-xs space-y-1">
+                            <div className="flex justify-between font-bold"><span>{row["اسم العميل"] || "عميل"} ({row["رقم الموبايل"]})</span><span className="text-amber-400">{money(row["الإجمالي النهائي"])}</span></div>
+                            <p className="text-[10px] text-gray-400 truncate">🍽 {row["تفاصيل الطلبات"]}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
-            </div>
+            )}
 
-          </div>
-        </div>
-      )}
+            {/* TAB 2: ITEMS */}
+            {adminTab === "items" && (
+              <div className="space-y-3">
+                <div className="flex justify-between items-center mb-2"><p className="font-bold text-xs text-amber-400">تعديل أصناف المنيو</p><button onClick={addNewItem} className="px-3 py-1 rounded-full bg-amber-400 text-black text-[10px] font-bold">+ إضافة صنف</button></div>
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  {items.map(item => (
+                    <div key={item.id} className="p-2.5 rounded-xl bg-[#141721] border border-white/5 text-xs flex justify-between items-center">
+                      <div><p className="font-bold text-white">{item.name}</p><p className="text-amber-400 text-[10px]">{item.sizes ? item.sizes.map(s => s.label + ":" + money(s.price)).join(" / ") : money(item.price)}</p></div>
+                      <button onClick={() => deleteItem(item.id)} className="p-1 text-red-400"><Trash2 size={13}/></button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
-      {/* MODALS */}
-      {orderSuccess && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-[#111319] border border-amber-500/30 p-6 rounded-3xl text-center space-y-3 max-w-xs">
-            <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto text-2xl">✓</div>
-            <h3 className="text-sm font-bold text-white">تم إرسال أوردرك بنجاح! 🎉</h3>
-            <p className="text-xs text-gray-400 leading-relaxed">جاري تحويلك لواتساب المطعم لتأكيد واستلام الفاتورة.</p>
-            <button onClick={() => setOrderSuccess(false)} className="w-full py-2 rounded-xl bg-amber-400 text-black font-black text-xs">فهمت، شكراً لك</button>
+            {/* TAB 3: SETTINGS */}
+            {adminTab === "settings" && (
+              <div className="space-y-3 text-xs max-w-sm mx-auto">
+                <label className="block space-y-1"><span className="text-gray-400">اسم المطعم:</span><input value={restaurantName} onChange={e => setRestaurantName(e.target.value)} className="w-full p-2 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
+                <label className="block space-y-1"><span className="text-gray-400">رمز الأمان PIN:</span><input value={adminPin} onChange={e => setAdminPin(e.target.value)} className="w-full p-2 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
+              </div>
+            )}
+
           </div>
         </div>
       )}
