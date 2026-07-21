@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "8.5"; // التحديث v8.5: معالجة مقاسات السلة، زراير النسخ، ونافذة تنبيه الإغلاق
+const MENU_VERSION = "10.0"; // الإصدار v10.0: حفظ السلة عند Refresh + زرار تصفير السلة + تكبير خط الأحجام وتظبيط محاذاة الأرقام
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbybuw8CuUGV-hf_ecUyevpGB5YioMKCdeOP3PxSKKuzGgMmtcfbHyrd0F81eJg3Z_U/exec";
 
 const THEMES = [
@@ -135,14 +135,24 @@ export default function RestaurantMenu() {
   const [items, setItems] = useState(DEFAULT_MENU);
   const [activeCat, setActiveCat] = useState("الكل");
   const [searchQuery, setSearchQuery] = useState("");
-  const [cart, setCart] = useState({});
+
+  // 🟢 المطلوب 4: استعادة وحفظ السلة تلقائياً بداخل ذاكرة المتصفح
+  const [cart, setCart] = useState(() => {
+    if (typeof window !== "undefined" && window.localStorage) {
+      const savedCart = localStorage.getItem("dream-corner-saved-cart");
+      if (savedCart) {
+        try { return JSON.parse(savedCart); } catch (e) {}
+      }
+    }
+    return {};
+  });
+
   const [cartOpen, setCartOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [adminTab, setAdminTab] = useState("dashboard");
   const [editingId, setEditingId] = useState(null);
   const [copied, setCopied] = useState("");
   const [loaded, setLoaded] = useState(false);
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [closeNoticeOpen, setCloseNoticeOpen] = useState(false);
 
   const [deliveryAreas, setDeliveryAreas] = useState(DEFAULT_DELIVERY_AREAS);
@@ -180,16 +190,22 @@ export default function RestaurantMenu() {
   const [pinError, setPinError] = useState("");
   const [logoClicks, setLogoClicks] = useState(0);
 
-  // حالات التقارير والداشبورد الشاملة
+  // حالات التقارير الشاملة
   const [reportsData, setReportsData] = useState([]);
   const [reportsLoading, setReportsLoading] = useState(false);
   const [reportDateFilter, setReportDateFilter] = useState("all");
   const [reportSearchQuery, setReportSearchQuery] = useState("");
-  const [dailyTarget, setDailyTarget] = useState(3000);
 
   const saveTimer = useRef(null);
   const status = checkRestaurantStatus();
   const findItem = (id) => items.find((i) => i.id === id);
+
+  // حفظ كاش السلة فور حدوث أي تغيير
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.localStorage) {
+      localStorage.setItem("dream-corner-saved-cart", JSON.stringify(cart));
+    }
+  }, [cart]);
 
   const cartList = useMemo(() => {
     return Object.entries(cart)
@@ -202,7 +218,7 @@ export default function RestaurantMenu() {
         const sizeLabel = parts[1] || "";
         const item = findItem(id);
         if (!item) return null;
-        const price = sizeLabel ? item.sizes.find((s) => s.label === sizeLabel)?.price ?? 0 : item.price;
+        const price = sizeLabel ? item.sizes?.find((s) => s.label === sizeLabel)?.price ?? 0 : item.price;
         const label = sizeLabel ? item.name + " (" + sizeLabel + ")" : item.name;
         return { key, id, label, price, qty };
       })
@@ -211,6 +227,14 @@ export default function RestaurantMenu() {
 
   const cartCount = useMemo(() => cartList.reduce((s, i) => s + i.qty, 0), [cartList]);
   const cartTotal = useMemo(() => cartList.reduce((s, i) => s + i.qty * i.price, 0), [cartList]);
+
+  // 🟢 المطلوب 3: دالة تصفير السلة بالكامل
+  const handleClearCart = () => {
+    setCart({});
+    if (typeof window !== "undefined" && window.localStorage) {
+      localStorage.removeItem("dream-corner-saved-cart");
+    }
+  };
 
   const activeDeliveryArea = useMemo(() => {
     if (selectedAreaIndex >= 0 && selectedAreaIndex < deliveryAreas.length) {
@@ -287,7 +311,6 @@ export default function RestaurantMenu() {
     });
   }, [reportsData, reportDateFilter, reportSearchQuery]);
 
-  // إحصائيات الداشبورد
   const reportsAnalytics = useMemo(() => {
     if (!reportsData || reportsData.length === 0) {
       return {
@@ -536,7 +559,6 @@ export default function RestaurantMenu() {
         if (typeof window !== "undefined" && window.localStorage) {
           const savedVersion = localStorage.getItem("menu-version");
           if (savedVersion !== MENU_VERSION) {
-            localStorage.removeItem("dream-corner-menu");
             localStorage.setItem("menu-version", MENU_VERSION);
             setItems(DEFAULT_MENU);
             setDeliveryAreas(DEFAULT_DELIVERY_AREAS);
@@ -712,6 +734,7 @@ export default function RestaurantMenu() {
       localStorage.setItem("customer-phone-cache", customerPhone.trim());
       localStorage.setItem("customer-address-cache", customerAddress.trim());
       localStorage.setItem("customer-points-loyalty", updatedPoints.toString());
+      localStorage.removeItem("dream-corner-saved-cart"); // تصفير السلة المحفوظة بعد نجاة الأوردر
     }
 
     const itemsSummary = cartList.map((cartItem) => cartItem.label + " x" + cartItem.qty).join(" | ");
@@ -794,7 +817,7 @@ export default function RestaurantMenu() {
   };
 
   return (
-    <div dir="rtl" className="min-h-screen bg-[#08090C] text-white font-['Tajawal'] pb-28">
+    <div dir="rtl" className="min-h-screen bg-[#08090C] text-white font-['Tajawal'] pb-32">
       
       {/* HEADER */}
       <header className="sticky top-0 z-30 bg-[#0C0E14]/90 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center justify-between">
@@ -819,6 +842,25 @@ export default function RestaurantMenu() {
         </div>
       </header>
 
+      {/* SOCIAL MEDIA STRIP */}
+      <div className="w-full flex justify-center items-center py-2.5 bg-[#0C0E14]/80 border-b border-white/5 sticky top-[57px] z-20 backdrop-blur-md">
+        <div className="flex items-center gap-3 px-4 py-1 rounded-full bg-[#1A1D26] border border-white/10 shadow-inner">
+          <a href={"tel:" + whatsappNumber} className="p-2 rounded-full bg-amber-400 text-black transition-transform active:scale-95 shadow">
+            <Phone size={13} />
+          </a>
+          <span className="h-3.5 w-[1px] bg-white/20" />
+          <a href={"https://wa.me/" + whatsappNumber.replace(/[^\d+]/g, "")} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-[#25D366] text-white transition-transform active:scale-95 shadow">
+            <MessageCircle size={13} />
+          </a>
+          <a href="https://www.facebook.com/share/1E3Dx3c5Yh/" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-[#1877F2] text-white transition-transform active:scale-95 shadow">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          </a>
+          <a href="https://www.tiktok.com/@dreamcornerfood" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-black text-white border border-white/20 transition-transform active:scale-95 shadow">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5"><path d="M12.525.02c1.31.01 2.61.03 3.91.05.08 1.53.64 2.93 1.66 4.02.97.97 2.24 1.57 3.63 1.69v3.91c-1.6-.05-3.11-.64-4.32-1.64-.1-.08-.19-.17-.28-.26v6.2c-.06 4.67-3.81 8.28-8.42 8.01-3.69-.21-6.72-3.14-7.06-6.82-.44-4.78 3.32-8.91 8.11-8.52v3.96c-2.15-.22-4.11 1.29-4.44 3.44-.4 2.58 1.56 4.88 4.15 4.96 2.43.08 4.5-1.74 4.66-4.16.03-.43.02-.87.02-1.3V0z"/></svg>
+          </a>
+        </div>
+      </div>
+
       {/* PERSONALIZED WELCOME BANNER FOR SAVED CUSTOMERS */}
       {customerName && (
         <div className="bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent border-b border-amber-500/30 px-4 py-2 flex items-center justify-between text-xs">
@@ -834,7 +876,7 @@ export default function RestaurantMenu() {
         </div>
       )}
 
-      {/* HERO BANNER SECTION (مع شارة حالة العمل مفتوح/مغلق) */}
+      {/* HERO BANNER SECTION */}
       <section className="relative w-full h-60 sm:h-72 overflow-hidden flex items-center justify-center">
         <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1200&q=80" alt="Delicious Pizza" className="absolute inset-0 w-full h-full object-cover opacity-30 scale-105" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#08090C] via-[#08090C]/60 to-transparent" />
@@ -848,7 +890,7 @@ export default function RestaurantMenu() {
               {status.text}
             </span>
             <span className="px-3 py-1 rounded-full bg-black/60 border border-white/10 text-gray-200 flex items-center gap-1">
-              <Bike size={12} className="text-amber-400" /> توصيل سريع لجميع القرى
+              <Bike size={12} className="text-amber-400" /> توصيل سريع
             </span>
             <span className="px-3 py-1 rounded-full bg-black/60 border border-white/10 text-gray-200 flex items-center gap-1">
               <Clock size={12} className="text-amber-400" /> {status.timeText}
@@ -861,7 +903,7 @@ export default function RestaurantMenu() {
       </section>
 
       {/* CATEGORIES NAV BAR */}
-      <nav className="sticky top-[57px] z-20 bg-[#08090C]/95 backdrop-blur-md border-y border-white/10 py-3 px-4">
+      <nav className="sticky top-[100px] z-20 bg-[#08090C]/95 backdrop-blur-md border-y border-white/10 py-3 px-4">
         <div className="max-w-3xl mx-auto flex gap-2 overflow-x-auto no-scrollbar">
           {categories.map((c) => (
             <button
@@ -901,7 +943,7 @@ export default function RestaurantMenu() {
         </div>
       </section>
 
-      {/* TOP BEST SELLERS ("الأكثر طلباً 🔥") */}
+      {/* 🟢 المطلوب 1 و 2: الأفضل مبيعاً مع إزاحة الترتيب وتكبير خط الأسعار والأحجام وعلامة + */}
       {bestSellerItems.length > 0 && activeCat === "الكل" && !searchQuery.trim() && (
         <section className="max-w-3xl mx-auto px-4 pt-7 space-y-3">
           <div className="flex items-center justify-between">
@@ -913,31 +955,37 @@ export default function RestaurantMenu() {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {bestSellerItems.map((item) => (
-              <div key={item.id} className="bg-[#111319] border border-white/10 rounded-3xl p-3 flex flex-col justify-between relative shadow-lg hover:border-amber-500/40 transition-all">
-                <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-amber-400 text-black font-black text-[10px] flex items-center justify-center z-10 shadow">
+              <div key={item.id} className="bg-[#111319] border border-white/10 rounded-3xl p-3.5 flex flex-col justify-between relative shadow-lg hover:border-amber-500/40 transition-all">
+                
+                {/* 🟢 معالجة تداخل الرقم: نقل الدائرة لأقصى اليسار فوق */}
+                <span className="absolute top-3 left-3 w-6 h-6 rounded-full bg-amber-400 text-black font-black text-xs flex items-center justify-center z-10 shadow-md">
                   {item.rank || 1}
                 </span>
 
-                <div className="space-y-1 mt-1">
-                  <h3 className="text-xs font-bold text-white truncate">{item.name}</h3>
-                  <p className="text-[9px] text-gray-400 line-clamp-2 leading-relaxed">{item.desc || "الوجبة الأكثر طلباً وشهيرة من دريم كورنر!"}</p>
+                <div className="space-y-1 mt-1 pr-1">
+                  <h3 className="text-xs sm:text-sm font-black text-white truncate">{item.name}</h3>
+                  <p className="text-[10px] text-gray-400 line-clamp-2 leading-relaxed">{item.desc || "الوجبة الأكثر طلباً وشهيرة من دريم كورنر!"}</p>
                 </div>
 
-                <div className="mt-3 pt-2 border-t border-white/5 space-y-1.5">
+                {/* 🟢 تكبير خط الأحجام والأسعار والعلامة + بوضوح كامل */}
+                <div className="mt-3 pt-2 border-t border-white/10 space-y-2">
                   {item.sizes ? (
                     item.sizes.slice(0, 2).map((sz) => {
                       const key = item.id + "::" + sz.label;
                       return (
-                        <div key={sz.label} className="flex items-center justify-between text-[9px] bg-[#1A1D26] p-1 px-2 rounded-xl">
-                          <span className="text-gray-300 font-bold">{sz.label}</span>
-                          <button onClick={() => addToCart(key, 1)} className="text-amber-400 font-black hover:underline">{money(sz.price)} +</button>
+                        <div key={sz.label} className="flex items-center justify-between text-xs bg-[#1A1D26] p-1.5 px-2.5 rounded-xl border border-white/5">
+                          <span className="text-gray-200 font-bold">{sz.label}</span>
+                          <button onClick={() => addToCart(key, 1)} className="text-amber-400 font-black text-xs hover:underline flex items-center gap-0.5">
+                            <span>{money(sz.price)}</span>
+                            <span className="text-base font-black text-amber-300 ml-0.5">+</span>
+                          </button>
                         </div>
                       );
                     })
                   ) : (
                     <div className="flex items-center justify-between pt-1">
-                      <span className="text-xs font-black text-amber-400">{money(item.price)}</span>
-                      <button onClick={() => addToCart(item.id, 1)} className="p-1.5 rounded-full bg-amber-400 text-black"><Plus size={12} /></button>
+                      <span className="text-sm font-black text-amber-400">{money(item.price)}</span>
+                      <button onClick={() => addToCart(item.id, 1)} className="p-2 rounded-full bg-amber-400 text-black font-black active:scale-95"><Plus size={14} /></button>
                     </div>
                   )}
                 </div>
@@ -947,7 +995,7 @@ export default function RestaurantMenu() {
         </section>
       )}
 
-      {/* MAIN MENU ITEMS */}
+      {/* 🟢 MAIN MENU ITEMS (مع تكبير الأحجام والأسعار) */}
       <main className="max-w-3xl mx-auto px-4 pt-7 space-y-6">
         {groups.map((group) => {
           const subcat = group[0];
@@ -963,44 +1011,44 @@ export default function RestaurantMenu() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {list.map((item) => (
-                  <div key={item.id} className="bg-[#111319] border border-white/10 rounded-3xl p-3.5 flex flex-col justify-between shadow-md hover:border-amber-500/30 transition-all">
+                  <div key={item.id} className="bg-[#111319] border border-white/10 rounded-3xl p-4 flex flex-col justify-between shadow-md hover:border-amber-500/30 transition-all">
                     <div className="space-y-1">
-                      <h3 className="text-xs font-black text-white">{item.name}</h3>
+                      <h3 className="text-xs sm:text-sm font-black text-white">{item.name}</h3>
                       {item.desc && <p className="text-[10px] text-gray-400 leading-relaxed">{item.desc}</p>}
                     </div>
 
-                    <div className="mt-3 pt-2 border-t border-white/5 space-y-1.5">
+                    <div className="mt-3 pt-2 border-t border-white/10 space-y-2">
                       {item.sizes ? (
                         item.sizes.map((sz) => {
                           const key = item.id + "::" + sz.label;
                           const qty = cart[key] || 0;
                           return (
-                            <div key={sz.label} className="flex items-center justify-between text-[10px] bg-[#1A1D26] p-1.5 px-2.5 rounded-xl">
-                              <span className="text-gray-300 font-bold">{sz.label}</span>
-                              <span className="text-amber-400 font-black">{money(sz.price)}</span>
+                            <div key={sz.label} className="flex items-center justify-between text-xs bg-[#1A1D26] p-2 px-3 rounded-xl border border-white/5">
+                              <span className="text-gray-200 font-bold">{sz.label}</span>
+                              <span className="text-amber-400 font-black text-xs">{money(sz.price)}</span>
                               {qty > 0 ? (
-                                <div className="flex items-center gap-1.5">
-                                  <button onClick={() => addToCart(key, -1)} className="w-4 h-4 rounded-full border border-white/20 flex items-center justify-center"><Minus size={9} /></button>
-                                  <span className="font-bold text-white text-xs">{qty}</span>
-                                  <button onClick={() => addToCart(key, 1)} className="w-4 h-4 rounded-full bg-amber-400 text-black flex items-center justify-center"><Plus size={9} /></button>
+                                <div className="flex items-center gap-2">
+                                  <button onClick={() => addToCart(key, -1)} className="w-5 h-5 rounded-full border border-white/20 flex items-center justify-center"><Minus size={10} /></button>
+                                  <span className="font-black text-white text-xs">{qty}</span>
+                                  <button onClick={() => addToCart(key, 1)} className="w-5 h-5 rounded-full bg-amber-400 text-black flex items-center justify-center font-bold"><Plus size={10} /></button>
                                 </div>
                               ) : (
-                                <button onClick={() => addToCart(key, 1)} className="p-1 rounded-full bg-amber-400 text-black"><Plus size={10} /></button>
+                                <button onClick={() => addToCart(key, 1)} className="p-1.5 rounded-full bg-amber-400 text-black font-black active:scale-95"><Plus size={12} /></button>
                               )}
                             </div>
                           );
                         })
                       ) : (
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-black text-amber-400">{money(item.price)}</span>
+                          <span className="text-sm font-black text-amber-400">{money(item.price)}</span>
                           {cart[item.id] > 0 ? (
-                            <div className="flex items-center gap-1.5 bg-[#1A1D26] px-2 py-0.5 rounded-full">
+                            <div className="flex items-center gap-2 bg-[#1A1D26] px-2.5 py-1 rounded-full border border-white/10">
                               <button onClick={() => addToCart(item.id, -1)} className="w-5 h-5 rounded-full border border-white/20 flex items-center justify-center"><Minus size={10} /></button>
                               <span className="font-bold text-xs">{cart[item.id]}</span>
-                              <button onClick={() => addToCart(item.id, 1)} className="w-5 h-5 rounded-full bg-amber-400 text-black flex items-center justify-center"><Plus size={10} /></button>
+                              <button onClick={() => addToCart(item.id, 1)} className="w-5 h-5 rounded-full bg-amber-400 text-black flex items-center justify-center font-bold"><Plus size={10} /></button>
                             </div>
                           ) : (
-                            <button onClick={() => addToCart(item.id, 1)} className="p-2 rounded-full bg-amber-400 text-black active:scale-95"><Plus size={12} /></button>
+                            <button onClick={() => addToCart(item.id, 1)} className="p-2 rounded-full bg-amber-400 text-black active:scale-95"><Plus size={13} /></button>
                           )}
                         </div>
                       )}
@@ -1023,9 +1071,21 @@ export default function RestaurantMenu() {
         </div>
       </section>
 
+      {/* FOOTER RIGHTS */}
+      <div className="fixed bottom-12 inset-x-0 z-20 border-t border-white/10 px-4 py-2.5 flex items-center justify-center gap-3 text-xs font-semibold bg-[#08090C]/90 backdrop-blur-md">
+        <a href="https://fb.com/mr.3abkarino" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 font-bold text-amber-400 hover:underline">
+          Mr3abkarino© <span className="text-red-500 text-sm animate-pulse">❤️</span>
+        </a>
+        <span className="opacity-30">|</span>
+        <span className="flex items-center gap-1 truncate text-gray-400 text-[10px]">
+          <MapPin size={12} className="shrink-0 text-amber-400" />
+          <span className="truncate">{address}</span>
+        </span>
+      </div>
+
       {/* FLOATING CART BUTTON */}
       {cartCount > 0 && (
-        <div className="fixed bottom-16 inset-x-0 z-30 px-4">
+        <div className="fixed bottom-20 inset-x-0 z-30 px-4">
           <div onClick={() => setCartOpen(true)} className="max-w-md mx-auto bg-amber-400 text-black p-3 rounded-2xl shadow-2xl flex items-center justify-between cursor-pointer active:scale-98 transition-all">
             <div className="flex items-center gap-2.5">
               <div className="w-7 h-7 rounded-full bg-black text-amber-400 flex items-center justify-center font-black text-xs">{cartCount}</div>
@@ -1060,18 +1120,29 @@ export default function RestaurantMenu() {
         </a>
       </footer>
 
-      {/* CART DRAWER MODAL (مقاسات مظبوطة وسهلة الرجوع) */}
+      {/* CART DRAWER MODAL (🟢 المطلوب 3: إضافة زر سلة المهملات لتصفير السلة) */}
       {cartOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end justify-center p-0">
-          <div className="absolute inset-0" onClick={() => setCartOpen(false)} /> {/* إغلاق بمجرد الضغط في أي مكان بره */}
+          <div className="absolute inset-0" onClick={() => setCartOpen(false)} />
           
           <div className="relative z-10 w-full max-w-lg bg-[#111319] border-t border-x border-amber-500/30 rounded-t-3xl p-5 space-y-4 max-h-[85vh] overflow-y-auto shadow-2xl" dir="rtl">
             
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <h3 className="text-base font-black text-amber-400 flex items-center gap-2">
-                <ShoppingCart size={18} />
-                <span>سلة المشتريات ({cartCount})</span>
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-black text-amber-400 flex items-center gap-1.5">
+                  <ShoppingCart size={18} />
+                  <span>سلة المشتريات ({cartCount})</span>
+                </h3>
+
+                {/* 🟢 زرار سلة المهملات لتفريغ/تصفير السلة */}
+                {cartCount > 0 && (
+                  <button onClick={handleClearCart} className="p-1.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 active:scale-95 transition-all mr-2 flex items-center gap-1 text-[10px] font-bold" title="تفريغ السلة بالكامل">
+                    <Trash2 size={13} />
+                    <span>تصفير السلة</span>
+                  </button>
+                )}
+              </div>
+
               <button onClick={() => setCartOpen(false)} className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1 hover:bg-amber-500/30">
                 <span>إغلاق ورجوع للمنيو</span>
                 <X size={14} />
@@ -1095,7 +1166,6 @@ export default function RestaurantMenu() {
               ))}
             </div>
 
-            {/* محفظة النقاط الذهبية */}
             {userPoints > 0 && (
               <div className="p-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 space-y-1.5">
                 <div className="flex items-center justify-between text-xs font-bold text-amber-300">
@@ -1108,7 +1178,6 @@ export default function RestaurantMenu() {
               </div>
             )}
 
-            {/* الحساب والتوصيل */}
             <div className="space-y-1 pt-2 border-t border-white/10 text-xs">
               <div className="flex justify-between text-gray-300"><span>حساب المأكولات:</span><span>{money(cartTotal)}</span></div>
               {discountAmount > 0 && <div className="flex justify-between text-emerald-400"><span>خصم الكوبون (-{appliedDiscountPercent}%):</span><span>-{money(discountAmount)}</span></div>}
@@ -1117,14 +1186,12 @@ export default function RestaurantMenu() {
               <div className="flex justify-between pt-2 text-sm font-black border-t border-white/10"><span>الإجمالي النهائي:</span><span className="text-amber-400 text-base">{money(finalTotal)}</span></div>
             </div>
 
-            {/* كوبون الخصم */}
             <div className="flex gap-2">
               <input type="text" placeholder="كوبون خصم؟" value={enteredPromo} onChange={e => setEnteredPromo(e.target.value)} className="flex-1 px-3 py-1.5 rounded-xl bg-[#1A1D26] border border-white/10 text-xs text-white uppercase" />
               <button onClick={handleApplyPromo} className="px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold text-xs">تطبيق</button>
             </div>
             {promoError && <p className="text-[10px] text-red-400 font-bold">{promoError}</p>}
 
-            {/* بيانات الدليفري والموعد المطلوب واللوكيشن */}
             <div className="space-y-2 pt-2 border-t border-white/10 text-xs">
               <input type="text" placeholder="اسمك الكريم..." value={customerName} onChange={e => setCustomerName(e.target.value)} className="w-full p-2.5 rounded-xl bg-[#1A1D26] border border-white/10 text-white" />
               <input type="tel" placeholder="رقم تليفونك..." value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} className="w-full p-2.5 rounded-xl bg-[#1A1D26] border border-white/10 text-white" />
@@ -1134,7 +1201,6 @@ export default function RestaurantMenu() {
                 {deliveryAreas.map((a, i) => <option key={i} value={i}>{a.name} (+{money(a.price)})</option>)}
               </select>
 
-              {/* الموعد المطلق */}
               <div className="p-2.5 rounded-xl bg-[#1A1D26] space-y-1.5 border border-white/5">
                 <p className="text-[10px] text-gray-400 font-bold">موعد التوصيل المطلق:</p>
                 <div className="grid grid-cols-2 gap-1.5 text-[10px]">
@@ -1144,7 +1210,6 @@ export default function RestaurantMenu() {
                 {scheduleType === "later" && <input type="text" placeholder="الموعد (مثال: الساعة 9:30 مساءً)..." value={scheduleTime} onChange={e => setScheduleTime(e.target.value)} className="w-full p-2 mt-1 rounded-lg bg-[#111319] text-[10px] text-white border border-amber-500/30" />}
               </div>
 
-              {/* العنوان والـ GPS */}
               <div className="flex gap-1.5">
                 <input type="text" placeholder="العنوان بالتفصيل..." value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} className="flex-1 p-2.5 rounded-xl bg-[#1A1D26] border border-white/10 text-white" />
                 <button type="button" onClick={handleGetLocation} className="px-3 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 flex items-center justify-center">
@@ -1152,7 +1217,6 @@ export default function RestaurantMenu() {
                 </button>
               </div>
 
-              {/* طرق الدفع + زراير نسخ أرقام المحافظ المباشرة */}
               <div className="space-y-2 pt-1">
                 <p className="text-[11px] font-bold text-amber-400">اختر طريقة الدفع المفضلة:</p>
                 <div className="grid grid-cols-2 gap-1.5">
@@ -1164,7 +1228,6 @@ export default function RestaurantMenu() {
                   <div className="p-3 rounded-2xl bg-black/50 border border-amber-500/30 space-y-2 text-[10px]">
                     <p className="text-amber-400 text-center font-bold">حول المبلغ وانسخ الحساب وارسل اسكرين شوت بالتحويل:</p>
                     
-                    {/* فودافون كاش كارت نسخ */}
                     <div className="flex items-center justify-between p-2 rounded-xl bg-[#1A1D26]">
                       <div className="flex items-center gap-2">
                         <Phone size={13} className="text-amber-400" />
@@ -1175,7 +1238,6 @@ export default function RestaurantMenu() {
                       </button>
                     </div>
 
-                    {/* انستا باي كارت نسخ */}
                     <div className="flex items-center justify-between p-2 rounded-xl bg-[#1A1D26]">
                       <div className="flex items-center gap-2">
                         <CreditCard size={13} className="text-amber-400" />
@@ -1199,7 +1261,7 @@ export default function RestaurantMenu() {
         </div>
       )}
 
-      {/* RESTAURANT CLOSED NOTICE MODAL ("الأفران ريحت شوية") */}
+      {/* RESTAURANT CLOSED NOTICE MODAL */}
       {closeNoticeOpen && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4" dir="rtl">
           <div className="w-full max-w-sm bg-[#111319] border border-amber-500/40 rounded-3xl p-6 text-center space-y-4 shadow-2xl">
@@ -1237,7 +1299,7 @@ export default function RestaurantMenu() {
                 <div>
                   <h2 className="text-base font-black text-amber-400 flex items-center gap-1.5">
                     <span>الرئيسية | لوحة تحكم دريم كورنر</span>
-                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v8.5</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v10.0</span>
                   </h2>
                   <p className="text-[10px] text-gray-400">مرحباً بك في لوحة التحكّم والذكاء المالي 👋</p>
                 </div>
@@ -1471,10 +1533,43 @@ export default function RestaurantMenu() {
 
                 {/* TAB 5: SETTINGS */}
                 {adminTab === "settings" && (
-                  <div className="space-y-3 max-w-sm mx-auto text-xs">
-                    <p className="font-bold text-sm text-amber-400 mb-2">إعدادات الهوية والأمان</p>
-                    <label className="block space-y-1"><span className="text-gray-400">اسم المطعم:</span><input value={restaurantName} onChange={e => setRestaurantName(e.target.value)} className="w-full p-2 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
-                    <label className="block space-y-1"><span className="text-gray-400">رمز الأمان PIN:</span><input value={adminPin} onChange={e => setAdminPin(e.target.value)} className="w-full p-2 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
+                  <div className="space-y-3 max-w-lg mx-auto text-xs space-y-3">
+                    <p className="font-bold text-sm text-amber-400 mb-2">إعدادات الهوية والأمان والمحافظ الإلكترونية</p>
+                    
+                    <label className="block space-y-1">
+                      <span className="text-gray-300 font-bold">اسم المطعم:</span>
+                      <input value={restaurantName} onChange={e => setRestaurantName(e.target.value)} className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" />
+                    </label>
+
+                    <label className="block space-y-1">
+                      <span className="text-gray-300 font-bold">الشعار الفرعي (Slogan):</span>
+                      <input value={tagline} onChange={e => setTagline(e.target.value)} className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" />
+                    </label>
+
+                    <label className="block space-y-1">
+                      <span className="text-gray-300 font-bold">العنوان الجغرافي:</span>
+                      <input value={address} onChange={e => setAddress(e.target.value)} className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" />
+                    </label>
+
+                    <label className="block space-y-1">
+                      <span className="text-gray-300 font-bold">رقم واتساب استقبال الطلبات:</span>
+                      <input value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" />
+                    </label>
+
+                    <label className="block space-y-1">
+                      <span className="text-gray-300 font-bold">رقم فودافون كاش:</span>
+                      <input value={vodafoneCash} onChange={e => setVodafoneCash(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" />
+                    </label>
+
+                    <label className="block space-y-1">
+                      <span className="text-gray-300 font-bold">حساب InstaPay:</span>
+                      <input value={instapay} onChange={e => setInstapay(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" />
+                    </label>
+
+                    <label className="block space-y-1">
+                      <span className="text-gray-300 font-bold">رمز الأمان PIN للمدير:</span>
+                      <input value={adminPin} onChange={e => setAdminPin(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" />
+                    </label>
                   </div>
                 )}
 
