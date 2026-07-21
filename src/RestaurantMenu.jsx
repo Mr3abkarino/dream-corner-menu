@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "10.1"; // v11.1: إصلاح أخطاء الـ Syntax والربط الكامل
+const MENU_VERSION = "13.0"; // v13.0: إزالة نظام نقاط الولاء بالكامل
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbybuw8CuUGV-hf_ecUyevpGB5YioMKCdeOP3PxSKKuzGgMmtcfbHyrd0F81eJg3Z_U/exec";
 
 const THEMES = [
@@ -177,9 +177,6 @@ export default function RestaurantMenu() {
   const [validationError, setValidationError] = useState("");
   const [orderSuccess, setOrderSuccess] = useState(false);
 
-  const [userPoints, setUserPoints] = useState(0);
-  const [redeemPoints, setRedeemPoints] = useState(false);
-
   const [scheduleType, setScheduleType] = useState("now"); 
   const [scheduleTime, setScheduleTime] = useState("");
 
@@ -255,12 +252,7 @@ export default function RestaurantMenu() {
 
   const discountAmount = useMemo(() => Math.round((cartTotal * appliedDiscountPercent) / 100), [cartTotal, appliedDiscountPercent]);
 
-  const pointsDiscountValue = useMemo(() => {
-    if (!redeemPoints) return 0;
-    return Math.min(userPoints, Math.max(0, cartTotal - discountAmount));
-  }, [redeemPoints, userPoints, cartTotal, discountAmount]);
-
-  const finalTotal = useMemo(() => Math.max(0, cartTotal - discountAmount - pointsDiscountValue) + activeDeliveryArea.price, [cartTotal, discountAmount, pointsDiscountValue, activeDeliveryArea]);
+  const finalTotal = useMemo(() => Math.max(0, cartTotal - discountAmount) + activeDeliveryArea.price, [cartTotal, discountAmount, activeDeliveryArea]);
 
   const fetchReportsFromSheet = async () => {
     setReportsLoading(true);
@@ -444,11 +436,9 @@ export default function RestaurantMenu() {
           const savedName = localStorage.getItem("customer-name-cache");
           const savedPhone = localStorage.getItem("customer-phone-cache");
           const savedAddress = localStorage.getItem("customer-address-cache");
-          const savedPoints = localStorage.getItem("customer-points-loyalty");
           if (savedName) setCustomerName(savedName);
           if (savedPhone) setCustomerPhone(savedPhone);
           if (savedAddress) setCustomerAddress(savedAddress);
-          if (savedPoints) setUserPoints(Number(savedPoints));
         }
       } catch (e) { console.error("Storage error", e); }
       setLoaded(true);
@@ -487,16 +477,10 @@ export default function RestaurantMenu() {
     if (!checkRestaurantStatus().isOpen) { setCloseNoticeOpen(true); return; }
     if (cartList.length === 0 || !customerName.trim() || !customerPhone.trim() || !customerAddress.trim() || selectedAreaIndex === -1) return;
 
-    const newlyEarnedPoints = Math.floor(cartTotal / 100);
-    let updatedPoints = userPoints;
-    if (redeemPoints) updatedPoints = Math.max(0, userPoints - pointsDiscountValue);
-    updatedPoints += newlyEarnedPoints;
-
     if (typeof window !== "undefined" && window.localStorage) {
       localStorage.setItem("customer-name-cache", customerName.trim());
       localStorage.setItem("customer-phone-cache", customerPhone.trim());
       localStorage.setItem("customer-address-cache", customerAddress.trim());
-      localStorage.setItem("customer-points-loyalty", updatedPoints.toString());
       localStorage.removeItem("dream-corner-saved-cart");
     }
 
@@ -509,14 +493,14 @@ export default function RestaurantMenu() {
     try {
       fetch(GOOGLE_SHEET_SCRIPT_URL, {
         method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ timestamp: new Date().toLocaleString("ar-EG"), customerName: customerName.trim(), customerPhone: customerPhone.trim(), area: activeDeliveryArea.name, address: customerAddress.trim(), paymentMethod: paymentText, schedule: deliveryTimeText, itemsSummary, cartTotal, couponDiscount: discountAmount, pointsDiscount: pointsDiscountValue, deliveryPrice: activeDeliveryArea.price, finalTotal })
+        body: JSON.stringify({ timestamp: new Date().toLocaleString("ar-EG"), customerName: customerName.trim(), customerPhone: customerPhone.trim(), area: activeDeliveryArea.name, address: customerAddress.trim(), paymentMethod: paymentText, schedule: deliveryTimeText, itemsSummary, cartTotal, couponDiscount: discountAmount, pointsDiscount: 0, deliveryPrice: activeDeliveryArea.price, finalTotal })
       });
     } catch (e) {}
 
     let text = `طلب جديد من منيو ${restaurantName} 🍽\n\n👤 العميل: ${customerName}\n📱 الهاتف: ${customerPhone}\n💳 الدفع: ${paymentText}\n📍 المنطقة: ${activeDeliveryArea.name}\n🏠 العنوان: ${customerAddress}\n\nالطلبات:\n${lines.join("\n")}\n\n💵 حساب الأكل: ${money(cartTotal)}\n🛵 التوصيل: ${money(activeDeliveryArea.price)}\n💰 الإجمالي: ${money(finalTotal)}`;
     window.open("https://wa.me/" + whatsappNumber.replace(/[^\d+]/g, "") + "?text=" + encodeURIComponent(text), "_blank");
 
-    setUserPoints(updatedPoints); setCartOpen(false); setCart({}); setOrderSuccess(true);
+    setCartOpen(false); setCart({}); setOrderSuccess(true);
   };
 
   return (
@@ -560,7 +544,6 @@ export default function RestaurantMenu() {
       {customerName && (
         <div className="bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent border-b border-amber-500/30 px-4 py-2 flex items-center justify-between text-xs">
           <div className="flex items-center gap-2"><Crown size={15} className="text-amber-400 animate-bounce" /><span className="font-bold text-amber-300">أهلاً بعودتك يا {customerName}! 👋</span></div>
-          {userPoints > 0 && <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-400 text-black font-black flex items-center gap-1">🪙 {userPoints} نقطة ذهبية</span>}
         </div>
       )}
 
@@ -842,22 +825,9 @@ export default function RestaurantMenu() {
               ))}
             </div>
 
-            {userPoints > 0 && (
-              <div className="p-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 space-y-1.5">
-                <div className="flex items-center justify-between text-xs font-bold text-amber-300">
-                  <span>🪙 محفظة النقاط: لديك {userPoints} نقطة</span>
-                  <span>تساوي {money(userPoints)} خصم</span>
-                </div>
-                <button onClick={() => setRedeemPoints(!redeemPoints)} className={`w-full py-1.5 rounded-lg text-[10px] font-black ${redeemPoints ? "bg-emerald-600 text-white" : "bg-amber-400 text-black"}`}>
-                  {redeemPoints ? "✓ تم تطبيق خصم النقاط" : "اضغط هنا لاستبدال النقاط بخصم فوري"}
-                </button>
-              </div>
-            )}
-
             <div className="space-y-1 pt-2 border-t border-white/10 text-xs">
               <div className="flex justify-between text-gray-300"><span>حساب المأكولات:</span><span>{money(cartTotal)}</span></div>
               {discountAmount > 0 && <div className="flex justify-between text-emerald-400"><span>خصم الكوبون (-{appliedDiscountPercent}%):</span><span>-{money(discountAmount)}</span></div>}
-              {redeemPoints && pointsDiscountValue > 0 && <div className="flex justify-between text-emerald-400"><span>خصم النقاط:</span><span>-{money(pointsDiscountValue)}</span></div>}
               <div className="flex justify-between text-gray-300"><span>توصيل لـ ({selectedAreaIndex >= 0 ? activeDeliveryArea.name : "لم تحدد"}):</span><span>{money(activeDeliveryArea.price)}</span></div>
               <div className="flex justify-between pt-2 text-sm font-black border-t border-white/10"><span>الإجمالي النهائي:</span><span className="text-amber-400 text-base">{money(finalTotal)}</span></div>
             </div>
@@ -951,7 +921,7 @@ export default function RestaurantMenu() {
                 <div>
                   <h2 className="text-base font-black text-amber-400 flex items-center gap-1.5">
                     <span>الرئيسية | لوحة تحكم دريم كورنر</span>
-                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v10.1</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v12.0</span>
                   </h2>
                   <p className="text-[10px] text-gray-400">مرحباً بك في لوحة التحكّم والذكاء المالي 👋</p>
                 </div>
@@ -1047,6 +1017,45 @@ export default function RestaurantMenu() {
                         </div>
                       </div>
                     </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="p-4 rounded-2xl bg-[#141721] border border-white/5 space-y-3">
+                        <h3 className="text-xs font-bold text-gray-300 flex items-center gap-2"><PieChart size={15} className="text-sky-400" /><span>توزيع طرق الدفع</span></h3>
+                        <div className="text-xs space-y-2 font-bold py-2">
+                          <p>💵 كاش: <span className="text-amber-400">{money(reportsAnalytics.cashSales)}</span></p>
+                          <p>📱 إلكتروني: <span className="text-emerald-400">{money(reportsAnalytics.electronicSales)}</span></p>
+                        </div>
+                      </div>
+
+                      <div className="p-4 rounded-2xl bg-[#141721] border border-white/5 space-y-3">
+                        <h3 className="text-xs font-bold text-gray-300 flex items-center gap-2"><Clock size={15} className="text-purple-400" /><span>ساعات الذروة والضغط</span></h3>
+                        <div className="grid grid-cols-2 gap-2">
+                          {reportsAnalytics.peakHours.map((h, i) => (
+                            <div key={i} className="p-2 rounded-xl bg-[#1C202E] text-center"><span className="text-xs font-bold text-purple-300 block">{h.hour}</span><span className="text-[9px] text-emerald-400 font-bold">{h.count} أوردر</span></div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/15 via-[#141721] to-[#141721] border border-amber-500/30 space-y-2">
+                        <h3 className="text-xs font-black text-amber-400 flex items-center gap-1.5"><Trophy size={16} /><span>العميل الذهبي 👑</span></h3>
+                        {reportsAnalytics.goldenCustomer && (
+                          <div className="pt-1 text-xs"><p className="font-bold text-white">{reportsAnalytics.goldenCustomer.name}</p><p className="text-[10px] text-gray-400">📱 {reportsAnalytics.goldenCustomer.phone}</p><p className="text-emerald-400 font-bold pt-1">{money(reportsAnalytics.goldenCustomer.spent)} إجمالي المشتريات</p></div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-[#141721] border border-white/5 space-y-3">
+                      <h3 className="text-xs font-bold text-gray-300 flex items-center gap-2"><ShoppingCart size={15} className="text-amber-400" /><span>سجل وتفاصيل الطلبات الأخيرة ({filteredReportsData.length})</span></h3>
+                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                        {filteredReportsData.slice().reverse().map((row, idx) => (
+                          <div key={idx} className="p-3 rounded-xl bg-[#1C202E] border border-white/5 text-xs flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                            <div><span className="font-bold text-white">{row["اسم العميل"] || "عميل"}</span> <span className="text-[10px] text-gray-400">({row["رقم الموبايل"]})</span><p className="text-[10px] text-gray-400">📍 {row["المنطقة / القرية"]} · 🕒 {row["التاريخ والوقت"]}</p></div>
+                            <div className="text-left"><span className="text-sm font-black text-amber-400 block">{money(row["الإجمالي النهائي"])}</span><span className="text-[9px] text-gray-400 truncate block max-w-xs">{row["تفاصيل الطلبات"]}</span></div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
                   </div>
                 )}
 
