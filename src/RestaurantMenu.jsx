@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "11.0"; // v11.0: أنيميشن طيران السلة + أشرطة Ribbon الأكثر طلباً + أيقونة بطاطس
+const MENU_VERSION = "10.1"; // v11.1: إصلاح أخطاء الـ Syntax والربط الكامل
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbybuw8CuUGV-hf_ecUyevpGB5YioMKCdeOP3PxSKKuzGgMmtcfbHyrd0F81eJg3Z_U/exec";
 
 const THEMES = [
@@ -153,7 +153,7 @@ export default function RestaurantMenu() {
   const [copied, setCopied] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [closeNoticeOpen, setCloseNoticeOpen] = useState(false);
-  const [animateCart, setAnimateCart] = useState(false); // انيميشن طيران السلة
+  const [animateCart, setAnimateCart] = useState(false);
 
   const [deliveryAreas, setDeliveryAreas] = useState(DEFAULT_DELIVERY_AREAS);
   const [newAreaName, setNewAreaName] = useState("");
@@ -226,7 +226,6 @@ export default function RestaurantMenu() {
   const cartCount = useMemo(() => cartList.reduce((s, i) => s + i.qty, 0), [cartList]);
   const cartTotal = useMemo(() => cartList.reduce((s, i) => s + i.qty * i.price, 0), [cartList]);
 
-  // 🟢 المطلوب 1: دالة إضافة المنتجات مع تشغيل أنيميشن النبضة للطيران
   const addToCart = (key, delta) => {
     setCart((c) => {
       const nextCart = { ...c };
@@ -451,7 +450,8 @@ export default function RestaurantMenu() {
           if (savedAddress) setCustomerAddress(savedAddress);
           if (savedPoints) setUserPoints(Number(savedPoints));
         }
-      } catch (e) { console.error(e); } setLoaded(true);
+      } catch (e) { console.error("Storage error", e); }
+      setLoaded(true);
     })();
   }, []);
 
@@ -538,7 +538,6 @@ export default function RestaurantMenu() {
               <LayoutGrid size={15} /> <span>لوحة التحكم</span>
             </button>
           )}
-          {/* 🟢 أنيميشن النبضة والطيران للسلة */}
           <button onClick={() => setCartOpen(true)} className={`p-2 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-400 relative transition-transform duration-300 ${animateCart ? "scale-125 bg-amber-400 text-black" : ""}`}>
             <ShoppingCart size={16} />
             {cartCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-400 text-black text-[9px] font-black rounded-full flex items-center justify-center">{cartCount}</span>}
@@ -583,7 +582,7 @@ export default function RestaurantMenu() {
         </div>
       </section>
 
-      {/* CATEGORIES NAV BAR (🟢 المطلوبة 2: تغيير أيقونة الأصناف الجانبية لباكيت بطاطس 🍟) */}
+      {/* CATEGORIES NAV BAR */}
       <nav className="sticky top-[100px] z-20 bg-[#08090C]/95 backdrop-blur-md border-y border-white/10 py-3 px-4">
         <div className="max-w-3xl mx-auto flex gap-2 overflow-x-auto no-scrollbar">
           {categories.map((c) => (
@@ -624,7 +623,7 @@ export default function RestaurantMenu() {
         </div>
       </section>
 
-      {/* 🟢 المطلوبة 3: استبدال الأرقام بـ Ribbon أسطوري "🔥 الأكثر طلباً" على زاوية الكارت */}
+      {/* BEST SELLERS SECTION */}
       {bestSellerItems.length > 0 && activeCat === "الكل" && !searchQuery.trim() && (
         <section className="max-w-3xl mx-auto px-4 pt-7 space-y-3">
           <div className="flex items-center justify-between">
@@ -638,7 +637,6 @@ export default function RestaurantMenu() {
             {bestSellerItems.map((item) => (
               <div key={item.id} className="bg-[#111319] border border-white/10 rounded-3xl p-3.5 flex flex-col justify-between relative shadow-lg hover:border-amber-500/40 transition-all overflow-hidden">
                 
-                {/* 🟢 Ribbon شريط مائل ذكي على الزاوية بدل الرقم */}
                 <div className="absolute top-2.5 -left-7 rotate-[-35deg] bg-gradient-to-r from-red-600 via-amber-500 to-yellow-400 text-black font-black text-[8px] px-7 py-0.5 shadow-md border-y border-amber-300/40 z-10 flex items-center justify-center gap-0.5">
                   🔥 الأكثر طلباً
                 </div>
@@ -763,7 +761,7 @@ export default function RestaurantMenu() {
         </span>
       </div>
 
-      {/* FLOATING CART BUTTON (مع أنيميشن النبضة) */}
+      {/* FLOATING CART BUTTON */}
       {cartCount > 0 && (
         <div className="fixed bottom-20 inset-x-0 z-30 px-4">
           <div onClick={() => setCartOpen(true)} className={`max-w-md mx-auto bg-amber-400 text-black p-3 rounded-2xl shadow-2xl flex items-center justify-between cursor-pointer active:scale-98 transition-all duration-300 ${animateCart ? "scale-105 shadow-amber-500/50 ring-2 ring-amber-300" : ""}`}>
@@ -953,7 +951,7 @@ export default function RestaurantMenu() {
                 <div>
                   <h2 className="text-base font-black text-amber-400 flex items-center gap-1.5">
                     <span>الرئيسية | لوحة تحكم دريم كورنر</span>
-                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v11.0</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v10.1</span>
                   </h2>
                   <p className="text-[10px] text-gray-400">مرحباً بك في لوحة التحكّم والذكاء المالي 👋</p>
                 </div>
@@ -1052,7 +1050,6 @@ export default function RestaurantMenu() {
                   </div>
                 )}
 
-                {/* باقي التبويبات */}
                 {adminTab === "items" && (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between mb-3"><p className="font-bold text-sm text-amber-400">إدارة الأصناف والأسعار</p><button onClick={addNewItem} className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full bg-amber-500 text-black"><PlusCircle size={14} /> إضافة صنف</button></div>
@@ -1092,7 +1089,7 @@ export default function RestaurantMenu() {
                 )}
 
                 {adminTab === "settings" && (
-                  <div className="space-y-3 max-w-lg mx-auto text-xs">
+                  <div className="space-y-3 max-w-lg mx-auto text-xs space-y-3">
                     <p className="font-bold text-sm text-amber-400 mb-2">إعدادات الهوية والأمان والمحافظ</p>
                     <label className="block space-y-1"><span className="text-gray-300 font-bold">اسم المطعم:</span><input value={restaurantName} onChange={e => setRestaurantName(e.target.value)} className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
                     <label className="block space-y-1"><span className="text-gray-300 font-bold">الشعار الفرعي (Slogan):</span><input value={tagline} onChange={e => setTagline(e.target.value)} className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
