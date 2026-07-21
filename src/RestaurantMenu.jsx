@@ -3,11 +3,12 @@ import restaurantLogo from "./assets/logo.png";
 import {
   ShoppingCart, Plus, Minus, X, Pencil, Trash2, Check, Copy,
   QrCode, Settings, Phone, CreditCard, Sparkles, Search, RotateCcw,
-  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation, Award, Calendar, DollarSign, Wallet, Flame
+  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation, Award, Calendar, DollarSign, Wallet, Flame, BarChart3, RefreshCw, Share2, TrendingUp, Users
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "3.9"; // تحديث الإصدار لإلغاء سيستم التثبيت وتنظيف الواجهة بالكامل
+const MENU_VERSION = "4.0"; // النسخة الذهبية: ربط Google Sheets + لوحة تقارير ومبيعات متكاملة
+const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbybuw8CuUGV-hf_ecUyevpGB5YioMKCdeOP3PxSKKuzGgMmtcfbHyrd0F81eJg3Z_U/exec";
 
 const THEMES = [
   { id: "brand", name: "هوية دريم كورنر", bg: "#0A0A0A", surface: "#141414", surface2: "#1F1F1F", accent: "#D4AF37", accent2: "#8B1E1E", text: "#F3E9D8", muted: "#A3A3A3", display: "'Tajawal', sans-serif" },
@@ -134,6 +135,7 @@ export default function RestaurantMenu() {
   const [cart, setCart] = useState({});
   const [cartOpen, setCartOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
+  const [adminTab, setAdminTab] = useState("reports"); // 'reports' or 'settings' or 'items'
   const [qrOpen, setQrOpen] = useState(false);
   const [themePickerOpen, setThemePickerOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -179,6 +181,10 @@ export default function RestaurantMenu() {
   const [enteredPin, setEnteredPin] = useState("");
   const [pinError, setPinError] = useState("");
   const [logoClicks, setLogoClicks] = useState(0);
+
+  // حالة التقارير
+  const [reportsData, setReportsData] = useState([]);
+  const [reportsLoading, setReportsLoading] = useState(false);
   
   const saveTimer = useRef(null);
 
@@ -229,6 +235,79 @@ export default function RestaurantMenu() {
   const qrSrc = useMemo(() => {
     return "https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=8&data=" + encodeURIComponent(menuUrl);
   }, [menuUrl]);
+
+  const fetchReportsFromSheet = async () => {
+    setReportsLoading(true);
+    try {
+      const res = await fetch(GOOGLE_SHEET_SCRIPT_URL + "?pin=" + adminPin);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setReportsData(data);
+      }
+    } catch (e) {
+      console.error("Failed to fetch reports", e);
+    } finally {
+      setReportsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (adminOpen && adminTab === "reports") {
+      fetchReportsFromSheet();
+    }
+  }, [adminOpen, adminTab]);
+
+  const reportsAnalytics = useMemo(() => {
+    if (!reportsData || reportsData.length === 0) {
+      return { totalOrders: 0, totalSales: 0, totalDelivery: 0, netTotal: 0, cashSales: 0, electronicSales: 0, topArea: "لا يوجد" };
+    }
+    
+    let totalSales = 0;
+    let totalDelivery = 0;
+    let netTotal = 0;
+    let cashSales = 0;
+    let electronicSales = 0;
+    const areasMap = {};
+
+    reportsData.forEach(row => {
+      const cartVal = Number(row["حساب الأكل الأصلي"]) || 0;
+      const delVal = Number(row["مصاريف التوصيل"]) || 0;
+      const finalVal = Number(row["الإجمالي النهائي"]) || 0;
+      const area = row["المنطقة / القرية"] || "غير محدد";
+      const pay = row["طريقة الدفع"] || "";
+
+      totalSales += cartVal;
+      totalDelivery += delVal;
+      netTotal += finalVal;
+
+      if (pay.includes("إلكتروني")) {
+        electronicSales += finalVal;
+      } else {
+        cashSales += finalVal;
+      }
+
+      areasMap[area] = (areasMap[area] || 0) + 1;
+    });
+
+    let topArea = "غير محدد";
+    let maxCount = 0;
+    Object.entries(areasMap).forEach(([a, count]) => {
+      if (count > maxCount) {
+        maxCount = count;
+        topArea = a;
+      }
+    });
+
+    return {
+      totalOrders: reportsData.length,
+      totalSales,
+      totalDelivery,
+      netTotal,
+      cashSales,
+      electronicSales,
+      topArea: topArea + " (" + maxCount + " أوردر)"
+    };
+  }, [reportsData]);
 
   const handleLogoClickLocal = () => {
     setLogoClicks((prev) => {
@@ -488,10 +567,37 @@ export default function RestaurantMenu() {
       localStorage.setItem("customer-points-loyalty", updatedPoints.toString());
     }
 
+    const itemsSummary = cartList.map((cartItem) => cartItem.label + " x" + cartItem.qty).join(" | ");
     const lines = cartList.map((cartItem) => "• " + cartItem.label + " x" + cartItem.qty + " — " + money(cartItem.price * cartItem.qty));
     
     const deliveryTimeText = scheduleType === "now" ? "⚡ توصيل فوري (الآن)" : "🕒 مجدول للموعد: " + scheduleTime;
     const paymentText = paymentMethod === "cash" ? "💵 نقدي (كاش عند الاستلام)" : "📱 دفع إلكتروني (فودافون كاش / إنستا باي)";
+
+    // إرسال بيانات الأوردر فوراً إلى Google Sheet في الخلفية
+    try {
+      fetch(GOOGLE_SHEET_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          timestamp: new Date().toLocaleString("ar-EG"),
+          customerName: customerName.trim(),
+          customerPhone: customerPhone.trim(),
+          area: activeDeliveryArea.name,
+          address: customerAddress.trim(),
+          paymentMethod: paymentText,
+          schedule: deliveryTimeText,
+          itemsSummary: itemsSummary,
+          cartTotal: cartTotal,
+          couponDiscount: discountAmount,
+          pointsDiscount: pointsDiscountValue,
+          deliveryPrice: activeDeliveryArea.price,
+          finalTotal: finalTotal
+        })
+      });
+    } catch (e) {
+      console.error("Sheet API Send Error:", e);
+    }
 
     let text = "طلب جديد من منيو " + restaurantName + " 🍽\n\n" + 
                "👤 اسم العميل: " + customerName + "\n" +
@@ -553,6 +659,22 @@ export default function RestaurantMenu() {
     setShowResetConfirm(false);
   };
 
+  const sendZReportToWhatsApp = () => {
+    const zText = "📊 تقرير تقفيل الخزنة والوردية (Z-Report) - " + restaurantName + "\n\n" +
+                  "🛒 إجمالي الأوردرات: " + reportsAnalytics.totalOrders + " أوردر\n" +
+                  "💵 مبيعات المأكولات: " + money(reportsAnalytics.totalSales) + "\n" +
+                  "🛵 إيرادات التوصيل: " + money(reportsAnalytics.totalDelivery) + "\n" +
+                  "💰 صافي الدخل الكلي: " + money(reportsAnalytics.netTotal) + "\n\n" +
+                  "💳 تحليلات طرق الدفع:\n" +
+                  "• كاش عند الاستلام: " + money(reportsAnalytics.cashSales) + "\n" +
+                  "• دفع إلكتروني (محافظ): " + money(reportsAnalytics.electronicSales) + "\n\n" +
+                  "📍 القرية الأكثر طلباً: " + reportsAnalytics.topArea + "\n" +
+                  "✨ التقرير مستخرج أوتوماتيكياً عبر Google Sheets!";
+
+    const phone = whatsappNumber.replace(/[^\d+]/g, "");
+    window.open("https://wa.me/" + phone + "?text=" + encodeURIComponent(zText), "_blank");
+  };
+
   const getCategoryIcon = (categoryName) => {
     switch (categoryName) {
       case "الكل": return "🍽";
@@ -590,7 +712,7 @@ export default function RestaurantMenu() {
               <>
                 <button onClick={() => setThemePickerOpen(true)} className="p-2 rounded-full border border-green-500/30 text-green-500 bg-green-500/5 transition-all hover:bg-green-500/10 active:scale-95" title="تغيير المظهر"><Palette size={18} /></button>
                 <button onClick={() => setQrOpen(true)} className="p-2 rounded-full border border-green-500/30 text-green-500 bg-green-500/5 transition-all hover:bg-green-500/10 active:scale-95" title="عرض QR"><QrCode size={18} /></button>
-                <button onClick={() => setAdminOpen(true)} className="p-2 rounded-full border border-green-500/50 text-green-500 bg-green-500/10 transition-all hover:bg-green-500/20 active:scale-95 animate-pulse" title="إعدادات المنيو والأسعار"><Settings size={18} /></button>
+                <button onClick={() => setAdminOpen(true)} className="p-2 rounded-full border border-green-500/50 text-green-500 bg-green-500/10 transition-all hover:bg-green-500/20 active:scale-95 animate-pulse" title="لوحة الإدارة والتقارير"><Settings size={18} /></button>
                 <button onClick={() => setIsAdmin(false)} className="p-2 rounded-full border border-red-500/30 text-red-500 bg-red-500/5 transition-all hover:bg-red-500/10 active:scale-95" title="خروج من وضع الإدارة"><LogOut size={16} /></button>
               </>
             )}
@@ -1115,63 +1237,134 @@ export default function RestaurantMenu() {
         </Overlay>
       )}
 
+      {/* ===================== ADMIN DASHBOARD WITH REPORTS ===================== */}
       {adminOpen && (
         <Overlay onClose={() => setAdminOpen(false)}>
-          <Sheet theme={theme} title="إعدادات الإدارة والأسعار" onClose={() => setAdminOpen(false)}>
-            <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
-              <Field label="اسم المطعم" value={restaurantName} onChange={setRestaurantName} theme={theme} />
-              <Field label="الشعار الفرعي للمنيو" value={tagline} onChange={setTagline} theme={theme} />
-              <Field label="العنوان الجغرافي" value={address} onChange={setAddress} theme={theme} />
-              <Field label="رقم واتساب الاستقبال" value={whatsappNumber} onChange={setWhatsappNumber} theme={theme} dir="ltr" hint="بالصيغة الدولية مثال: +201006113627" />
-              <Field label="رقم فودافون كاش" value={vodafoneCash} onChange={setVodafoneCash} theme={theme} dir="ltr" />
-              <Field label="حساب InstaPay" value={instapay} onChange={setInstapay} theme={theme} dir="ltr" />
-              <Field label="رمز الأمان للإدارة (PIN)" value={adminPin} onChange={setAdminPin} theme={theme} dir="ltr" />
+          <Sheet theme={theme} title="لوحة إدارة دريم كورنر 👑" onClose={() => setAdminOpen(false)}>
+            {/* أزرار التبويبات العلوي للإدارة */}
+            <div className="flex gap-1 p-1 rounded-xl mb-4 border" style={{ background: theme.surface2, borderColor: theme.muted + "20" }}>
+              <button 
+                onClick={() => setAdminTab("reports")} 
+                className="flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1"
+                style={adminTab === "reports" ? { background: theme.accent, color: theme.bg } : { color: theme.muted }}
+              >
+                <BarChart3 size={14} />
+                <span>التقارير</span>
+              </button>
+              <button 
+                onClick={() => setAdminTab("items")} 
+                className="flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1"
+                style={adminTab === "items" ? { background: theme.accent, color: theme.bg } : { color: theme.muted }}
+              >
+                <PlusCircle size={14} />
+                <span>المنيو والأسعار</span>
+              </button>
+              <button 
+                onClick={() => setAdminTab("settings")} 
+                className="flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1"
+                style={adminTab === "settings" ? { background: theme.accent, color: theme.bg } : { color: theme.muted }}
+              >
+                <Settings size={14} />
+                <span>الإعدادات</span>
+              </button>
+            </div>
 
-              <div className="pt-4 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
-                <p className="font-bold text-sm mb-2">إدارة قرى ومناطق التوصيل (الدليفري)</p>
-                <div className="bg-black/20 p-3 rounded-xl border border-[#1F1F1F] space-y-2 mb-3">
-                  <div className="grid grid-cols-2 gap-2">
-                    <input type="text" placeholder="اسم القرية" value={newAreaName} onChange={(e) => setNewAreaName(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
-                    <input type="number" placeholder="سعر التوصيل" value={newAreaPrice} onChange={(e) => setNewAreaPrice(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
-                  </div>
-                  <button onClick={handleAddDeliveryArea} className="w-full py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><PlusCircle size={13}/>إضافة المنطقة</button>
+            {/* TAB 1: REPORTS & ANALYTICS */}
+            {adminTab === "reports" && (
+              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold opacity-80" style={{ color: theme.muted }}>تقارير المبيعات المسجلة أوتوماتيكياً:</span>
+                  <button onClick={fetchReportsFromSheet} className="p-1.5 rounded-lg border text-xs font-bold flex items-center gap-1" style={{ borderColor: theme.accent, color: theme.accent }}>
+                    <RefreshCw size={12} className={reportsLoading ? "animate-spin" : ""} />
+                    <span>تحديث</span>
+                  </button>
                 </div>
-                <div className="space-y-1.5 max-h-[15vh] overflow-y-auto pr-1">
-                  {deliveryAreas.map((area, idx) => (
-                    <div key={idx} className="flex items-center justify-between text-xs p-2 rounded-lg bg-black/10 border border-[#1F1F1F]">
-                      <span className="font-medium">{area.name} · <span style={{ color: theme.accent }}>{money(area.price)}</span></span>
-                      <button onClick={() => handleRemoveDeliveryArea(idx)} className="p-1 rounded-full text-red-500 border border-red-500/20 bg-red-500/5"><Trash2 size={12}/></button>
-                    </div>
-                  ))}
-                </div>
-              </div>
 
-              <div className="pt-4 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
-                <p className="font-bold text-sm mb-2">إدارة كوبونات الخصم والكمية (Promo Codes)</p>
-                <div className="bg-black/20 p-3 rounded-xl border border-[#1F1F1F] space-y-2 mb-3">
-                  <div className="grid grid-cols-3 gap-2">
-                    <input type="text" placeholder="الكود" value={newPromoCode} onChange={(e) => setNewPromoCode(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs uppercase" style={{ borderColor: theme.muted + "40", color: theme.text }} />
-                    <input type="number" placeholder="الخصم %" value={newPromoDiscount} onChange={(e) => setNewPromoDiscount(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
-                    <input type="number" placeholder="أقصى عدد استخدام" value={newPromoLimit} onChange={(e) => setNewPromoLimit(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
+                {reportsLoading ? (
+                  <div className="text-center py-8 space-y-2">
+                    <RefreshCw size={24} className="animate-spin mx-auto text-amber-500" />
+                    <p className="text-xs opacity-70">جاري جلب إحصائيات الأوردرات من Google Sheets...</p>
                   </div>
-                  <button onClick={handleAddPromoCode} className="w-full py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><PlusCircle size={13}/>إضافة الكود بالكمية</button>
-                </div>
-                <div className="space-y-1.5 max-h-[15vh] overflow-y-auto pr-1">
-                  {promoCodes.map((promo, idx) => (
-                    <div key={idx} className="flex items-center justify-between text-xs p-2 rounded-lg bg-black/10 border border-[#1F1F1F]">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="font-bold text-green-500">{promo.code} · <span className="font-medium text-white">خصم {promo.discount}%</span></span>
-                        <span className="text-[10px]" style={{ color: theme.muted }}>
-                          الاستخدامات: {promo.used || 0} من {promo.limit || 0} (المتبقي: {Math.max(0, (promo.limit || 0) - (promo.used || 0))})
-                        </span>
+                ) : (
+                  <>
+                    {/* KPI Cards */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-3 rounded-xl border flex flex-col justify-between" style={{ background: theme.surface2, borderColor: theme.accent + "30" }}>
+                        <span className="text-[10px] opacity-70" style={{ color: theme.muted }}>إجمالي عدد الطلبات</span>
+                        <span className="text-lg font-black mt-1" style={{ color: theme.accent }}>{reportsAnalytics.totalOrders} أوردر</span>
                       </div>
-                      <button onClick={() => handleRemovePromoCode(idx)} className="p-1 rounded-full text-red-500 border border-red-500/20 bg-red-500/5"><Trash2 size={12}/></button>
+                      <div className="p-3 rounded-xl border flex flex-col justify-between" style={{ background: theme.surface2, borderColor: theme.accent + "30" }}>
+                        <span className="text-[10px] opacity-70" style={{ color: theme.muted }}>صافي المبيعات الكلي</span>
+                        <span className="text-lg font-black mt-1 text-green-500">{money(reportsAnalytics.netTotal)}</span>
+                      </div>
+                      <div className="p-3 rounded-xl border flex flex-col justify-between" style={{ background: theme.surface2, borderColor: theme.accent + "30" }}>
+                        <span className="text-[10px] opacity-70" style={{ color: theme.muted }}>حساب الأكل الأصلي</span>
+                        <span className="text-sm font-bold mt-1">{money(reportsAnalytics.totalSales)}</span>
+                      </div>
+                      <div className="p-3 rounded-xl border flex flex-col justify-between" style={{ background: theme.surface2, borderColor: theme.accent + "30" }}>
+                        <span className="text-[10px] opacity-70" style={{ color: theme.muted }}>إيرادات الدليفري</span>
+                        <span className="text-sm font-bold mt-1">{money(reportsAnalytics.totalDelivery)}</span>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </div>
 
-              <div className="pt-4 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
+                    <div className="p-3 rounded-xl border space-y-2" style={{ background: theme.surface2, borderColor: theme.accent + "20" }}>
+                      <p className="text-[11px] font-bold flex items-center gap-1" style={{ color: theme.accent }}>
+                        <TrendingUp size={14} />
+                        <span>تحليلات إضافية:</span>
+                      </p>
+                      <div className="text-xs space-y-1 opacity-90">
+                        <div className="flex justify-between">
+                          <span>القرية الأكثر طلباً:</span>
+                          <span className="font-bold text-amber-500">{reportsAnalytics.topArea}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>مبيعات الكاش عند الاستلام:</span>
+                          <span className="font-bold">{money(reportsAnalytics.cashSales)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>مبيعات المحافظ الإلكترونية:</span>
+                          <span className="font-bold text-green-400">{money(reportsAnalytics.electronicSales)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button 
+                      onClick={sendZReportToWhatsApp}
+                      className="w-full py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow bg-emerald-600 text-white"
+                    >
+                      <Share2 size={14} />
+                      <span>تصدير تقرير تقفيل الخزنة (Z-Report) للواتساب</span>
+                    </button>
+
+                    {/* جدول الطلبات بالتفصيل */}
+                    <div className="space-y-2 pt-2 border-t" style={{ borderColor: theme.muted + "20" }}>
+                      <p className="text-xs font-bold" style={{ color: theme.accent }}>سجل الطلبات الأخيرة:</p>
+                      <div className="space-y-2 max-h-[30vh] overflow-y-auto pr-1">
+                        {reportsData.slice().reverse().map((row, idx) => (
+                          <div key={idx} className="p-2.5 rounded-xl border text-xs space-y-1" style={{ background: theme.surface, borderColor: theme.muted + "20" }}>
+                            <div className="flex justify-between font-bold">
+                              <span>{row["اسم العميل"] || "عميل"} ({row["رقم الموبايل"]})</span>
+                              <span style={{ color: theme.accent }}>{money(row["الإجمالي النهائي"])}</span>
+                            </div>
+                            <div className="text-[10px] opacity-70 flex justify-between" style={{ color: theme.muted }}>
+                              <span>📍 {row["المنطقة / القرية"]}</span>
+                              <span>🕒 {row["التاريخ والوقت"]}</span>
+                            </div>
+                            <p className="text-[10px] opacity-80 line-clamp-1 border-t pt-1 mt-1" style={{ borderColor: theme.muted + "10" }}>
+                              🍽 {row["تفاصيل الطلبات"]}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* TAB 2: MENU ITEMS EDITING */}
+            {adminTab === "items" && (
+              <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
                 <div className="flex items-center justify-between mb-3">
                   <p className="font-bold text-sm">قائمة المأكولات والأصناف</p>
                   <button onClick={addNewItem} className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full" style={{ background: theme.accent, color: theme.bg }}><PlusCircle size={14} /> إضافة صنف</button>
@@ -1224,10 +1417,68 @@ export default function RestaurantMenu() {
                   ))}
                 </div>
               </div>
-              <div className="pt-4 mt-2 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
-                <button onClick={() => setShowResetConfirm(true)} className="w-full py-2.5 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 text-red-500 border-red-500/30"><RotateCcw size={14} /> إعادة تعيين منيو دريم كورنر الافتراضي</button>
+            )}
+
+            {/* TAB 3: RESTAURANT SETTINGS */}
+            {adminTab === "settings" && (
+              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+                <Field label="اسم المطعم" value={restaurantName} onChange={setRestaurantName} theme={theme} />
+                <Field label="الشعار الفرعي للمنيو" value={tagline} onChange={setTagline} theme={theme} />
+                <Field label="العنوان الجغرافي" value={address} onChange={setAddress} theme={theme} />
+                <Field label="رقم واتساب الاستقبال" value={whatsappNumber} onChange={setWhatsappNumber} theme={theme} dir="ltr" hint="بالصيغة الدولية مثال: +201006113627" />
+                <Field label="رقم فودافون كاش" value={vodafoneCash} onChange={setVodafoneCash} theme={theme} dir="ltr" />
+                <Field label="حساب InstaPay" value={instapay} onChange={setInstapay} theme={theme} dir="ltr" />
+                <Field label="رمز الأمان للإدارة (PIN)" value={adminPin} onChange={setAdminPin} theme={theme} dir="ltr" />
+
+                <div className="pt-4 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
+                  <p className="font-bold text-sm mb-2">إدارة قرى ومناطق التوصيل (الدليفري)</p>
+                  <div className="bg-black/20 p-3 rounded-xl border border-[#1F1F1F] space-y-2 mb-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <input type="text" placeholder="اسم القرية" value={newAreaName} onChange={(e) => setNewAreaName(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
+                      <input type="number" placeholder="سعر التوصيل" value={newAreaPrice} onChange={(e) => setNewAreaPrice(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
+                    </div>
+                    <button onClick={handleAddDeliveryArea} className="w-full py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><PlusCircle size={13}/>إضافة المنطقة</button>
+                  </div>
+                  <div className="space-y-1.5 max-h-[15vh] overflow-y-auto pr-1">
+                    {deliveryAreas.map((area, idx) => (
+                      <div key={idx} className="flex items-center justify-between text-xs p-2 rounded-lg bg-black/10 border border-[#1F1F1F]">
+                        <span className="font-medium">{area.name} · <span style={{ color: theme.accent }}>{money(area.price)}</span></span>
+                        <button onClick={() => handleRemoveDeliveryArea(idx)} className="p-1 rounded-full text-red-500 border border-red-500/20 bg-red-500/5"><Trash2 size={12}/></button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
+                  <p className="font-bold text-sm mb-2">إدارة كوبونات الخصم والكمية (Promo Codes)</p>
+                  <div className="bg-black/20 p-3 rounded-xl border border-[#1F1F1F] space-y-2 mb-3">
+                    <div className="grid grid-cols-3 gap-2">
+                      <input type="text" placeholder="الكود" value={newPromoCode} onChange={(e) => setNewPromoCode(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs uppercase" style={{ borderColor: theme.muted + "40", color: theme.text }} />
+                      <input type="number" placeholder="الخصم %" value={newPromoDiscount} onChange={(e) => setNewPromoDiscount(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
+                      <input type="number" placeholder="أقصى عدد استخدام" value={newPromoLimit} onChange={(e) => setNewPromoLimit(e.target.value)} className="px-2 py-1.5 rounded-lg border bg-transparent text-xs" style={{ borderColor: theme.muted + "40", color: theme.text }} />
+                    </div>
+                    <button onClick={handleAddPromoCode} className="w-full py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><PlusCircle size={13}/>إضافة الكود بالكمية</button>
+                  </div>
+                  <div className="space-y-1.5 max-h-[15vh] overflow-y-auto pr-1">
+                    {promoCodes.map((promo, idx) => (
+                      <div key={idx} className="flex items-center justify-between text-xs p-2 rounded-lg bg-black/10 border border-[#1F1F1F]">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="font-bold text-green-500">{promo.code} · <span className="font-medium text-white">خصم {promo.discount}%</span></span>
+                          <span className="text-[10px]" style={{ color: theme.muted }}>
+                            الاستخدامات: {promo.used || 0} من {promo.limit || 0} (المتبقي: {Math.max(0, (promo.limit || 0) - (promo.used || 0))})
+                          </span>
+                        </div>
+                        <button onClick={() => handleRemovePromoCode(idx)} className="p-1 rounded-full text-red-500 border border-red-500/20 bg-red-500/5"><Trash2 size={12}/></button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-4 mt-2 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
+                  <button onClick={() => setShowResetConfirm(true)} className="w-full py-2.5 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 text-red-500 border-red-500/30"><RotateCcw size={14} /> إعادة تعيين منيو دريم كورنر الافتراضي</button>
+                </div>
               </div>
-            </div>
+            )}
           </Sheet>
         </Overlay>
       )}
