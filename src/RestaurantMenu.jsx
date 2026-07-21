@@ -3,11 +3,11 @@ import restaurantLogo from "./assets/logo.png";
 import {
   ShoppingCart, Plus, Minus, X, Pencil, Trash2, Check, Copy,
   QrCode, Settings, Phone, CreditCard, Sparkles, Search, RotateCcw,
-  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation, Award, Calendar, DollarSign, Wallet, Flame, BarChart3, RefreshCw, Share2, TrendingUp, Download, PieChart, Crown, Clock, CheckCircle2
+  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation, Award, Calendar, DollarSign, Wallet, Flame, BarChart3, RefreshCw, Share2, TrendingUp, Download, PieChart, Crown, Clock, Bike, Utensils, Trophy, Gem, Users
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "4.2"; // التحديث الذهبي الشامل لصفحة التقارير والتحليلات
+const MENU_VERSION = "4.4"; // الإصدار v4.4: الوسام الذهبي لأكثر العملاء شراءً + الحساب المجمل لكل عميل
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbybuw8CuUGV-hf_ecUyevpGB5YioMKCdeOP3PxSKKuzGgMmtcfbHyrd0F81eJg3Z_U/exec";
 
 const THEMES = [
@@ -135,7 +135,7 @@ export default function RestaurantMenu() {
   const [cart, setCart] = useState({});
   const [cartOpen, setCartOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
-  const [adminTab, setAdminTab] = useState("reports"); // 'reports' or 'settings' or 'items'
+  const [adminTab, setAdminTab] = useState("reports");
   const [qrOpen, setQrOpen] = useState(false);
   const [themePickerOpen, setThemePickerOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -182,12 +182,11 @@ export default function RestaurantMenu() {
   const [pinError, setPinError] = useState("");
   const [logoClicks, setLogoClicks] = useState(0);
 
-  // حالات التقارير والفلترة
+  // حالات التقارير والعملاء v4.4
   const [reportsData, setReportsData] = useState([]);
   const [reportsLoading, setReportsLoading] = useState(false);
-  const [reportDateFilter, setReportDateFilter] = useState("all"); // 'today', 'yesterday', 'week', 'all'
+  const [reportDateFilter, setReportDateFilter] = useState("all");
   const [reportSearchQuery, setReportSearchQuery] = useState("");
-  const [dailyTarget, setDailyTarget] = useState(3000); // هدف المبيعات اليومي
 
   const saveTimer = useRef(null);
   const status = checkRestaurantStatus();
@@ -259,7 +258,6 @@ export default function RestaurantMenu() {
     }
   }, [adminOpen, adminTab]);
 
-  // تصفية بيانات التقارير بناءً على التاريخ والبحث
   const filteredReportsData = useMemo(() => {
     if (!reportsData || reportsData.length === 0) return [];
 
@@ -270,13 +268,9 @@ export default function RestaurantMenu() {
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toLocaleDateString("ar-EG");
 
-    const weekAgo = new Date(now);
-    weekAgo.setDate(weekAgo.getDate() - 7);
-
     return reportsData.filter(row => {
       const dateStr = row["التاريخ والوقت"] || "";
       
-      // فلتر التاريخ
       let passesDate = true;
       if (reportDateFilter === "today") {
         passesDate = dateStr.includes(todayStr) || dateStr.startsWith(todayStr);
@@ -284,7 +278,6 @@ export default function RestaurantMenu() {
         passesDate = dateStr.includes(yesterdayStr) || dateStr.startsWith(yesterdayStr);
       }
 
-      // فلتر البحث
       let passesSearch = true;
       if (reportSearchQuery.trim()) {
         const q = reportSearchQuery.trim().toLowerCase();
@@ -299,13 +292,13 @@ export default function RestaurantMenu() {
     });
   }, [reportsData, reportDateFilter, reportSearchQuery]);
 
-  // إحصائيات تحليلات التقارير المتقدمة الشاملة
+  // إحصائيات تحليلات الوسام الذهبي والعملاء v4.4
   const reportsAnalytics = useMemo(() => {
     if (!filteredReportsData || filteredReportsData.length === 0) {
       return {
         totalOrders: 0, totalSales: 0, totalDelivery: 0, netTotal: 0,
         cashSales: 0, electronicSales: 0, instantOrders: 0, scheduledOrders: 0,
-        topArea: "لا يوجد", topCustomers: []
+        topArea: "لا يوجد", goldenCustomer: null, allCustomersList: [], topItems: [], peakHours: [], deliveryBreakdown: []
       };
     }
     
@@ -319,6 +312,8 @@ export default function RestaurantMenu() {
     
     const areasMap = {};
     const customersMap = {};
+    const itemsMap = {};
+    const hoursMap = {};
 
     filteredReportsData.forEach(row => {
       const cartVal = Number(row["حساب الأكل الأصلي"]) || 0;
@@ -329,6 +324,8 @@ export default function RestaurantMenu() {
       const sched = row["نوع وموعد التوصيل"] || "";
       const custName = row["اسم العميل"] || "عميل بدون اسم";
       const custPhone = row["رقم الموبايل"] || "";
+      const itemsText = row["تفاصيل الطلبات"] || "";
+      const timestamp = row["التاريخ والوقت"] || "";
 
       totalSales += cartVal;
       totalDelivery += delVal;
@@ -340,26 +337,79 @@ export default function RestaurantMenu() {
       if (sched.includes("مجدول")) scheduledOrders++;
       else instantOrders++;
 
-      areasMap[area] = (areasMap[area] || 0) + 1;
+      if (!areasMap[area]) areasMap[area] = { count: 0, deliveryFees: 0 };
+      areasMap[area].count += 1;
+      areasMap[area].deliveryFees += delVal;
 
-      const custKey = custName + " (" + custPhone + ")";
-      if (!customersMap[custKey]) customersMap[custKey] = { name: custName, phone: custPhone, count: 0, spent: 0 };
+      // تجميع حساب مجمل لكل عميل
+      const custKey = custPhone ? custPhone.trim() : custName.trim();
+      if (!customersMap[custKey]) {
+        customersMap[custKey] = { name: custName, phone: custPhone, count: 0, spent: 0, lastArea: area };
+      }
       customersMap[custKey].count += 1;
       customersMap[custKey].spent += finalVal;
+      customersMap[custKey].lastArea = area;
+
+      if (itemsText) {
+        const parts = itemsText.split("|");
+        parts.forEach(part => {
+          const trimmed = part.trim();
+          if (trimmed) {
+            const match = trimmed.match(/(.+) x(\d+)/);
+            if (match) {
+              const itemName = match[1].trim();
+              const qty = Number(match[2]) || 1;
+              itemsMap[itemName] = (itemsMap[itemName] || 0) + qty;
+            } else {
+              itemsMap[trimmed] = (itemsMap[trimmed] || 0) + 1;
+            }
+          }
+        });
+      }
+
+      if (timestamp) {
+        const timeMatch = timestamp.match(/(\d{1,2}):\d{2}:\d{2}\s*(م|ص|AM|PM)?/i);
+        if (timeMatch) {
+          let hour = Number(timeMatch[1]);
+          const period = timeMatch[2] ? timeMatch[2].toUpperCase() : "";
+          if ((period === "م" || period === "PM") && hour < 12) hour += 12;
+          if ((period === "ص" || period === "AM") && hour === 12) hour = 0;
+          
+          const hourLabel = hour >= 12 ? `${hour === 12 ? 12 : hour - 12} مساءً` : `${hour === 0 ? 12 : hour} صباحاً`;
+          hoursMap[hourLabel] = (hoursMap[hourLabel] || 0) + 1;
+        }
+      }
     });
 
     let topArea = "غير محدد";
     let maxCount = 0;
-    Object.entries(areasMap).forEach(([a, count]) => {
-      if (count > maxCount) {
-        maxCount = count;
+    Object.entries(areasMap).forEach(([a, data]) => {
+      if (data.count > maxCount) {
+        maxCount = data.count;
         topArea = a;
       }
     });
 
-    const topCustomers = Object.values(customersMap)
-      .sort((a, b) => b.spent - a.spent)
+    // قائمة جميع العملاء مرتبة بالأعلى إنفاقاً
+    const sortedCustomers = Object.values(customersMap)
+      .sort((a, b) => b.spent - a.spent);
+
+    // صاحب الوسام الذهبي (العميل الأول)
+    const goldenCustomer = sortedCustomers.length > 0 ? sortedCustomers[0] : null;
+
+    const topItems = Object.entries(itemsMap)
+      .map(([name, qty]) => ({ name, qty }))
+      .sort((a, b) => b.qty - a.qty)
+      .slice(0, 5);
+
+    const peakHours = Object.entries(hoursMap)
+      .map(([hour, count]) => ({ hour, count }))
+      .sort((a, b) => b.count - a.count)
       .slice(0, 3);
+
+    const deliveryBreakdown = Object.entries(areasMap)
+      .map(([area, data]) => ({ area, count: data.count, fees: data.deliveryFees }))
+      .sort((a, b) => b.count - a.count);
 
     return {
       totalOrders: filteredReportsData.length,
@@ -371,13 +421,16 @@ export default function RestaurantMenu() {
       instantOrders,
       scheduledOrders,
       topArea: topArea + " (" + maxCount + " أوردر)",
-      topCustomers
+      goldenCustomer,
+      allCustomersList: sortedCustomers,
+      topItems,
+      peakHours,
+      deliveryBreakdown
     };
   }, [filteredReportsData]);
 
   const exportToCSV = () => {
     if (!filteredReportsData || filteredReportsData.length === 0) return;
-    
     const headers = ["التاريخ والوقت", "اسم العميل", "رقم الموبايل", "المنطقة / القرية", "العنوان", "طريقة الدفع", "تفاصيل الطلبات", "الإجمالي النهائي"];
     const rows = filteredReportsData.map(r => [
       `"${r["التاريخ والوقت"] || ""}"`,
@@ -662,7 +715,6 @@ export default function RestaurantMenu() {
     const deliveryTimeText = scheduleType === "now" ? "⚡ توصيل فوري (الآن)" : "🕒 مجدول للموعد: " + scheduleTime;
     const paymentText = paymentMethod === "cash" ? "💵 نقدي (كاش عند الاستلام)" : "📱 دفع إلكتروني (فودافون كاش / إنستا باي)";
 
-    // إرسال بيانات الأوردر فوراً إلى Google Sheet في الخلفية
     try {
       fetch(GOOGLE_SHEET_SCRIPT_URL, {
         method: "POST",
@@ -754,9 +806,8 @@ export default function RestaurantMenu() {
                   "💵 مبيعات المأكولات: " + money(reportsAnalytics.totalSales) + "\n" +
                   "🛵 إيرادات التوصيل: " + money(reportsAnalytics.totalDelivery) + "\n" +
                   "💰 صافي الدخل الكلي: " + money(reportsAnalytics.netTotal) + "\n\n" +
-                  "💳 تحليلات طرق الدفع:\n" +
-                  "• كاش عند الاستلام: " + money(reportsAnalytics.cashSales) + "\n" +
-                  "• دفع إلكتروني (محافظ): " + money(reportsAnalytics.electronicSales) + "\n\n" +
+                  "🏆 العميل الذهبي المفضل: " + (reportsAnalytics.goldenCustomer ? reportsAnalytics.goldenCustomer.name + " (" + money(reportsAnalytics.goldenCustomer.spent) + ")" : "لا يوجد") + "\n" +
+                  "🍕 الأصناف الأكثر مبيعاً: " + (reportsAnalytics.topItems[0]?.name || "لا يوجد") + "\n" +
                   "📍 القرية الأكثر طلباً: " + reportsAnalytics.topArea + "\n" +
                   "✨ التقرير مستخرج أوتوماتيكياً عبر Google Sheets!";
 
@@ -777,7 +828,7 @@ export default function RestaurantMenu() {
 
   return (
     <div dir="rtl" className="min-h-screen w-full transition-colors duration-500 pb-28" style={{ background: theme.bg, color: theme.text, fontFamily: "'Tajawal', sans-serif" }}>
-      {/* ===================== HEADER ===================== */}
+      {/* HEADER */}
       <header className="sticky top-0 z-30 backdrop-blur-md border-b" style={{ background: theme.bg + "D9", borderColor: (theme.muted || "#B3A18C") + "20" }}>
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
@@ -809,36 +860,30 @@ export default function RestaurantMenu() {
         </div>
       </header>
 
-      {/* ===================== SOCIAL MEDIA BAR ===================== */}
+      {/* SOCIAL MEDIA BAR */}
       <div className="w-full flex justify-center items-center py-3 border-b sticky top-[77px] z-20 backdrop-blur-md" style={{ background: theme.bg + "D9", borderColor: (theme.muted || "#B3A18C") + "15" }}>
         <div className="flex items-center gap-4 px-4 py-1.5 rounded-full shadow-inner border" style={{ background: theme.surface2, borderColor: (theme.muted || "#B3A18C") + "20" }}>
-          
-          <a href={"tel:" + whatsappNumber} className="inline-flex items-center justify-center p-2.5 rounded-full transition-all duration-200 active:scale-95 shadow-md group" style={{ background: theme.accent, color: theme.bg }} aria-label="اتصل بنا هاتفياً">
+          <a href={"tel:" + whatsappNumber} className="inline-flex items-center justify-center p-2.5 rounded-full transition-all duration-200 active:scale-95 shadow-md group" style={{ background: theme.accent, color: theme.bg }}>
             <Phone size={15} className="group-hover:scale-110 transition-transform" />
           </a>
-
           <span className="h-4 w-[1px]" style={{ background: (theme.muted || "#B3A18C") + "30" }} />
-
-          <a href={"https://wa.me/" + whatsappNumber.replace(/[^\d+]/g, "")} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center p-2.5 rounded-full bg-[#25D366] text-white hover:bg-[#20ba5a] transition-all duration-200 active:scale-95 shadow-md group" aria-label="تواصل معنا عبر واتساب">
+          <a href={"https://wa.me/" + whatsappNumber.replace(/[^\d+]/g, "")} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center p-2.5 rounded-full bg-[#25D366] text-white hover:bg-[#20ba5a] transition-all duration-200 active:scale-95 shadow-md group">
             <MessageCircle size={15} className="group-hover:scale-110 transition-transform" />
           </a>
-
-          <a href="https://www.facebook.com/share/1E3Dx3c5Yh/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center p-2.5 rounded-full bg-[#1877F2] text-white hover:bg-[#166FE5] transition-all duration-200 active:scale-95 shadow-md group" aria-label="تابعنا على فيسبوك">
+          <a href="https://www.facebook.com/share/1E3Dx3c5Yh/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center p-2.5 rounded-full bg-[#1877F2] text-white hover:bg-[#166FE5] transition-all duration-200 active:scale-95 shadow-md group">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current group-hover:scale-110 transition-transform">
               <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
             </svg>
           </a>
-
-          <a href="https://www.tiktok.com/@dreamcornerfood" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center p-2.5 rounded-full bg-[#000000] text-white hover:bg-neutral-900 border border-neutral-800 transition-all duration-200 active:scale-95 shadow-md group" aria-label="تابعنا على تيك توك">
+          <a href="https://www.tiktok.com/@dreamcornerfood" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center p-2.5 rounded-full bg-[#000000] text-white hover:bg-neutral-900 border border-neutral-800 transition-all duration-200 active:scale-95 shadow-md group">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 group-hover:scale-110 transition-transform">
               <path d="M12.525.02c1.31.01 2.61.03 3.91.05.08 1.53.64 2.93 1.66 4.02.97.97 2.24 1.57 3.63 1.69v3.91c-1.6-.05-3.11-.64-4.32-1.64-.1-.08-.19-.17-.28-.26v6.2c-.06 4.67-3.81 8.28-8.42 8.01-3.69-.21-6.72-3.14-7.06-6.82-.44-4.78 3.32-8.91 8.11-8.52v3.96c-2.15-.22-4.11 1.29-4.44 3.44-.4 2.58 1.56 4.88 4.15 4.96 2.43.08 4.5-1.74 4.66-4.16.03-.43.02-.87.02-1.3V0z"/>
             </svg>
           </a>
-
         </div>
       </div>
 
-      {/* ===================== CATEGORIES BAR ===================== */}
+      {/* CATEGORIES BAR */}
       <div className="sticky top-[138px] z-10 backdrop-blur-md border-b py-3 shadow-sm" style={{ background: theme.bg + "F2", borderColor: (theme.muted || "#B3A18C") + "15" }}>
         <div className="max-w-3xl mx-auto px-4 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
           {categories.map((c) => (
@@ -855,7 +900,7 @@ export default function RestaurantMenu() {
         </div>
       </div>
 
-      {/* ===================== SEARCH ===================== */}
+      {/* SEARCH */}
       <div className="max-w-3xl mx-auto px-4 pt-4">
         <div className="relative">
           <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="ابحث عن بيتزا، سندوتش، مشروب..." className="w-full px-4 py-3 pr-10 rounded-2xl text-xs border focus:outline-none transition-all shadow-sm" style={{ background: theme.surface, borderColor: (theme.muted || "#B3A18C") + "25", color: theme.text }} />
@@ -864,7 +909,7 @@ export default function RestaurantMenu() {
         </div>
       </div>
 
-      {/* ===================== BEST SELLERS SECTION ===================== */}
+      {/* BEST SELLERS SECTION */}
       {bestSellerItems.length > 0 && activeCat === "الكل" && !searchQuery.trim() && (
         <div className="max-w-3xl mx-auto px-4 pt-6">
           <div className="flex items-center gap-1.5 mb-3.5">
@@ -927,7 +972,7 @@ export default function RestaurantMenu() {
         </div>
       )}
 
-      {/* ===================== MENU ITEMS ===================== */}
+      {/* MENU ITEMS */}
       <main className="max-w-3xl mx-auto px-4 pb-32 pt-5 space-y-8">
         {groups.map((group) => {
           const subcat = group[0];
@@ -1000,7 +1045,7 @@ export default function RestaurantMenu() {
         )}
       </main>
 
-      {/* ===================== FOOTER INFO STRIP ===================== */}
+      {/* FOOTER INFO STRIP */}
       <div className="fixed bottom-0 inset-x-0 z-20 border-t px-4 py-3.5 flex items-center justify-center gap-4 text-xs font-semibold shadow-inner" style={{ background: theme.bg + "F2", borderColor: (theme.muted || "#B3A18C") + "20" , color: theme.muted, backdropFilter: "blur(8px)" }}>
         <a href="https://fb.com/mr.3abkarino" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 font-bold tracking-wide shrink-0 cursor-pointer hover:underline" style={{ color: theme.accent }}>
           Mr3abkarino© <span className="text-red-500 text-sm animate-pulse">❤️</span>
@@ -1012,7 +1057,7 @@ export default function RestaurantMenu() {
         </span>
       </div>
 
-      {/* ===================== FLOATING CART BUTTON ===================== */}
+      {/* FLOATING CART BUTTON */}
       {cartCount > 0 && (
         <button onClick={() => setCartOpen(true)} className="fixed bottom-14 left-1/2 -translate-x-1/2 z-35 flex items-center justify-between gap-6 px-6 py-3.5 rounded-full shadow-2xl font-bold text-sm active:scale-95 transition-all" style={{ background: theme.accent, color: theme.bg, width: "90%", maxWidth: "450px" }}>
           <div className="flex items-center gap-2">
@@ -1026,7 +1071,7 @@ export default function RestaurantMenu() {
         </button>
       )}
       
-      {/* ===================== CART DRAWER ===================== */}
+      {/* CART DRAWER */}
       {cartOpen && (
         <Overlay onClose={() => setCartOpen(false)}>
           <Sheet theme={theme} title="سلة المشتريات" onClose={() => setCartOpen(false)}>
@@ -1235,7 +1280,7 @@ export default function RestaurantMenu() {
         </Overlay>
       )}
 
-      {/* ===================== MODALS & SHEETS ===================== */}
+      {/* MODALS */}
       {orderSuccess && (
         <Overlay onClose={() => setOrderSuccess(false)}>
           <Sheet theme={theme} title="تم إرسال طلبك بنجاح! 🎉" onClose={() => setOrderSuccess(false)}>
@@ -1326,11 +1371,11 @@ export default function RestaurantMenu() {
         </Overlay>
       )}
 
-      {/* ===================== ADVANCED ADMIN DASHBOARD ===================== */}
+      {/* ADVANCED ADMIN DASHBOARD v4.4 */}
       {adminOpen && (
         <Overlay onClose={() => setAdminOpen(false)}>
-          <Sheet theme={theme} title="لوحة القيادة والتقارير الشاملة 👑" onClose={() => setAdminOpen(false)}>
-            {/* أزرار التبويبات العلوي للإدارة */}
+          <Sheet theme={theme} title="لوحة الذكاء والتقارير الشاملة 👑" onClose={() => setAdminOpen(false)}>
+            {/* TABS */}
             <div className="flex gap-1 p-1 rounded-xl mb-4 border" style={{ background: theme.surface2, borderColor: theme.muted + "20" }}>
               <button 
                 onClick={() => setAdminTab("reports")} 
@@ -1338,7 +1383,7 @@ export default function RestaurantMenu() {
                 style={adminTab === "reports" ? { background: theme.accent, color: theme.bg } : { color: theme.muted }}
               >
                 <BarChart3 size={14} />
-                <span>التقارير الشاملة</span>
+                <span>التقارير الذكية</span>
               </button>
               <button 
                 onClick={() => setAdminTab("items")} 
@@ -1358,16 +1403,16 @@ export default function RestaurantMenu() {
               </button>
             </div>
 
-            {/* TAB 1: ADVANCED REPORTS & ANALYTICS */}
+            {/* TAB 1: REPORTS & ANALYTICS v4.4 */}
             {adminTab === "reports" && (
-              <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
+              <div className="space-y-4 max-h-[68vh] overflow-y-auto pr-1">
                 {/* 1. الفلترة الزمنية والبحث */}
                 <div className="space-y-2 bg-black/10 p-2.5 rounded-2xl border border-white/5">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold opacity-80" style={{ color: theme.muted }}>الفترة الزمنية:</span>
                     <button onClick={fetchReportsFromSheet} className="p-1 rounded-lg border text-[10px] font-bold flex items-center gap-1" style={{ borderColor: theme.accent, color: theme.accent }}>
                       <RefreshCw size={11} className={reportsLoading ? "animate-spin" : ""} />
-                      <span>تحديث الحسابات</span>
+                      <span>تحديث البيانات</span>
                     </button>
                   </div>
 
@@ -1387,31 +1432,34 @@ export default function RestaurantMenu() {
                 {reportsLoading ? (
                   <div className="text-center py-10 space-y-2">
                     <RefreshCw size={26} className="animate-spin mx-auto text-amber-500" />
-                    <p className="text-xs opacity-70">جاري سحب تحليلات المبيعات من Google Sheets...</p>
+                    <p className="text-xs opacity-70">جاري تحليل بيانات المبيعات من Google Sheets...</p>
                   </div>
                 ) : (
                   <>
-                    {/* 2. شريط متابعة الهدف اليومي (Daily Target Gauge) */}
-                    <div className="p-3 rounded-2xl border bg-gradient-to-r from-amber-500/10 to-amber-500/5 space-y-2" style={{ borderColor: theme.accent + "40" }}>
-                      <div className="flex items-center justify-between text-xs font-bold">
-                        <span className="flex items-center gap-1" style={{ color: theme.accent }}>
-                          <TrendingUp size={14} />
-                          <span>تحقيق الهدف المالي للمبيعات:</span>
-                        </span>
-                        <span className="font-extrabold">{reportsAnalytics.netTotal} / {dailyTarget} جنيه</span>
+                    {/* NEW FEATURE 1: الوسام الذهبي لأكثر عميل شراءً */}
+                    {reportsAnalytics.goldenCustomer && (
+                      <div className="p-3.5 rounded-2xl border bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-amber-600/20 space-y-2 relative overflow-hidden shadow-lg" style={{ borderColor: theme.accent }}>
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center gap-1.5 text-xs font-black text-amber-400">
+                            <Trophy size={16} className="animate-bounce" />
+                            <span>🏆 الوسام الذهبي لأكثر العملاء شراءً</span>
+                          </span>
+                          <span className="text-[9px] px-2 py-0.5 rounded-full font-black text-black bg-amber-400">VIP Top Customer</span>
+                        </div>
+                        <div className="flex items-center justify-between pt-1">
+                          <div>
+                            <p className="text-sm font-black text-white">{reportsAnalytics.goldenCustomer.name}</p>
+                            <p className="text-[10px] opacity-80" style={{ color: theme.muted }}>📱 {reportsAnalytics.goldenCustomer.phone} · 📍 {reportsAnalytics.goldenCustomer.lastArea}</p>
+                          </div>
+                          <div className="text-left">
+                            <p className="text-sm font-black text-green-400">{money(reportsAnalytics.goldenCustomer.spent)}</p>
+                            <p className="text-[9px] font-bold text-amber-300">{reportsAnalytics.goldenCustomer.count} أوردرات مسجلة</p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="w-full h-2.5 bg-black/30 rounded-full overflow-hidden border border-white/10">
-                        <div 
-                          className="h-full bg-gradient-to-r from-amber-500 to-green-500 transition-all duration-500" 
-                          style={{ width: `${Math.min(100, Math.round((reportsAnalytics.netTotal / dailyTarget) * 100))}%` }}
-                        />
-                      </div>
-                      <p className="text-[9px] text-left opacity-70 font-bold" style={{ color: theme.muted }}>
-                        تم تحقيق {Math.round((reportsAnalytics.netTotal / dailyTarget) * 100)}% من المستهدف المقدر بـ {dailyTarget} ج.م
-                      </p>
-                    </div>
+                    )}
 
-                    {/* 3. الكروت الإحصائية الرئيسية (KPI Cards) */}
+                    {/* 2. KPI Cards */}
                     <div className="grid grid-cols-2 gap-2">
                       <div className="p-3 rounded-2xl border flex flex-col justify-between" style={{ background: theme.surface2, borderColor: theme.accent + "30" }}>
                         <span className="text-[10px] opacity-70" style={{ color: theme.muted }}>عدد الطلبات الكلي</span>
@@ -1431,62 +1479,86 @@ export default function RestaurantMenu() {
                       </div>
                     </div>
 
-                    {/* 4. أشرطة التحليل البصري (Visual Progress Bars) */}
-                    <div className="p-3 rounded-2xl border space-y-3" style={{ background: theme.surface2, borderColor: theme.accent + "20" }}>
-                      <p className="text-[11px] font-bold flex items-center gap-1" style={{ color: theme.accent }}>
-                        <PieChart size={14} />
-                        <span>تحليل المبيعات ونوع الدفع والتوصيل:</span>
-                      </p>
-                      
-                      {/* شريط طريقة الدفع */}
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-[10px] font-bold">
-                          <span>💵 كاش: {money(reportsAnalytics.cashSales)}</span>
-                          <span className="text-green-400">📱 إلكتروني: {money(reportsAnalytics.electronicSales)}</span>
-                        </div>
-                        <div className="w-full h-2 rounded-full overflow-hidden flex bg-black/40">
-                          <div style={{ width: `${reportsAnalytics.netTotal ? (reportsAnalytics.cashSales / reportsAnalytics.netTotal) * 100 : 50}%` }} className="bg-amber-500 h-full" />
-                          <div style={{ width: `${reportsAnalytics.netTotal ? (reportsAnalytics.electronicSales / reportsAnalytics.netTotal) * 100 : 50}%` }} className="bg-green-500 h-full" />
-                        </div>
-                      </div>
-
-                      {/* شريط نوع التوصيل */}
-                      <div className="space-y-1 pt-1">
-                        <div className="flex justify-between text-[10px] font-bold">
-                          <span>⚡ توصيل فوري: {reportsAnalytics.instantOrders} أوردر</span>
-                          <span className="text-amber-400">🕒 مجدول: {reportsAnalytics.scheduledOrders} أوردر</span>
-                        </div>
-                        <div className="w-full h-2 rounded-full overflow-hidden flex bg-black/40">
-                          <div style={{ width: `${reportsAnalytics.totalOrders ? (reportsAnalytics.instantOrders / reportsAnalytics.totalOrders) * 100 : 50}%` }} className="bg-sky-500 h-full" />
-                          <div style={{ width: `${reportsAnalytics.totalOrders ? (reportsAnalytics.scheduledOrders / reportsAnalytics.totalOrders) * 100 : 50}%` }} className="bg-amber-500 h-full" />
-                        </div>
-                      </div>
-
-                      <div className="pt-2 border-t text-[11px] flex justify-between font-bold" style={{ borderColor: theme.muted + "15" }}>
-                        <span opacity-80 style={{ color: theme.muted }}>القرية الأكثر طلباً:</span>
-                        <span className="text-amber-500">{reportsAnalytics.topArea}</span>
-                      </div>
-                    </div>
-
-                    {/* 5. كارت كبار العملاء VIP */}
-                    {reportsAnalytics.topCustomers.length > 0 && (
-                      <div className="p-3 rounded-2xl border space-y-2 bg-gradient-to-r from-amber-500/10 to-amber-600/5" style={{ borderColor: theme.accent + "30" }}>
-                        <p className="text-[11px] font-bold flex items-center gap-1" style={{ color: theme.accent }}>
-                          <Crown size={14} className="text-amber-400" />
-                          <span>قائمة كبار العملاء (Top VIP Customers):</span>
+                    {/* NEW FEATURE 2: جدول الحساب المجمل لكل عميل */}
+                    {reportsAnalytics.allCustomersList.length > 0 && (
+                      <div className="p-3 rounded-2xl border space-y-2" style={{ background: theme.surface2, borderColor: theme.accent + "30" }}>
+                        <p className="text-[11px] font-bold flex items-center gap-1.5" style={{ color: theme.accent }}>
+                          <Users size={14} className="text-amber-400" />
+                          <span>الحساب المجمل التراكمي لكل عميل (Customer Lifetime Value):</span>
                         </p>
-                        <div className="space-y-1.5">
-                          {reportsAnalytics.topCustomers.map((cust, idx) => (
+                        <div className="space-y-1.5 max-h-[22vh] overflow-y-auto pr-1">
+                          {reportsAnalytics.allCustomersList.map((cust, idx) => (
                             <div key={idx} className="flex items-center justify-between text-[10px] p-2 rounded-xl bg-black/20 border border-white/5">
-                              <span className="font-bold">{idx + 1}. {cust.name} ({cust.phone})</span>
-                              <span className="font-extrabold text-amber-400">{cust.count} أوردرات · {money(cust.spent)}</span>
+                              <div>
+                                <span className="font-bold text-white">{idx + 1}. {cust.name}</span>
+                                <span className="block text-[9px] opacity-60" style={{ color: theme.muted }}>{cust.phone}</span>
+                              </div>
+                              <div className="text-left">
+                                <span className="font-extrabold text-amber-400 block">{money(cust.spent)}</span>
+                                <span className="text-[9px] opacity-70">{cust.count} أوردرات</span>
+                              </div>
                             </div>
                           ))}
                         </div>
                       </div>
                     )}
 
-                    {/* أزرار التصدير والإجراءات السريعة */}
+                    {/* الأصناف الأكثر مبيعاً */}
+                    {reportsAnalytics.topItems.length > 0 && (
+                      <div className="p-3 rounded-2xl border space-y-2" style={{ background: theme.surface2, borderColor: theme.accent + "30" }}>
+                        <p className="text-[11px] font-bold flex items-center gap-1.5" style={{ color: theme.accent }}>
+                          <Utensils size={14} className="text-amber-400" />
+                          <span>أكثر الأصناف طلباً ومبيعاً (Top 5 Items):</span>
+                        </p>
+                        <div className="space-y-1.5">
+                          {reportsAnalytics.topItems.map((item, idx) => (
+                            <div key={idx} className="flex items-center justify-between text-[10px] p-2 rounded-xl bg-black/20 border border-white/5">
+                              <span className="font-bold">{idx + 1}. {item.name}</span>
+                              <span className="font-extrabold text-amber-400">{item.qty} وجبات</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* تحليل ساعات الذروة */}
+                    {reportsAnalytics.peakHours.length > 0 && (
+                      <div className="p-3 rounded-2xl border space-y-2" style={{ background: theme.surface2, borderColor: theme.accent + "30" }}>
+                        <p className="text-[11px] font-bold flex items-center gap-1.5" style={{ color: theme.accent }}>
+                          <Clock size={14} className="text-sky-400" />
+                          <span>ساعات الذروة والأوقات الأكثر زحاماً:</span>
+                        </p>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {reportsAnalytics.peakHours.map((hourData, idx) => (
+                            <div key={idx} className="p-2 rounded-xl bg-black/20 border border-white/5 text-center">
+                              <p className="text-[9px] opacity-70" style={{ color: theme.muted }}>المرتبة {idx + 1}</p>
+                              <p className="text-xs font-bold text-sky-400 mt-0.5">{hourData.hour}</p>
+                              <p className="text-[9px] font-black opacity-90">{hourData.count} أوردر</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* تقرير حسابات ودليفري الطيارين والقرى */}
+                    {reportsAnalytics.deliveryBreakdown.length > 0 && (
+                      <div className="p-3 rounded-2xl border space-y-2 bg-gradient-to-r from-emerald-500/10 to-emerald-600/5" style={{ borderColor: "rgba(16, 185, 129, 0.3)" }}>
+                        <p className="text-[11px] font-bold flex items-center gap-1.5 text-emerald-400">
+                          <Bike size={14} />
+                          <span>تقرير حسابات الدليفري والقرى للطيارين:</span>
+                        </p>
+                        <div className="space-y-1.5 max-h-[20vh] overflow-y-auto pr-1">
+                          {reportsAnalytics.deliveryBreakdown.map((areaData, idx) => (
+                            <div key={idx} className="flex items-center justify-between text-[10px] p-2 rounded-xl bg-black/20 border border-white/5">
+                              <span className="font-bold">{areaData.area}</span>
+                              <span className="font-extrabold text-emerald-400">{areaData.count} رحلات · {money(areaData.fees)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* أزرار التصدير */}
                     <div className="grid grid-cols-2 gap-2">
                       <button 
                         onClick={sendZReportToWhatsApp}
@@ -1504,7 +1576,7 @@ export default function RestaurantMenu() {
                       </button>
                     </div>
 
-                    {/* 6. جدول تفاصيل الأوردرات الأخيرة */}
+                    {/* جدول تفاصيل الأوردرات */}
                     <div className="space-y-2 pt-2 border-t" style={{ borderColor: theme.muted + "20" }}>
                       <p className="text-xs font-bold" style={{ color: theme.accent }}>سجل الطلبات الأخير ({filteredReportsData.length} أوردر):</p>
                       <div className="space-y-2 max-h-[30vh] overflow-y-auto pr-1">
@@ -1643,7 +1715,7 @@ export default function RestaurantMenu() {
                 </div>
 
                 <div className="pt-4 mt-2 border-t" style={{ borderColor: (theme.muted || "#B3A18C") + "30" }}>
-                  <button onClick={() => setShowResetConfirm(true)} className="w-full py-2.5 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 text-red-500 border-red-500/30"><RotateCcw size={14} /> إعادة تعيين منيو دريم كورنر الافتراضي</button>
+                  <button onClick={() => setShowResetConfirm(false)} className="w-full py-2.5 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 text-red-500 border-red-500/30"><RotateCcw size={14} /> إعادة تعيين منيو دريم كورنر الافتراضي</button>
                 </div>
               </div>
             )}
