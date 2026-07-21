@@ -8,7 +8,7 @@ import {
 
 const LOGO_SRC = restaurantLogo;
 const MENU_VERSION = "17.0"; // v17.0: إصلاح الشاشة البيضاء في لوحة الإدارة
-const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbybuw8CuUGV-hf_ecUyevpGB5YioMKCdeOP3PxSKKuzGgMmtcfbHyrd0F81eJg3Z_U/exec";
+const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwndOxzx5j5JIA3GegNsRGyaDfaVp4zlIvHNZtdZ8wUa17-pmPoDIvgqOWskDFSavY/exec";
 
 const DEFAULT_DELIVERY_AREAS = [
   { name: "البرامون (داخل البلد)", price: 10 },
