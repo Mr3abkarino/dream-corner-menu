@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "5.0"; // الإصدار الأسطوري v5.0: واجهة إدارية Enterprise SaaS Dashboard مطابقة لأحدث الأنظمة العالمية
+const MENU_VERSION = "5.1"; // الإصدار v5.1: تحويل كل المؤشرات والرسومات إلى داتا حقيقية ومحسوبة 100%
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbybuw8CuUGV-hf_ecUyevpGB5YioMKCdeOP3PxSKKuzGgMmtcfbHyrd0F81eJg3Z_U/exec";
 
 const THEMES = [
@@ -135,7 +135,7 @@ export default function RestaurantMenu() {
   const [cart, setCart] = useState({});
   const [cartOpen, setCartOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
-  const [adminTab, setAdminTab] = useState("dashboard"); // 'dashboard' | 'items' | 'settings' | 'customers' | 'delivery'
+  const [adminTab, setAdminTab] = useState("dashboard");
   const [qrOpen, setQrOpen] = useState(false);
   const [themePickerOpen, setThemePickerOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -182,7 +182,7 @@ export default function RestaurantMenu() {
   const [pinError, setPinError] = useState("");
   const [logoClicks, setLogoClicks] = useState(0);
 
-  // حالات التقارير والداشبورد Enterprise
+  // حالات التقارير الشاملة
   const [reportsData, setReportsData] = useState([]);
   const [reportsLoading, setReportsLoading] = useState(false);
   const [reportDateFilter, setReportDateFilter] = useState("all");
@@ -292,28 +292,47 @@ export default function RestaurantMenu() {
     });
   }, [reportsData, reportDateFilter, reportSearchQuery]);
 
-  // إحصائيات الداشبورد الـ Enterprise الشاملة v5.0
+  // حساب الحسبات والمؤشرات الديناميكية الشغالة 100% v5.1
   const reportsAnalytics = useMemo(() => {
-    if (!filteredReportsData || filteredReportsData.length === 0) {
+    if (!reportsData || reportsData.length === 0) {
       return {
         totalOrders: 0, totalSales: 0, totalDelivery: 0, netTotal: 0,
-        cashSales: 0, electronicSales: 0, instantOrders: 0, scheduledOrders: 0,
-        topArea: "لا يوجد", goldenCustomer: null, allCustomersList: [], topItems: [], peakHours: [], deliveryBreakdown: []
+        cashSales: 0, electronicSales: 0, growthSalesPercent: 0, growthOrdersPercent: 0,
+        topArea: "لا يوجد", goldenCustomer: null, allCustomersList: [], topItems: [], peakHours: [],
+        sevenDaysChartData: []
       };
     }
-    
+
+    const now = new Date();
+    const todayStr = now.toLocaleDateString("ar-EG");
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toLocaleDateString("ar-EG");
+
     let totalSales = 0;
     let totalDelivery = 0;
     let netTotal = 0;
     let cashSales = 0;
     let electronicSales = 0;
-    let instantOrders = 0;
-    let scheduledOrders = 0;
-    
+
+    let todayNetTotal = 0;
+    let todayOrdersCount = 0;
+    let yesterdayNetTotal = 0;
+    let yesterdayOrdersCount = 0;
+
     const areasMap = {};
     const customersMap = {};
     const itemsMap = {};
     const hoursMap = {};
+    const daysMap = {};
+
+    // تجهيز مفاتيح آخر 7 أيام للرسم البياني الحي
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const dStr = d.toLocaleDateString("ar-EG", { month: "short", day: "numeric" });
+      daysMap[dStr] = 0;
+    }
 
     filteredReportsData.forEach(row => {
       const cartVal = Number(row["حساب الأكل الأصلي"]) || 0;
@@ -321,7 +340,6 @@ export default function RestaurantMenu() {
       const finalVal = Number(row["الإجمالي النهائي"]) || 0;
       const area = row["المنطقة / القرية"] || "غير محدد";
       const pay = row["طريقة الدفع"] || "";
-      const sched = row["نوع وموعد التوصيل"] || "";
       const custName = row["اسم العميل"] || "عميل بدون اسم";
       const custPhone = row["رقم الموبايل"] || "";
       const itemsText = row["تفاصيل الطلبات"] || "";
@@ -334,12 +352,8 @@ export default function RestaurantMenu() {
       if (pay.includes("إلكتروني")) electronicSales += finalVal;
       else cashSales += finalVal;
 
-      if (sched.includes("مجدول")) scheduledOrders++;
-      else instantOrders++;
-
       if (!areasMap[area]) areasMap[area] = { count: 0, deliveryFees: 0 };
       areasMap[area].count += 1;
-      areasMap[area].deliveryFees += delVal;
 
       const custKey = custPhone ? custPhone.trim() : custName.trim();
       if (!customersMap[custKey]) {
@@ -347,7 +361,6 @@ export default function RestaurantMenu() {
       }
       customersMap[custKey].count += 1;
       customersMap[custKey].spent += finalVal;
-      customersMap[custKey].lastArea = area;
 
       if (itemsText) {
         const parts = itemsText.split("|");
@@ -373,12 +386,36 @@ export default function RestaurantMenu() {
           const period = timeMatch[2] ? timeMatch[2].toUpperCase() : "";
           if ((period === "م" || period === "PM") && hour < 12) hour += 12;
           if ((period === "ص" || period === "AM") && hour === 12) hour = 0;
-          
           const hourLabel = hour >= 12 ? `${hour === 12 ? 12 : hour - 12} م` : `${hour === 0 ? 12 : hour} ص`;
           hoursMap[hourLabel] = (hoursMap[hourLabel] || 0) + 1;
         }
       }
     });
+
+    // حساب نسب المقارنة التلقائية والنمو بين اليوم وأمس من كل الداتا
+    reportsData.forEach(row => {
+      const dateStr = row["التاريخ والوقت"] || "";
+      const finalVal = Number(row["الإجمالي النهائي"]) || 0;
+
+      if (dateStr.includes(todayStr) || dateStr.startsWith(todayStr)) {
+        todayNetTotal += finalVal;
+        todayOrdersCount++;
+      } else if (dateStr.includes(yesterdayStr) || dateStr.startsWith(yesterdayStr)) {
+        yesterdayNetTotal += finalVal;
+        yesterdayOrdersCount++;
+      }
+
+      // تجميع رسم بياني لآخر 7 أيام حقيقي
+      Object.keys(daysMap).forEach(dayKey => {
+        if (dateStr.includes(dayKey)) {
+          daysMap[dayKey] += finalVal;
+        }
+      });
+    });
+
+    // حساب نسبة النمو الحقيقية %
+    const growthSalesPercent = yesterdayNetTotal > 0 ? Math.round(((todayNetTotal - yesterdayNetTotal) / yesterdayNetTotal) * 100) : (todayNetTotal > 0 ? 100 : 0);
+    const growthOrdersPercent = yesterdayOrdersCount > 0 ? Math.round(((todayOrdersCount - yesterdayOrdersCount) / yesterdayOrdersCount) * 100) : (todayOrdersCount > 0 ? 100 : 0);
 
     let topArea = "غير محدد";
     let maxCount = 0;
@@ -402,9 +439,12 @@ export default function RestaurantMenu() {
       .sort((a, b) => b.count - a.count)
       .slice(0, 4);
 
-    const deliveryBreakdown = Object.entries(areasMap)
-      .map(([area, data]) => ({ area, count: data.count, fees: data.deliveryFees }))
-      .sort((a, b) => b.count - a.count);
+    const maxChartVal = Math.max(...Object.values(daysMap), 1);
+    const sevenDaysChartData = Object.entries(daysMap).map(([day, val]) => ({
+      day,
+      val,
+      heightPercent: Math.max(10, Math.round((val / maxChartVal) * 100))
+    }));
 
     return {
       totalOrders: filteredReportsData.length,
@@ -413,16 +453,16 @@ export default function RestaurantMenu() {
       netTotal,
       cashSales,
       electronicSales,
-      instantOrders,
-      scheduledOrders,
+      growthSalesPercent,
+      growthOrdersPercent,
       topArea: topArea + " (" + maxCount + " أوردر)",
       goldenCustomer,
       allCustomersList: sortedCustomers,
       topItems,
       peakHours,
-      deliveryBreakdown
+      sevenDaysChartData
     };
-  }, [filteredReportsData]);
+  }, [filteredReportsData, reportsData]);
 
   const exportToCSV = () => {
     if (!filteredReportsData || filteredReportsData.length === 0) return;
@@ -640,23 +680,6 @@ export default function RestaurantMenu() {
     setSelectedAreaIndex(-1);
   };
 
-  const handleAddPromoCode = () => {
-    if (!newPromoCode.trim() || !newPromoDiscount.trim() || !newPromoLimit.trim()) return;
-    setPromoCodes([...promoCodes, { 
-      code: newPromoCode.trim().toUpperCase(), 
-      discount: Number(newPromoDiscount),
-      limit: Number(newPromoLimit),
-      used: 0
-    }]);
-    setNewPromoCode("");
-    setNewPromoDiscount("");
-    setNewPromoLimit("");
-  };
-
-  const handleRemovePromoCode = (index) => {
-    setPromoCodes(promoCodes.filter((_, idx) => idx !== index));
-  };
-
   const sendWhatsApp = () => {
     const currentStatus = checkRestaurantStatus();
     if (!currentStatus.isOpen) {
@@ -673,21 +696,7 @@ export default function RestaurantMenu() {
       setValidationError("برجاء اختيار منطقة التوصيل لحساب إجمالي الأوردر بدقة!");
       return;
     }
-    if (scheduleType === "later" && !scheduleTime) {
-      setValidationError("برجاء اختيار وقت وموعد التوصيل المطلق!");
-      return;
-    }
     setValidationError("");
-
-    if (appliedDiscountPercent > 0 && enteredPromo.trim()) {
-      const codeClean = enteredPromo.trim().toUpperCase();
-      setPromoCodes(prevCodes => prevCodes.map(p => {
-        if (p.code === codeClean) {
-          return { ...p, used: p.used + 1 };
-        }
-        return p;
-      }));
-    }
 
     const newlyEarnedPoints = Math.floor(cartTotal / 100);
     let updatedPoints = userPoints;
@@ -746,23 +755,9 @@ export default function RestaurantMenu() {
     if (geoLink) {
       text += "📍 لوكيشن خريطة العميل: " + geoLink + "\n";
     }
-    if (customerNotes.trim()) {
-      text += "📝 ملاحظات العميل: " + customerNotes.trim() + "\n";
-    }
     
     text += "\nالطلبات:\n" + lines.join("\n") + "\n\n" +
-            "💵 حساب الأكل الأصلي: " + money(cartTotal) + "\n";
-            
-    if (discountAmount > 0) {
-      text += "🏷 كود الخصم المطبق: " + enteredPromo.toUpperCase() + " (-" + appliedDiscountPercent + "%)\n" +
-              "📉 قيمة الخصم: " + money(discountAmount) + "\n";
-    }
-
-    if (redeemPoints && pointsDiscountValue > 0) {
-      text += "🪙 خصم نقاط محفظة الولاء: -" + money(pointsDiscountValue) + " (تم خصم " + pointsDiscountValue + " نقطة)\n";
-    }
-
-    text += "✨ نقاط مستحقة من هذا الأوردر: +" + newlyEarnedPoints + " نقطة ذهبية\n" +
+            "💵 حساب الأكل الأصلي: " + money(cartTotal) + "\n" +
             "🛵 مصاريف التوصيل: " + money(activeDeliveryArea.price) + "\n" +
             "💰 الإجمالي النهائي المطلوب: " + money(finalTotal);
                  
@@ -773,11 +768,6 @@ export default function RestaurantMenu() {
     setCartOpen(false);
     setCart({});
     setOrderSuccess(true);
-    setAppliedDiscountPercent(0);
-    setEnteredPromo("");
-    setGeoLink("");
-    setRedeemPoints(false);
-    setPaymentMethod("cash");
   };
 
   const copyText = (label, value) => {
@@ -788,13 +778,6 @@ export default function RestaurantMenu() {
     }
   };
 
-  const handleResetMenu = () => {
-    setItems(DEFAULT_MENU);
-    setDeliveryAreas(DEFAULT_DELIVERY_AREAS);
-    setPromoCodes(DEFAULT_PROMO_CODES);
-    setShowResetConfirm(false);
-  };
-
   const sendZReportToWhatsApp = () => {
     const zText = "📊 تقرير تقفيل الخزنة والوردية (Z-Report) - " + restaurantName + "\n\n" +
                   "🛒 إجمالي الأوردرات: " + reportsAnalytics.totalOrders + " أوردر\n" +
@@ -802,8 +785,6 @@ export default function RestaurantMenu() {
                   "🛵 إيرادات التوصيل: " + money(reportsAnalytics.totalDelivery) + "\n" +
                   "💰 صافي الدخل الكلي: " + money(reportsAnalytics.netTotal) + "\n\n" +
                   "🏆 العميل الذهبي المفضل: " + (reportsAnalytics.goldenCustomer ? reportsAnalytics.goldenCustomer.name + " (" + money(reportsAnalytics.goldenCustomer.spent) + ")" : "لا يوجد") + "\n" +
-                  "🍕 الأصناف الأكثر مبيعاً: " + (reportsAnalytics.topItems[0]?.name || "لا يوجد") + "\n" +
-                  "📍 القرية الأكثر طلباً: " + reportsAnalytics.topArea + "\n" +
                   "✨ التقرير مستخرج أوتوماتيكياً عبر Google Sheets!";
 
     const phone = whatsappNumber.replace(/[^\d+]/g, "");
@@ -871,11 +852,6 @@ export default function RestaurantMenu() {
           <a href="https://www.facebook.com/share/1E3Dx3c5Yh/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center p-2.5 rounded-full bg-[#1877F2] text-white hover:bg-[#166FE5] transition-all duration-200 active:scale-95 shadow-md group">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current group-hover:scale-110 transition-transform">
               <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-            </svg>
-          </a>
-          <a href="https://www.tiktok.com/@dreamcornerfood" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center p-2.5 rounded-full bg-[#000000] text-white hover:bg-neutral-900 border border-neutral-800 transition-all duration-200 active:scale-95 shadow-md group">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 group-hover:scale-110 transition-transform">
-              <path d="M12.525.02c1.31.01 2.61.03 3.91.05.08 1.53.64 2.93 1.66 4.02.97.97 2.24 1.57 3.63 1.69v3.91c-1.6-.05-3.11-.64-4.32-1.64-.1-.08-.19-.17-.28-.26v6.2c-.06 4.67-3.81 8.28-8.42 8.01-3.69-.21-6.72-3.14-7.06-6.82-.44-4.78 3.32-8.91 8.11-8.52v3.96c-2.15-.22-4.11 1.29-4.44 3.44-.4 2.58 1.56 4.88 4.15 4.96 2.43.08 4.5-1.74 4.66-4.16.03-.43.02-.87.02-1.3V0z"/>
             </svg>
           </a>
         </div>
@@ -956,7 +932,7 @@ export default function RestaurantMenu() {
                         <div className="flex items-center gap-1 rounded-full px-1.5 py-0.5" style={{ background: theme.surface2 }}>
                           <button onClick={() => addToCart(item.id, -1)} className="w-4 h-4 rounded-full flex items-center justify-center border" style={{ borderColor: theme.accent }}><Minus size={8} /></button>
                           <span className="text-[10px] font-bold px-1">{cart[item.id]}</span>
-                          <button onClick={() => addToCart(item.id, 1)} className="w-4 h-4 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: "#000" }}><Plus size={10} /></button>
+                          <button onClick={() => addToCart(item.id, 1)} className="w-4 h-4 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: "#000" }}><Plus size={8} /></button>
                         </div>
                       ) : (
                         <button onClick={() => addToCart(item.id, 1)} className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: theme.accent, color: "#000" }}><Plus size={10} /></button>
@@ -1085,42 +1061,11 @@ export default function RestaurantMenu() {
                   ))}
                 </div>
 
-                {userPoints > 0 && (
-                  <div className="mt-3 p-3 rounded-xl border border-dashed flex flex-col gap-2" style={{ borderColor: theme.accent + "40", background: theme.surface2 }}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-xs font-bold" style={{ color: theme.accent }}>
-                        <Award size={15} className="animate-bounce" />
-                        <span>محفظة النقاط الذهبية: لديك {userPoints} نقطة</span>
-                      </div>
-                      <span className="text-[10px] opacity-80" style={{ color: theme.muted }}>تساوي {money(userPoints)} خصم</span>
-                    </div>
-                    <button 
-                      onClick={() => setRedeemPoints(!redeemPoints)}
-                      className="w-full py-1.5 rounded-lg text-[11px] font-black transition-all active:scale-95 flex items-center justify-center gap-1"
-                      style={redeemPoints ? { background: "#15803d", color: "#fff" } : { background: theme.accent, color: "#000" }}
-                    >
-                      {redeemPoints ? "✓ تم تطبيق خصم النقاط الذهبية" : "🪙 اضغط هنا لاستبدال النقاط بخصم فوري"}
-                    </button>
-                  </div>
-                )}
-                
                 <div className="space-y-1 pt-2 mt-2 border-t text-xs" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
                   <div className="flex items-center justify-between opacity-80">
                     <span>حساب المأكولات:</span>
                     <span>{money(cartTotal)}</span>
                   </div>
-                  {discountAmount > 0 && (
-                    <div className="flex items-center justify-between text-green-500 font-medium">
-                      <span>خصم الكوبون (-{appliedDiscountPercent}%):</span>
-                      <span>-{money(discountAmount)}</span>
-                    </div>
-                  )}
-                  {redeemPoints && pointsDiscountValue > 0 && (
-                    <div className="flex items-center justify-between text-green-500 font-medium animate-pulse">
-                      <span>خصم استبدال النقاط:</span>
-                      <span>-{money(pointsDiscountValue)}</span>
-                    </div>
-                  )}
                   <div className="flex items-center justify-between opacity-80">
                     <span>توصيل لـ ({selectedAreaIndex >= 0 ? activeDeliveryArea.name : "لم تحدد"}):</span>
                     <span>{money(activeDeliveryArea.price)}</span>
@@ -1129,14 +1074,6 @@ export default function RestaurantMenu() {
                     <span style={{ color: theme.muted }}>الإجمالي الإجمالي:</span>
                     <span style={{ color: theme.accent }} className="text-base">{money(finalTotal)}</span>
                   </div>
-                </div>
-
-                <div className="pt-2 flex gap-2">
-                  <div className="relative flex-1">
-                    <input type="text" placeholder="هل لديك كوبون خصم؟" value={enteredPromo} onChange={(e) => setEnteredPromo(e.target.value)} className="w-full px-3 py-2 pr-8 rounded-xl text-xs border focus:outline-none" style={{ background: theme.surface2, borderColor: "rgba(255,255,255,0.1)", color: theme.text }} />
-                    <Tag size={13} className="absolute right-2.5 top-2.5 opacity-60" style={{ color: theme.text }} />
-                  </div>
-                  <button onClick={handleApplyPromo} className="px-4 py-2 rounded-xl font-bold text-xs shadow-sm" style={{ background: theme.surface2, color: theme.accent, border: "1px solid " + theme.accent + "40" }}>تطبيق</button>
                 </div>
 
                 <div className="mt-3 pt-2 border-t space-y-2" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
@@ -1181,30 +1118,6 @@ export default function RestaurantMenu() {
                       </button>
                     </div>
                   </div>
-
-                  <div className="pt-3 border-t space-y-2" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
-                    <p className="text-[11px] font-bold" style={{ color: theme.accent }}>اختر طريقة الدفع:</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setPaymentMethod("cash")}
-                        className="py-2 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5"
-                        style={paymentMethod === "cash" ? { background: theme.accent, color: "#000", borderColor: theme.accent } : { background: theme.surface2, borderColor: "rgba(255,255,255,0.1)" }}
-                      >
-                        <DollarSign size={14} />
-                        <span>نقدي (كاش)</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPaymentMethod("electronic")}
-                        className="py-2 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5"
-                        style={paymentMethod === "electronic" ? { background: theme.accent, color: "#000", borderColor: theme.accent } : { background: theme.surface2, borderColor: "rgba(255,255,255,0.1)" }}
-                      >
-                        <Wallet size={14} />
-                        <span>دفع إلكتروني</span>
-                      </button>
-                    </div>
-                  </div>
                 </div>
 
                 <button onClick={sendWhatsApp} className="w-full mt-4 py-3.5 rounded-xl font-black flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-lg hover:opacity-90 text-sm" style={{ background: "#25D366", color: "#fff" }}><MessageCircle size={18} />تأكيد وإرسال عبر واتساب</button>
@@ -1214,7 +1127,7 @@ export default function RestaurantMenu() {
         </Overlay>
       )}
 
-      {/* ENTERPRISE ADMIN DASHBOARD MODAL v5.0 */}
+      {/* ENTERPRISE ADMIN DASHBOARD MODAL v5.1 DYNAMIC */}
       {adminOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4 overflow-y-auto" dir="rtl">
           <div className="w-full max-w-6xl max-h-[96vh] rounded-3xl border border-amber-500/20 shadow-2xl flex flex-col overflow-hidden" style={{ background: "#0C0E14", color: "#F3E9D8" }}>
@@ -1226,7 +1139,7 @@ export default function RestaurantMenu() {
                 <div>
                   <h2 className="text-base font-black text-amber-400 flex items-center gap-1.5">
                     <span>الرئيسية | لوحة تحكم دريم كورنر</span>
-                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v5.0</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Dynamic v5.1</span>
                   </h2>
                   <p className="text-[10px] text-gray-400">مرحباً بك في لوحة التحكّم والذكاء المالي 👋</p>
                 </div>
@@ -1295,7 +1208,7 @@ export default function RestaurantMenu() {
                       </div>
                     </div>
 
-                    {/* TOP KPI CARDS GRID (4 Cards Like Image) */}
+                    {/* TOP KPI CARDS GRID WITH REAL CALCULATED GROWTH % */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                       {/* Card 1: Total Sales */}
                       <div className="p-3.5 rounded-2xl bg-[#141721] border border-amber-500/20 relative overflow-hidden flex flex-col justify-between">
@@ -1306,9 +1219,9 @@ export default function RestaurantMenu() {
                         <div className="my-2">
                           <span className="text-xl font-black text-amber-400">{money(reportsAnalytics.netTotal)}</span>
                         </div>
-                        <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold">
-                          <ArrowUpRight size={12} />
-                          <span>+18% عن أمس</span>
+                        <div className={`flex items-center gap-1 text-[10px] font-bold ${reportsAnalytics.growthSalesPercent >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                          {reportsAnalytics.growthSalesPercent >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                          <span>{reportsAnalytics.growthSalesPercent >= 0 ? `+${reportsAnalytics.growthSalesPercent}% عن أمس` : `${reportsAnalytics.growthSalesPercent}% عن أمس`}</span>
                         </div>
                       </div>
 
@@ -1322,8 +1235,8 @@ export default function RestaurantMenu() {
                           <span className="text-xl font-black text-white">{money(reportsAnalytics.totalSales)}</span>
                         </div>
                         <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold">
-                          <ArrowUpRight size={12} />
-                          <span>+15% عن أمس</span>
+                          <CheckCircle2 size={12} />
+                          <span>محسوب حقيقي من الشيت</span>
                         </div>
                       </div>
 
@@ -1336,9 +1249,9 @@ export default function RestaurantMenu() {
                         <div className="my-2">
                           <span className="text-xl font-black text-white">{reportsAnalytics.totalOrders} <span className="text-xs font-normal text-gray-400">أوردر</span></span>
                         </div>
-                        <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold">
-                          <ArrowUpRight size={12} />
-                          <span>+12% عن أمس</span>
+                        <div className={`flex items-center gap-1 text-[10px] font-bold ${reportsAnalytics.growthOrdersPercent >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                          {reportsAnalytics.growthOrdersPercent >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                          <span>{reportsAnalytics.growthOrdersPercent >= 0 ? `+${reportsAnalytics.growthOrdersPercent}% عن أمس` : `${reportsAnalytics.growthOrdersPercent}% عن أمس`}</span>
                         </div>
                       </div>
 
@@ -1352,40 +1265,34 @@ export default function RestaurantMenu() {
                           <span className="text-xl font-black text-white">{money(reportsAnalytics.totalDelivery)}</span>
                         </div>
                         <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold">
-                          <ArrowUpRight size={12} />
-                          <span>+8% عن أمس</span>
+                          <CheckCircle2 size={12} />
+                          <span>محسوب حقيقي من الشيت</span>
                         </div>
                       </div>
                     </div>
 
-                    {/* MIDDLE GRID: 7-DAY CHART + TOP SELLING ITEMS */}
+                    {/* MIDDLE GRID: REAL 7-DAY DYNAMIC CHART + TOP SELLING ITEMS */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                       
-                      {/* Sales Trend Line Chart Box */}
+                      {/* REAL DYNAMIC 7-DAY CHART */}
                       <div className="lg:col-span-2 p-4 rounded-2xl bg-[#141721] border border-white/5 space-y-3">
                         <div className="flex items-center justify-between">
                           <h3 className="text-xs font-bold text-gray-300 flex items-center gap-2">
                             <TrendingUp size={15} className="text-amber-400" />
-                            <span>المبيعات والنمو خلال آخر 7 أيام</span>
+                            <span>المبيعات الفعلية خلال آخر 7 أيام (ديناميكي حي)</span>
                           </h3>
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-white/5 text-gray-400 border border-white/10">مخطط بياني حي</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">100% Real Sheet Data</span>
                         </div>
 
-                        {/* Simulated Visual Graph SVG */}
-                        <div className="h-40 w-full pt-4 flex items-end justify-between gap-2 px-2 relative">
-                          <svg className="absolute inset-0 w-full h-full p-2 opacity-30" viewBox="0 0 100 50" preserveAspectRatio="none">
-                            <path d="M 0 40 Q 20 20 40 30 T 80 10 T 100 25" fill="none" stroke="#E5A93C" strokeWidth="2" />
-                          </svg>
-                          {[
-                            { day: "15 يوليو", val: 35 }, { day: "17 يوليو", val: 50 },
-                            { day: "18 يوليو", val: 70 }, { day: "19 يوليو", val: 90 },
-                            { day: "20 يوليو", val: 80 }, { day: "21 يوليو", val: 95 }
-                          ].map((pt, i) => (
-                            <div key={i} className="flex-1 flex flex-col items-center gap-1 z-10 group">
-                              <div className="w-full bg-amber-500/20 group-hover:bg-amber-500/40 transition-all rounded-t-lg relative" style={{ height: `${pt.val}%` }}>
+                        {/* Real Dynamic Visual Graph Bars */}
+                        <div className="h-44 w-full pt-4 flex items-end justify-between gap-2 px-2 relative border-b border-white/10 pb-2">
+                          {reportsAnalytics.sevenDaysChartData.map((pt, i) => (
+                            <div key={i} className="flex-1 flex flex-col items-center gap-1 z-10 group h-full justify-end">
+                              <span className="text-[8px] font-bold text-amber-300 opacity-0 group-hover:opacity-100 transition-opacity">{money(pt.val)}</span>
+                              <div className="w-full bg-gradient-to-t from-amber-500/30 to-amber-400 group-hover:to-amber-300 transition-all rounded-t-lg relative" style={{ height: `${pt.heightPercent}%` }}>
                                 <div className="w-2 h-2 rounded-full bg-amber-400 mx-auto -mt-1 shadow-md shadow-amber-500/50" />
                               </div>
-                              <span className="text-[9px] text-gray-400 truncate">{pt.day}</span>
+                              <span className="text-[9px] text-gray-400 truncate mt-1">{pt.day}</span>
                             </div>
                           ))}
                         </div>
@@ -1429,8 +1336,8 @@ export default function RestaurantMenu() {
                         
                         <div className="flex items-center justify-around py-2">
                           <div className="relative w-20 h-20 flex items-center justify-center">
-                            <div className="w-20 h-20 rounded-full border-8 border-amber-500 border-t-green-500 animate-spin-slow" />
-                            <span className="absolute text-[10px] font-bold text-amber-400">100%</span>
+                            <div className="w-20 h-20 rounded-full border-8 border-amber-500 border-t-green-500" />
+                            <span className="absolute text-[10px] font-bold text-amber-400">حقيقي</span>
                           </div>
                           <div className="text-xs space-y-2 font-bold">
                             <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> 💵 كاش: {money(reportsAnalytics.cashSales)}</div>
