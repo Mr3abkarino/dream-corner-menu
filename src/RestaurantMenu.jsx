@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "13.1"; // v13.1: تنظيف شامل ومطلق لكل شارات ونصوص وسيرفرات النقاط
+const MENU_VERSION = "14.0"; // v14.0: تطهير حتمي وشامل للذاكرة من النقاط
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbybuw8CuUGV-hf_ecUyevpGB5YioMKCdeOP3PxSKKuzGgMmtcfbHyrd0F81eJg3Z_U/exec";
 
 const THEMES = [
@@ -26,8 +26,8 @@ const DEFAULT_DELIVERY_AREAS = [
 ];
 
 const DEFAULT_PROMO_CODES = [
-  { code: "OFF10", discount: 10, limit: 1, used: 0 },
-  { code: "DREAM", discount: 15, limit: 1, used: 0 }
+  { code: "OFF10", discount: 10, limit: 0, used: 0 },
+  { code: "DREAM", discount: 15, limit: 0, used: 0 }
 ];
 
 const COMING_SOON_OFFERS = [
@@ -195,6 +195,18 @@ export default function RestaurantMenu() {
   const saveTimer = useRef(null);
   const status = checkRestaurantStatus();
   const findItem = (id) => items.find((i) => i.id === id);
+
+  // 🟢 تطهير إجباري وفوري لجميع المفاتيح المتصلة بالنقاط بداخل ذاكرة المتصفح
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.localStorage) {
+      localStorage.removeItem("customer-points-loyalty");
+      Object.keys(localStorage).forEach(key => {
+        if (key.includes("point") || key.includes("loyalty")) {
+          localStorage.removeItem(key);
+        }
+      });
+    }
+  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.localStorage) {
@@ -417,9 +429,6 @@ export default function RestaurantMenu() {
     (async () => {
       try {
         if (typeof window !== "undefined" && window.localStorage) {
-          // مسح أي بقايا سابقة للنقاط من الجهاز نهائياً
-          localStorage.removeItem("customer-points-loyalty");
-          
           const savedVersion = localStorage.getItem("menu-version");
           if (savedVersion !== MENU_VERSION) {
             localStorage.setItem("menu-version", MENU_VERSION);
@@ -543,7 +552,7 @@ export default function RestaurantMenu() {
         </div>
       </div>
 
-      {/* WELCOME BANNER (بدون أرقام أو نقاط) */}
+      {/* WELCOME BANNER (مظهر فقط للاسم بشكل أنيق ونظيف) */}
       {customerName && (
         <div className="bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent border-b border-amber-500/30 px-4 py-2 flex items-center justify-between text-xs">
           <div className="flex items-center gap-2"><Crown size={15} className="text-amber-400 animate-bounce" /><span className="font-bold text-amber-300">أهلاً بعودتك يا {customerName}! 👋</span></div>
@@ -924,7 +933,7 @@ export default function RestaurantMenu() {
                 <div>
                   <h2 className="text-base font-black text-amber-400 flex items-center gap-1.5">
                     <span>الرئيسية | لوحة تحكم دريم كورنر</span>
-                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v13.0</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v14.0</span>
                   </h2>
                   <p className="text-[10px] text-gray-400">مرحباً بك في لوحة التحكّم والذكاء المالي 👋</p>
                 </div>
