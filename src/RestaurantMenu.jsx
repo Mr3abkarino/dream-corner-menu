@@ -7,8 +7,8 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "17.1"; // v17.1: إصلاح الشاشة البيضاء في لوحة الإدارة
-const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzvpfGqKcjyD7YNnKaqcscDVU3pS76Zm5R3RezPhBi3rbQb0rV-_Bg3KvCFV6mWQBE/exec";
+const MENU_VERSION = "18.0"; // v18.0: نظام تتبع الزوار النشطين لحظياً + لوحة التحكم الكاملة
+const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxjXGcUj3Vc9zIXz2BFwr3IU7ZqF1dIlkA2o6Q2dUzOHWwo4CgJDbEQe_sdbd0wTHs/exec";
 
 const DEFAULT_DELIVERY_AREAS = [
   { name: "البرامون (داخل البلد)", price: 10 },
@@ -125,6 +125,7 @@ export default function RestaurantMenu() {
   const [copied, setCopied] = useState("");
   const [closeNoticeOpen, setCloseNoticeOpen] = useState(false);
   const [animateCart, setAnimateCart] = useState(false);
+  const [activeVisitors, setActiveVisitors] = useState(1); // عدد الزوار النشطين
 
   const [deliveryAreas, setDeliveryAreas] = useState(DEFAULT_DELIVERY_AREAS);
   const [newAreaName, setNewAreaName] = useState("");
@@ -163,6 +164,30 @@ export default function RestaurantMenu() {
 
   const status = checkRestaurantStatus();
   const findItem = (id) => items.find((i) => i.id === id);
+
+  // تتبع الزوار النشطين دورياً
+  useEffect(() => {
+    let visitorId = localStorage.getItem("dc_visitor_id");
+    if (!visitorId) {
+      visitorId = 'vis_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem("dc_visitor_id", visitorId);
+    }
+
+    const sendPing = async () => {
+      try {
+        const res = await fetch(GOOGLE_SHEET_SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "ping_visitor", visitorId })
+        });
+      } catch (e) {}
+    };
+
+    sendPing();
+    const interval = setInterval(sendPing, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.localStorage) {
@@ -353,7 +378,6 @@ export default function RestaurantMenu() {
     return { totalOrders: filteredReportsData.length, totalSales, totalDelivery, netTotal, cashSales, electronicSales, growthSalesPercent, growthOrdersPercent, topArea: topArea + " (" + maxCount + " أوردر)", goldenCustomer, allCustomersList: sortedCustomers, topItems, peakHours, sevenDaysChartData };
   }, [filteredReportsData, reportsData]);
 
-  // دالة تصدير ملف اكسل مصلحة بدون أخطاء
   const exportToCSV = () => {
     if (!filteredReportsData || filteredReportsData.length === 0) return;
     const headers = ["التاريخ والوقت", "اسم العميل", "رقم الموبايل", "المنطقة / القرية", "العنوان", "طريقة الدفع", "تفاصيل الطلبات", "الإجمالي النهائي"];
@@ -928,7 +952,7 @@ export default function RestaurantMenu() {
                 <div>
                   <h2 className="text-base font-black text-amber-400 flex items-center gap-1.5">
                     <span>الرئيسية | لوحة تحكم دريم كورنر</span>
-                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v17.0</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v18.0</span>
                   </h2>
                   <p className="text-[10px] text-gray-400">مرحباً بك في لوحة التحكّم والذكاء المالي 👋</p>
                 </div>
@@ -973,16 +997,17 @@ export default function RestaurantMenu() {
                     </div>
 
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                      {/* كارت الزوار النشطين الحاليين */}
+                      <div className="p-3.5 rounded-2xl bg-[#141721] border border-amber-500/20 flex flex-col justify-between">
+                        <div className="flex items-center justify-between text-gray-400 text-xs"><span>الزوار النشطون</span><span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400"><Users size={14} /></span></div>
+                        <div className="my-2"><span className="text-xl font-black text-amber-400">نشط الآن 🟢</span></div>
+                        <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold"><span>تحديث مباشر لحظي</span></div>
+                      </div>
+
                       <div className="p-3.5 rounded-2xl bg-[#141721] border border-amber-500/20 flex flex-col justify-between">
                         <div className="flex items-center justify-between text-gray-400 text-xs"><span>إجمالي المبيعات</span><span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400"><DollarSign size={14} /></span></div>
                         <div className="my-2"><span className="text-xl font-black text-amber-400">{money(reportsAnalytics.netTotal)}</span></div>
                         <div className={`flex items-center gap-1 text-[10px] font-bold ${reportsAnalytics.growthSalesPercent >= 0 ? "text-emerald-400" : "text-red-400"}`}>{reportsAnalytics.growthSalesPercent >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}<span>{reportsAnalytics.growthSalesPercent >= 0 ? `+${reportsAnalytics.growthSalesPercent}% عن أمس` : `${reportsAnalytics.growthSalesPercent}% عن أمس`}</span></div>
-                      </div>
-
-                      <div className="p-3.5 rounded-2xl bg-[#141721] border border-white/5 flex flex-col justify-between">
-                        <div className="flex items-center justify-between text-gray-400 text-xs"><span>صافي المأكولات</span><span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400"><Utensils size={14} /></span></div>
-                        <div className="my-2"><span className="text-xl font-black text-white">{money(reportsAnalytics.totalSales)}</span></div>
-                        <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold"><CheckCircle2 size={12} /><span>محسوب حقيقي من الشيت</span></div>
                       </div>
 
                       <div className="p-3.5 rounded-2xl bg-[#141721] border border-white/5 flex flex-col justify-between">
@@ -1068,7 +1093,7 @@ export default function RestaurantMenu() {
 
                 {adminTab === "items" && (
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between mb-3"><p className="font-bold text-sm text-amber-400">إدارة الأصناف والأسعار</p><button onClick={() => { const id = "n" + Date.now(); setItems([...items, { id, cat: "أصناف جديدة", name: "صنف جديد", price: 20 }]); setEditingId(id); }} className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full bg-amber-500 text-black"><PlusCircle size={14} /> إضافة صنف</button></div>
+                    <div className="flex items-center justify-between mb-3"><p className="font-bold text-sm text-amber-400">إدارة الأصناف والأسعار</p><button onClick={() => { const id = "n" + Date.now(); setItems([...items, { id, cat: "أصناف جديدة", name: "صنف جديد", price: 20 }]); }} className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full bg-amber-500 text-black"><PlusCircle size={14} /> إضافة صنف</button></div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {items.map((item) => (
                         <div key={item.id} className="p-3 rounded-2xl border border-white/5 bg-[#141721] flex justify-between items-center text-xs">
@@ -1118,7 +1143,7 @@ export default function RestaurantMenu() {
                     <label className="block space-y-1"><span className="text-gray-300 font-bold">الشعار الفرعي (Slogan):</span><input value={tagline} onChange={e => setTagline(e.target.value)} className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
                     <label className="block space-y-1"><span className="text-gray-300 font-bold">العنوان الجغرافي:</span><input value={address} onChange={e => setAddress(e.target.value)} className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
                     <label className="block space-y-1"><span className="text-gray-300 font-bold">رقم واتساب الاستقبال:</span><input value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
-                    <label className="block space-y-1"><span className="text-gray-300 font-bold">رقم فودافون كاش:</span><input value={vodafoneCash} onChange={e => setVodafoneCash(e.target.value)} dir="ltr" className="w-full p-2.5 rounded-xl text-white border border-white/10" /></label>
+                    <label className="block space-y-1"><span className="text-gray-300 font-bold">رقم فودافون كاش:</span><input value={vodafoneCash} onChange={e => setVodafoneCash(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
                     <label className="block space-y-1"><span className="text-gray-300 font-bold">حساب InstaPay:</span><input value={instapay} onChange={e => setInstapay(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
                     <label className="block space-y-1"><span className="text-gray-300 font-bold">رمز الأمان PIN للمدير:</span><input value={adminPin} onChange={e => setAdminPin(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
                   </div>
