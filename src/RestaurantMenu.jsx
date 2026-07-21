@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "13.0"; // v13.0: إزالة نظام نقاط الولاء بالكامل
+const MENU_VERSION = "13.1"; // v13.1: تنظيف شامل ومطلق لكل شارات ونصوص وسيرفرات النقاط
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbybuw8CuUGV-hf_ecUyevpGB5YioMKCdeOP3PxSKKuzGgMmtcfbHyrd0F81eJg3Z_U/exec";
 
 const THEMES = [
@@ -417,6 +417,9 @@ export default function RestaurantMenu() {
     (async () => {
       try {
         if (typeof window !== "undefined" && window.localStorage) {
+          // مسح أي بقايا سابقة للنقاط من الجهاز نهائياً
+          localStorage.removeItem("customer-points-loyalty");
+          
           const savedVersion = localStorage.getItem("menu-version");
           if (savedVersion !== MENU_VERSION) {
             localStorage.setItem("menu-version", MENU_VERSION);
@@ -540,7 +543,7 @@ export default function RestaurantMenu() {
         </div>
       </div>
 
-      {/* WELCOME BANNER */}
+      {/* WELCOME BANNER (بدون أرقام أو نقاط) */}
       {customerName && (
         <div className="bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent border-b border-amber-500/30 px-4 py-2 flex items-center justify-between text-xs">
           <div className="flex items-center gap-2"><Crown size={15} className="text-amber-400 animate-bounce" /><span className="font-bold text-amber-300">أهلاً بعودتك يا {customerName}! 👋</span></div>
@@ -921,7 +924,7 @@ export default function RestaurantMenu() {
                 <div>
                   <h2 className="text-base font-black text-amber-400 flex items-center gap-1.5">
                     <span>الرئيسية | لوحة تحكم دريم كورنر</span>
-                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v12.0</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v13.0</span>
                   </h2>
                   <p className="text-[10px] text-gray-400">مرحباً بك في لوحة التحكّم والذكاء المالي 👋</p>
                 </div>
@@ -1104,7 +1107,7 @@ export default function RestaurantMenu() {
                     <label className="block space-y-1"><span className="text-gray-300 font-bold">الشعار الفرعي (Slogan):</span><input value={tagline} onChange={e => setTagline(e.target.value)} className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
                     <label className="block space-y-1"><span className="text-gray-300 font-bold">العنوان الجغرافي:</span><input value={address} onChange={e => setAddress(e.target.value)} className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
                     <label className="block space-y-1"><span className="text-gray-300 font-bold">رقم واتساب الاستقبال:</span><input value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
-                    <label className="block space-y-1"><span className="text-gray-300 font-bold">رقم فودافون كاش:</span><input value={vodafoneCash} onChange={e => setVodafoneCash(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
+                    <label className="block space-y-1"><span className="text-gray-300 font-bold">رقم فودافون كاش:</span><input value={vodafoneCash} onChange={e => setVodafoneCash(e.target.value)} dir="ltr" className="w-full p-2.5 rounded-xl text-white border border-white/10" /></label>
                     <label className="block space-y-1"><span className="text-gray-300 font-bold">حساب InstaPay:</span><input value={instapay} onChange={e => setInstapay(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
                     <label className="block space-y-1"><span className="text-gray-300 font-bold">رمز الأمان PIN للمدير:</span><input value={adminPin} onChange={e => setAdminPin(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
                   </div>
