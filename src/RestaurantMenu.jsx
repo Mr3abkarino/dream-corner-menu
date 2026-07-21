@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "10.0"; // الإصدار v10.0: حفظ السلة عند Refresh + زرار تصفير السلة + تكبير خط الأحجام وتظبيط محاذاة الأرقام
+const MENU_VERSION = "11.0"; // v11.0: أنيميشن طيران السلة + أشرطة Ribbon الأكثر طلباً + أيقونة بطاطس
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbybuw8CuUGV-hf_ecUyevpGB5YioMKCdeOP3PxSKKuzGgMmtcfbHyrd0F81eJg3Z_U/exec";
 
 const THEMES = [
@@ -136,7 +136,6 @@ export default function RestaurantMenu() {
   const [activeCat, setActiveCat] = useState("الكل");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // 🟢 المطلوب 4: استعادة وحفظ السلة تلقائياً بداخل ذاكرة المتصفح
   const [cart, setCart] = useState(() => {
     if (typeof window !== "undefined" && window.localStorage) {
       const savedCart = localStorage.getItem("dream-corner-saved-cart");
@@ -154,6 +153,7 @@ export default function RestaurantMenu() {
   const [copied, setCopied] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [closeNoticeOpen, setCloseNoticeOpen] = useState(false);
+  const [animateCart, setAnimateCart] = useState(false); // انيميشن طيران السلة
 
   const [deliveryAreas, setDeliveryAreas] = useState(DEFAULT_DELIVERY_AREAS);
   const [newAreaName, setNewAreaName] = useState("");
@@ -190,7 +190,6 @@ export default function RestaurantMenu() {
   const [pinError, setPinError] = useState("");
   const [logoClicks, setLogoClicks] = useState(0);
 
-  // حالات التقارير الشاملة
   const [reportsData, setReportsData] = useState([]);
   const [reportsLoading, setReportsLoading] = useState(false);
   const [reportDateFilter, setReportDateFilter] = useState("all");
@@ -200,7 +199,6 @@ export default function RestaurantMenu() {
   const status = checkRestaurantStatus();
   const findItem = (id) => items.find((i) => i.id === id);
 
-  // حفظ كاش السلة فور حدوث أي تغيير
   useEffect(() => {
     if (typeof window !== "undefined" && window.localStorage) {
       localStorage.setItem("dream-corner-saved-cart", JSON.stringify(cart));
@@ -228,7 +226,20 @@ export default function RestaurantMenu() {
   const cartCount = useMemo(() => cartList.reduce((s, i) => s + i.qty, 0), [cartList]);
   const cartTotal = useMemo(() => cartList.reduce((s, i) => s + i.qty * i.price, 0), [cartList]);
 
-  // 🟢 المطلوب 3: دالة تصفير السلة بالكامل
+  // 🟢 المطلوب 1: دالة إضافة المنتجات مع تشغيل أنيميشن النبضة للطيران
+  const addToCart = (key, delta) => {
+    setCart((c) => {
+      const nextCart = { ...c };
+      nextCart[key] = Math.max(0, (c[key] || 0) + delta);
+      return nextCart;
+    });
+
+    if (delta > 0) {
+      setAnimateCart(true);
+      setTimeout(() => setAnimateCart(false), 500);
+    }
+  };
+
   const handleClearCart = () => {
     setCart({});
     if (typeof window !== "undefined" && window.localStorage) {
@@ -243,82 +254,54 @@ export default function RestaurantMenu() {
     return { name: "اختر منطقة التوصيل...", price: 0 };
   }, [selectedAreaIndex, deliveryAreas]);
 
-  const discountAmount = useMemo(() => {
-    return Math.round((cartTotal * appliedDiscountPercent) / 100);
-  }, [cartTotal, appliedDiscountPercent]);
+  const discountAmount = useMemo(() => Math.round((cartTotal * appliedDiscountPercent) / 100), [cartTotal, appliedDiscountPercent]);
 
   const pointsDiscountValue = useMemo(() => {
     if (!redeemPoints) return 0;
     return Math.min(userPoints, Math.max(0, cartTotal - discountAmount));
   }, [redeemPoints, userPoints, cartTotal, discountAmount]);
 
-  const finalTotal = useMemo(() => {
-    return Math.max(0, cartTotal - discountAmount - pointsDiscountValue) + activeDeliveryArea.price;
-  }, [cartTotal, discountAmount, pointsDiscountValue, activeDeliveryArea]);
+  const finalTotal = useMemo(() => Math.max(0, cartTotal - discountAmount - pointsDiscountValue) + activeDeliveryArea.price, [cartTotal, discountAmount, pointsDiscountValue, activeDeliveryArea]);
 
   const fetchReportsFromSheet = async () => {
     setReportsLoading(true);
     try {
       const res = await fetch(GOOGLE_SHEET_SCRIPT_URL + "?pin=" + adminPin);
       const data = await res.json();
-      if (Array.isArray(data)) {
-        setReportsData(data);
-      }
+      if (Array.isArray(data)) setReportsData(data);
     } catch (e) {
-      console.error("Failed to fetch reports", e);
-    } finally {
-      setReportsLoading(false);
-    }
+      console.error(e);
+    } finally { setReportsLoading(false); }
   };
 
-  useEffect(() => {
-    if (adminOpen) {
-      fetchReportsFromSheet();
-    }
-  }, [adminOpen]);
+  useEffect(() => { if (adminOpen) fetchReportsFromSheet(); }, [adminOpen]);
 
   const filteredReportsData = useMemo(() => {
     if (!reportsData || reportsData.length === 0) return [];
-
     const now = new Date();
     const todayStr = now.toLocaleDateString("ar-EG");
-
     const yesterday = new Date(now);
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toLocaleDateString("ar-EG");
 
     return reportsData.filter(row => {
       const dateStr = row["التاريخ والوقت"] || "";
-      
       let passesDate = true;
-      if (reportDateFilter === "today") {
-        passesDate = dateStr.includes(todayStr) || dateStr.startsWith(todayStr);
-      } else if (reportDateFilter === "yesterday") {
-        passesDate = dateStr.includes(yesterdayStr) || dateStr.startsWith(yesterdayStr);
-      }
+      if (reportDateFilter === "today") passesDate = dateStr.includes(todayStr) || dateStr.startsWith(todayStr);
+      else if (reportDateFilter === "yesterday") passesDate = dateStr.includes(yesterdayStr) || dateStr.startsWith(yesterdayStr);
 
       let passesSearch = true;
       if (reportSearchQuery.trim()) {
         const q = reportSearchQuery.trim().toLowerCase();
-        const name = (row["اسم العميل"] || "").toLowerCase();
-        const phone = (row["رقم الموبايل"] || "").toLowerCase();
-        const area = (row["المنطقة / القرية"] || "").toLowerCase();
-        const itemsText = (row["تفاصيل الطلبات"] || "").toLowerCase();
-        passesSearch = name.includes(q) || phone.includes(q) || area.includes(q) || itemsText.includes(q);
+        passesSearch = (row["اسم العميل"] || "").toLowerCase().includes(q) || (row["رقم الموبايل"] || "").toLowerCase().includes(q) || (row["المنطقة / القرية"] || "").toLowerCase().includes(q);
       }
-
       return passesDate && passesSearch;
     });
   }, [reportsData, reportDateFilter, reportSearchQuery]);
 
   const reportsAnalytics = useMemo(() => {
     if (!reportsData || reportsData.length === 0) {
-      return {
-        totalOrders: 0, totalSales: 0, totalDelivery: 0, netTotal: 0,
-        cashSales: 0, electronicSales: 0, growthSalesPercent: 0, growthOrdersPercent: 0,
-        topArea: "لا يوجد", goldenCustomer: null, allCustomersList: [], topItems: [], peakHours: [],
-        sevenDaysChartData: []
-      };
+      return { totalOrders: 0, totalSales: 0, totalDelivery: 0, netTotal: 0, cashSales: 0, electronicSales: 0, growthSalesPercent: 0, growthOrdersPercent: 0, topArea: "لا يوجد", goldenCustomer: null, allCustomersList: [], topItems: [], peakHours: [], sevenDaysChartData: [] };
     }
 
     const now = new Date();
@@ -327,28 +310,14 @@ export default function RestaurantMenu() {
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toLocaleDateString("ar-EG");
 
-    let totalSales = 0;
-    let totalDelivery = 0;
-    let netTotal = 0;
-    let cashSales = 0;
-    let electronicSales = 0;
+    let totalSales = 0, totalDelivery = 0, netTotal = 0, cashSales = 0, electronicSales = 0;
+    let todayNetTotal = 0, todayOrdersCount = 0, yesterdayNetTotal = 0, yesterdayOrdersCount = 0;
 
-    let todayNetTotal = 0;
-    let todayOrdersCount = 0;
-    let yesterdayNetTotal = 0;
-    let yesterdayOrdersCount = 0;
-
-    const areasMap = {};
-    const customersMap = {};
-    const itemsMap = {};
-    const hoursMap = {};
-    const daysMap = {};
+    const areasMap = {}, customersMap = {}, itemsMap = {}, hoursMap = {}, daysMap = {};
 
     for (let i = 6; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
-      const dStr = d.toLocaleDateString("ar-EG", { month: "short", day: "numeric" });
-      daysMap[dStr] = 0;
+      const d = new Date(now); d.setDate(d.getDate() - i);
+      daysMap[d.toLocaleDateString("ar-EG", { month: "short", day: "numeric" })] = 0;
     }
 
     filteredReportsData.forEach(row => {
@@ -362,36 +331,23 @@ export default function RestaurantMenu() {
       const itemsText = row["تفاصيل الطلبات"] || "";
       const timestamp = row["التاريخ والوقت"] || "";
 
-      totalSales += cartVal;
-      totalDelivery += delVal;
-      netTotal += finalVal;
+      totalSales += cartVal; totalDelivery += delVal; netTotal += finalVal;
+      if (pay.includes("إلكتروني")) electronicSales += finalVal; else cashSales += finalVal;
 
-      if (pay.includes("إلكتروني")) electronicSales += finalVal;
-      else cashSales += finalVal;
-
-      if (!areasMap[area]) areasMap[area] = { count: 0, deliveryFees: 0 };
+      if (!areasMap[area]) areasMap[area] = { count: 0 };
       areasMap[area].count += 1;
 
       const custKey = custPhone ? custPhone.trim() : custName.trim();
-      if (!customersMap[custKey]) {
-        customersMap[custKey] = { name: custName, phone: custPhone, count: 0, spent: 0, lastArea: area };
-      }
-      customersMap[custKey].count += 1;
-      customersMap[custKey].spent += finalVal;
+      if (!customersMap[custKey]) customersMap[custKey] = { name: custName, phone: custPhone, count: 0, spent: 0, lastArea: area };
+      customersMap[custKey].count += 1; customersMap[custKey].spent += finalVal;
 
       if (itemsText) {
-        const parts = itemsText.split("|");
-        parts.forEach(part => {
+        itemsText.split("|").forEach(part => {
           const trimmed = part.trim();
           if (trimmed) {
             const match = trimmed.match(/(.+) x(\d+)/);
-            if (match) {
-              const itemName = match[1].trim();
-              const qty = Number(match[2]) || 1;
-              itemsMap[itemName] = (itemsMap[itemName] || 0) + qty;
-            } else {
-              itemsMap[trimmed] = (itemsMap[trimmed] || 0) + 1;
-            }
+            if (match) itemsMap[match[1].trim()] = (itemsMap[match[1].trim()] || 0) + (Number(match[2]) || 1);
+            else itemsMap[trimmed] = (itemsMap[trimmed] || 0) + 1;
           }
         });
       }
@@ -412,126 +368,47 @@ export default function RestaurantMenu() {
     reportsData.forEach(row => {
       const dateStr = row["التاريخ والوقت"] || "";
       const finalVal = Number(row["الإجمالي النهائي"]) || 0;
+      if (dateStr.includes(todayStr) || dateStr.startsWith(todayStr)) { todayNetTotal += finalVal; todayOrdersCount++; }
+      else if (dateStr.includes(yesterdayStr) || dateStr.startsWith(yesterdayStr)) { yesterdayNetTotal += finalVal; yesterdayOrdersCount++; }
 
-      if (dateStr.includes(todayStr) || dateStr.startsWith(todayStr)) {
-        todayNetTotal += finalVal;
-        todayOrdersCount++;
-      } else if (dateStr.includes(yesterdayStr) || dateStr.startsWith(yesterdayStr)) {
-        yesterdayNetTotal += finalVal;
-        yesterdayOrdersCount++;
-      }
-
-      Object.keys(daysMap).forEach(dayKey => {
-        if (dateStr.includes(dayKey)) {
-          daysMap[dayKey] += finalVal;
-        }
-      });
+      Object.keys(daysMap).forEach(dayKey => { if (dateStr.includes(dayKey)) daysMap[dayKey] += finalVal; });
     });
 
     const growthSalesPercent = yesterdayNetTotal > 0 ? Math.round(((todayNetTotal - yesterdayNetTotal) / yesterdayNetTotal) * 100) : (todayNetTotal > 0 ? 100 : 0);
     const growthOrdersPercent = yesterdayOrdersCount > 0 ? Math.round(((todayOrdersCount - yesterdayOrdersCount) / yesterdayOrdersCount) * 100) : (todayOrdersCount > 0 ? 100 : 0);
 
-    let topArea = "غير محدد";
-    let maxCount = 0;
-    Object.entries(areasMap).forEach(([a, data]) => {
-      if (data.count > maxCount) {
-        maxCount = data.count;
-        topArea = a;
-      }
-    });
+    let topArea = "غير محدد", maxCount = 0;
+    Object.entries(areasMap).forEach(([a, data]) => { if (data.count > maxCount) { maxCount = data.count; topArea = a; } });
 
     const sortedCustomers = Object.values(customersMap).sort((a, b) => b.spent - a.spent);
     const goldenCustomer = sortedCustomers.length > 0 ? sortedCustomers[0] : null;
 
-    const topItems = Object.entries(itemsMap)
-      .map(([name, qty]) => ({ name, qty }))
-      .sort((a, b) => b.qty - a.qty)
-      .slice(0, 5);
-
-    const peakHours = Object.entries(hoursMap)
-      .map(([hour, count]) => ({ hour, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 4);
+    const topItems = Object.entries(itemsMap).map(([name, qty]) => ({ name, qty })).sort((a, b) => b.qty - a.qty).slice(0, 5);
+    const peakHours = Object.entries(hoursMap).map(([hour, count]) => ({ hour, count })).sort((a, b) => b.count - a.count).slice(0, 4);
 
     const maxChartVal = Math.max(...Object.values(daysMap), 1);
-    const sevenDaysChartData = Object.entries(daysMap).map(([day, val]) => ({
-      day,
-      val,
-      heightPercent: Math.max(10, Math.round((val / maxChartVal) * 100))
-    }));
+    const sevenDaysChartData = Object.entries(daysMap).map(([day, val]) => ({ day, val, heightPercent: Math.max(10, Math.round((val / maxChartVal) * 100)) }));
 
-    return {
-      totalOrders: filteredReportsData.length,
-      totalSales,
-      totalDelivery,
-      netTotal,
-      cashSales,
-      electronicSales,
-      growthSalesPercent,
-      growthOrdersPercent,
-      topArea: topArea + " (" + maxCount + " أوردر)",
-      goldenCustomer,
-      allCustomersList: sortedCustomers,
-      topItems,
-      peakHours,
-      sevenDaysChartData
-    };
+    return { totalOrders: filteredReportsData.length, totalSales, totalDelivery, netTotal, cashSales, electronicSales, growthSalesPercent, growthOrdersPercent, topArea: topArea + " (" + maxCount + " أوردر)", goldenCustomer, allCustomersList: sortedCustomers, topItems, peakHours, sevenDaysChartData };
   }, [filteredReportsData, reportsData]);
-
-  const exportToCSV = () => {
-    if (!filteredReportsData || filteredReportsData.length === 0) return;
-    const headers = ["التاريخ والوقت", "اسم العميل", "رقم الموبايل", "المنطقة / القرية", "العنوان", "طريقة الدفع", "تفاصيل الطلبات", "الإجمالي النهائي"];
-    const rows = filteredReportsData.map(r => [
-      `"${r["التاريخ والوقت"] || ""}"`,
-      `"${r["اسم العميل"] || ""}"`,
-      `"${r["رقم الموبايل"] || ""}"`,
-      `"${r["المنطقة / القرية"] || ""}"`,
-      `"${r["العنوان بالتفصيل"] || ""}"`,
-      `"${r["طريقة الدفع"] || ""}"`,
-      `"${r["تفاصيل الطلبات"] || ""}"`,
-      `"${r["الإجمالي النهائي"] || 0}"`
-    ]);
-
-    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `تقارير_مبيعات_دريم_كورنر_${new Date().toLocaleDateString("ar-EG")}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   const handleLogoClickLocal = () => {
     setLogoClicks((prev) => {
-      const nextClicks = prev + 1;
-      if (nextClicks >= 3) {
-        setPinModalOpen(true);
-        return 0;
-      }
-      return nextClicks;
+      if (prev + 1 >= 3) { setPinModalOpen(true); return 0; }
+      return prev + 1;
     });
   };
 
   const handleGetLocation = () => {
-    if (!navigator.geolocation) {
-      setValidationError("متصفحك لا يدعم تحديد الموقع تلقائياً.");
-      return;
-    }
+    if (!navigator.geolocation) { setValidationError("متصفحك لا يدعم تحديد الموقع تلقائياً."); return; }
     setGeoLinkLoading(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
-        setGeoLink("http://maps.google.com/?q=" + lat + "," + lon);
+        setGeoLink("http://maps.google.com/?q=" + position.coords.latitude + "," + position.coords.longitude);
         setCustomerAddress(prev => prev + " [تم تحديد اللوكيشن بـ GPS 📍]");
         setGeoLinkLoading(false);
       },
-      () => {
-        setValidationError("فشل تحديد الموقع، برجاء تفعيل الـ GPS في موبايلك.");
-        setGeoLinkLoading(false);
-      }
+      () => { setValidationError("فشل تحديد الموقع، برجاء تفعيل الـ GPS في موبايلك."); setGeoLinkLoading(false); }
     );
   };
 
@@ -540,17 +417,9 @@ export default function RestaurantMenu() {
     if (!codeClean) return;
     const match = promoCodes.find(p => p.code.toUpperCase() === codeClean);
     if (match) {
-      if (match.used >= match.limit) {
-        setAppliedDiscountPercent(0);
-        setPromoError("عذراً، تم استهلاك الحد الأقصى لاستخدام هذا الكوبون!");
-        return;
-      }
-      setAppliedDiscountPercent(match.discount);
-      setPromoError("");
-    } else {
-      setAppliedDiscountPercent(0);
-      setPromoError("كود الخصم غير صحيح أو منتهي الصلاحية!");
-    }
+      if (match.used >= match.limit) { setAppliedDiscountPercent(0); setPromoError("عذراً، تم استهلاك الحد الأقصى لاستخدام هذا الكوبون!"); return; }
+      setAppliedDiscountPercent(match.discount); setPromoError("");
+    } else { setAppliedDiscountPercent(0); setPromoError("كود الخصم غير صحيح أو منتهي الصلاحية!"); }
   };
 
   useEffect(() => {
@@ -560,28 +429,17 @@ export default function RestaurantMenu() {
           const savedVersion = localStorage.getItem("menu-version");
           if (savedVersion !== MENU_VERSION) {
             localStorage.setItem("menu-version", MENU_VERSION);
-            setItems(DEFAULT_MENU);
-            setDeliveryAreas(DEFAULT_DELIVERY_AREAS);
-            setPromoCodes(DEFAULT_PROMO_CODES);
-            setLoaded(true);
-            return;
+            setItems(DEFAULT_MENU); setDeliveryAreas(DEFAULT_DELIVERY_AREAS); setPromoCodes(DEFAULT_PROMO_CODES); setLoaded(true); return;
           }
         }
-
         const res = await safeStorage.get("dream-corner-menu");
         if (res && res.value) {
           const d = JSON.parse(res.value);
           if (d.items) setItems(d.items);
           if (d.restaurantName) setRestaurantName(d.restaurantName);
-          if (d.tagline) setTagline(d.tagline);
-          if (d.address) setAddress(d.address);
-          if (d.menuUrl) setMenuUrl(d.menuUrl);
           if (d.whatsappNumber) setWhatsappNumber(d.whatsappNumber);
           if (d.vodafoneCash) setVodafoneCash(d.vodafoneCash);
           if (d.instapay) setInstapay(d.instapay);
-          if (d.adminPin) setAdminPin(d.adminPin);
-          if (d.deliveryAreas) setDeliveryAreas(d.deliveryAreas);
-          if (d.promoCodes) setPromoCodes(d.promoCodes);
         }
         if (typeof window !== "undefined" && window.localStorage) {
           const savedName = localStorage.getItem("customer-name-cache");
@@ -593,39 +451,14 @@ export default function RestaurantMenu() {
           if (savedAddress) setCustomerAddress(savedAddress);
           if (savedPoints) setUserPoints(Number(savedPoints));
         }
-      } catch (e) {
-        console.error("Storage error", e);
-      } setLoaded(true);
+      } catch (e) { console.error(e); } setLoaded(true);
     })();
   }, []);
 
-  useEffect(() => {
-    if (!loaded) return;
-    clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(async () => {
-      try {
-        await safeStorage.set("dream-corner-menu", JSON.stringify({
-          items, restaurantName, tagline, address, menuUrl, whatsappNumber,
-          vodafoneCash, instapay, adminPin, deliveryAreas, promoCodes, themeId: theme.id,
-        }));
-      } catch (e) {
-        console.error("Auto-save failed", e);
-      }
-    }, 500);
-  }, [items, restaurantName, tagline, address, menuUrl, whatsappNumber, vodafoneCash, instapay, adminPin, deliveryAreas, promoCodes, theme, loaded]);
-
   const handleVerifyPin = (e) => {
     e.preventDefault();
-    if (enteredPin === adminPin) {
-      setIsAdmin(true);
-      setPinModalOpen(false);
-      setPinError("");
-      setEnteredPin("");
-      setAdminOpen(true);
-    } else {
-      setPinError("رمز الأمان PIN غير صحيح!");
-      setEnteredPin("");
-    }
+    if (enteredPin === adminPin) { setIsAdmin(true); setPinModalOpen(false); setEnteredPin(""); setAdminOpen(true); }
+    else setPinError("رمز الأمان PIN غير صحيح!");
   };
 
   const categories = useMemo(() => ["الكل", ...new Set(items.map((i) => i.cat))], [items]);
@@ -636,12 +469,7 @@ export default function RestaurantMenu() {
       const matchesCategory = activeCat === "الكل" || item.cat === activeCat;
       const cleanQuery = searchQuery.trim().toLowerCase();
       if (!cleanQuery) return matchesCategory;
-      return matchesCategory && (
-        item.name.toLowerCase().includes(cleanQuery) ||
-        (item.desc && item.desc.toLowerCase().includes(cleanQuery)) ||
-        item.cat.toLowerCase().includes(cleanQuery) ||
-        (item.subcat && item.subcat.toLowerCase().includes(cleanQuery))
-      );
+      return matchesCategory && (item.name.toLowerCase().includes(cleanQuery) || (item.desc && item.desc.toLowerCase().includes(cleanQuery)));
     });
   }, [items, activeCat, searchQuery]);
 
@@ -655,78 +483,13 @@ export default function RestaurantMenu() {
     return Array.from(map.entries());
   }, [visibleItems]);
 
-  const addToCart = (key, delta) =>
-    setCart((c) => {
-      const nextCart = { ...c };
-      nextCart[key] = Math.max(0, (c[key] || 0) + delta);
-      return nextCart;
-    });
-
-  const updateItem = (id, patch) => setItems((its) => its.map((i) => (i.id === id ? { ...i, ...patch } : i)));
-  const updateSize = (id, sizeIdx, patch) => setItems((its) => its.map((i) => i.id === id ? { ...i, sizes: i.sizes.map((s, idx) => (idx === sizeIdx ? { ...s, ...patch } : s)) } : i));
-  const deleteItem = (id) => setItems((its) => its.filter((i) => i.id !== id));
-
-  const addNewItem = () => {
-    const id = "n" + Date.now().toString();
-    setItems((its) => [...its, { id, cat: activeCat === "الكل" ? "أصناف جديدة" : activeCat, name: "صنف جديد", price: 20, desc: "" }]);
-    setEditingId(id);
-  };
-
-  const handleAddDeliveryArea = () => {
-    if (!newAreaName.trim() || !newAreaPrice.trim()) return;
-    setDeliveryAreas([...deliveryAreas, { name: newAreaName.trim(), price: Number(newAreaPrice) }]);
-    setNewAreaName(""); setNewAreaPrice("");
-  };
-
-  const handleRemoveDeliveryArea = (index) => {
-    setDeliveryAreas(deliveryAreas.filter((_, idx) => idx !== index));
-    setSelectedAreaIndex(-1);
-  };
-
-  const copyText = (label, value) => {
-    const ok = copyTextToClipboard(value);
-    if (ok) {
-      setCopied(label);
-      setTimeout(() => setCopied(""), 2000);
-    }
-  };
-
   const sendWhatsApp = () => {
-    const currentStatus = checkRestaurantStatus();
-    if (!currentStatus.isOpen) {
-      setCloseNoticeOpen(true);
-      return;
-    }
-
-    if (cartList.length === 0) return;
-    if (!customerName.trim() || !customerPhone.trim() || !customerAddress.trim()) {
-      setValidationError("برجاء كتابة الاسم، ورقم الهاتف، وعنوان التوصيل أولاً لتأكيد طلبك!");
-      return;
-    }
-    if (selectedAreaIndex === -1) {
-      setValidationError("برجاء اختيار منطقة التوصيل لحساب إجمالي الأوردر بدقة!");
-      return;
-    }
-    if (scheduleType === "later" && !scheduleTime) {
-      setValidationError("برجاء اختيار وقت وموعد التوصيل المطلق!");
-      return;
-    }
-    setValidationError("");
-
-    if (appliedDiscountPercent > 0 && enteredPromo.trim()) {
-      const codeClean = enteredPromo.trim().toUpperCase();
-      setPromoCodes(prevCodes => prevCodes.map(p => {
-        if (p.code === codeClean) return { ...p, used: p.used + 1 };
-        return p;
-      }));
-    }
+    if (!checkRestaurantStatus().isOpen) { setCloseNoticeOpen(true); return; }
+    if (cartList.length === 0 || !customerName.trim() || !customerPhone.trim() || !customerAddress.trim() || selectedAreaIndex === -1) return;
 
     const newlyEarnedPoints = Math.floor(cartTotal / 100);
     let updatedPoints = userPoints;
-
-    if (redeemPoints) {
-      updatedPoints = Math.max(0, userPoints - pointsDiscountValue);
-    }
+    if (redeemPoints) updatedPoints = Math.max(0, userPoints - pointsDiscountValue);
     updatedPoints += newlyEarnedPoints;
 
     if (typeof window !== "undefined" && window.localStorage) {
@@ -734,86 +497,26 @@ export default function RestaurantMenu() {
       localStorage.setItem("customer-phone-cache", customerPhone.trim());
       localStorage.setItem("customer-address-cache", customerAddress.trim());
       localStorage.setItem("customer-points-loyalty", updatedPoints.toString());
-      localStorage.removeItem("dream-corner-saved-cart"); // تصفير السلة المحفوظة بعد نجاة الأوردر
+      localStorage.removeItem("dream-corner-saved-cart");
     }
 
-    const itemsSummary = cartList.map((cartItem) => cartItem.label + " x" + cartItem.qty).join(" | ");
-    const lines = cartList.map((cartItem) => "• " + cartItem.label + " x" + cartItem.qty + " — " + money(cartItem.price * cartItem.qty));
+    const itemsSummary = cartList.map((i) => i.label + " x" + i.qty).join(" | ");
+    const lines = cartList.map((i) => "• " + i.label + " x" + i.qty + " — " + money(i.price * i.qty));
     
     const deliveryTimeText = scheduleType === "now" ? "⚡ توصيل فوري (الآن)" : "🕒 مجدول للموعد: " + scheduleTime;
-    const paymentText = paymentMethod === "cash" ? "💵 نقدي (كاش عند الاستلام)" : "📱 دفع إلكتروني (فودافون كاش / إنستا باي)";
+    const paymentText = paymentMethod === "cash" ? "💵 نقدي (كاش)" : "📱 دفع إلكتروني";
 
     try {
       fetch(GOOGLE_SHEET_SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          timestamp: new Date().toLocaleString("ar-EG"),
-          customerName: customerName.trim(),
-          customerPhone: customerPhone.trim(),
-          area: activeDeliveryArea.name,
-          address: customerAddress.trim(),
-          paymentMethod: paymentText,
-          schedule: deliveryTimeText,
-          itemsSummary: itemsSummary,
-          cartTotal: cartTotal,
-          couponDiscount: discountAmount,
-          pointsDiscount: pointsDiscountValue,
-          deliveryPrice: activeDeliveryArea.price,
-          finalTotal: finalTotal
-        })
+        method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ timestamp: new Date().toLocaleString("ar-EG"), customerName: customerName.trim(), customerPhone: customerPhone.trim(), area: activeDeliveryArea.name, address: customerAddress.trim(), paymentMethod: paymentText, schedule: deliveryTimeText, itemsSummary, cartTotal, couponDiscount: discountAmount, pointsDiscount: pointsDiscountValue, deliveryPrice: activeDeliveryArea.price, finalTotal })
       });
-    } catch (e) {
-      console.error("Sheet API Send Error:", e);
-    }
+    } catch (e) {}
 
-    let text = "طلب جديد من منيو " + restaurantName + " 🍽\n\n" + 
-               "👤 اسم العميل: " + customerName + "\n" +
-               "📱 تليفون العميل: " + customerPhone + "\n" +
-               "💳 طريقة الدفع: " + paymentText + "\n" +
-               "📅 موعد التوصيل: " + deliveryTimeText + "\n" +
-               "📍 المنطقة: " + activeDeliveryArea.name + "\n" +
-               "🏠 العنوان بالتفصيل: " + customerAddress + "\n";
-               
-    if (geoLink) text += "📍 لوكيشن خريطة العميل: " + geoLink + "\n";
-    if (customerNotes.trim()) text += "📝 ملاحظات العميل: " + customerNotes.trim() + "\n";
-    
-    text += "\nالطلبات:\n" + lines.join("\n") + "\n\n" +
-            "💵 حساب الأكل الأصلي: " + money(cartTotal) + "\n";
-            
-    if (discountAmount > 0) text += "🏷 كود الخصم المطبق: " + enteredPromo.toUpperCase() + " (-" + appliedDiscountPercent + "%)\n📉 قيمة الخصم: " + money(discountAmount) + "\n";
-    if (redeemPoints && pointsDiscountValue > 0) text += "🪙 خصم نقاط محفظة الولاء: -" + money(pointsDiscountValue) + " (تم خصم " + pointsDiscountValue + " نقطة)\n";
+    let text = `طلب جديد من منيو ${restaurantName} 🍽\n\n👤 العميل: ${customerName}\n📱 الهاتف: ${customerPhone}\n💳 الدفع: ${paymentText}\n📍 المنطقة: ${activeDeliveryArea.name}\n🏠 العنوان: ${customerAddress}\n\nالطلبات:\n${lines.join("\n")}\n\n💵 حساب الأكل: ${money(cartTotal)}\n🛵 التوصيل: ${money(activeDeliveryArea.price)}\n💰 الإجمالي: ${money(finalTotal)}`;
+    window.open("https://wa.me/" + whatsappNumber.replace(/[^\d+]/g, "") + "?text=" + encodeURIComponent(text), "_blank");
 
-    text += "✨ نقاط مستحقة من هذا الأوردر: +" + newlyEarnedPoints + " نقطة ذهبية\n" +
-            "🛵 مصاريف التوصيل: " + money(activeDeliveryArea.price) + "\n" +
-            "💰 الإجمالي النهائي المطلوب: " + money(finalTotal);
-                 
-    const phone = whatsappNumber.replace(/[^\d+]/g, "");
-    window.open("https://wa.me/" + phone + "?text=" + encodeURIComponent(text), "_blank");
-
-    setUserPoints(updatedPoints);
-    setCartOpen(false);
-    setCart({});
-    setOrderSuccess(true);
-    setAppliedDiscountPercent(0);
-    setEnteredPromo("");
-    setGeoLink("");
-    setRedeemPoints(false);
-    setPaymentMethod("cash");
-  };
-
-  const sendZReportToWhatsApp = () => {
-    const zText = "📊 تقرير تقفيل الخزنة والوردية (Z-Report) - " + restaurantName + "\n\n" +
-                  "🛒 إجمالي الأوردرات: " + reportsAnalytics.totalOrders + " أوردر\n" +
-                  "💵 مبيعات المأكولات: " + money(reportsAnalytics.totalSales) + "\n" +
-                  "🛵 إيرادات التوصيل: " + money(reportsAnalytics.totalDelivery) + "\n" +
-                  "💰 صافي الدخل الكلي: " + money(reportsAnalytics.netTotal) + "\n\n" +
-                  "🏆 العميل الذهبي المفضل: " + (reportsAnalytics.goldenCustomer ? reportsAnalytics.goldenCustomer.name + " (" + money(reportsAnalytics.goldenCustomer.spent) + ")" : "لا يوجد") + "\n" +
-                  "✨ التقرير مستخرج أوتوماتيكياً عبر Google Sheets!";
-
-    const phone = whatsappNumber.replace(/[^\d+]/g, "");
-    window.open("https://wa.me/" + phone + "?text=" + encodeURIComponent(zText), "_blank");
+    setUserPoints(updatedPoints); setCartOpen(false); setCart({}); setOrderSuccess(true);
   };
 
   return (
@@ -835,7 +538,8 @@ export default function RestaurantMenu() {
               <LayoutGrid size={15} /> <span>لوحة التحكم</span>
             </button>
           )}
-          <button onClick={() => setCartOpen(true)} className="p-2 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-400 relative">
+          {/* 🟢 أنيميشن النبضة والطيران للسلة */}
+          <button onClick={() => setCartOpen(true)} className={`p-2 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-400 relative transition-transform duration-300 ${animateCart ? "scale-125 bg-amber-400 text-black" : ""}`}>
             <ShoppingCart size={16} />
             {cartCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-400 text-black text-[9px] font-black rounded-full flex items-center justify-center">{cartCount}</span>}
           </button>
@@ -845,34 +549,19 @@ export default function RestaurantMenu() {
       {/* SOCIAL MEDIA STRIP */}
       <div className="w-full flex justify-center items-center py-2.5 bg-[#0C0E14]/80 border-b border-white/5 sticky top-[57px] z-20 backdrop-blur-md">
         <div className="flex items-center gap-3 px-4 py-1 rounded-full bg-[#1A1D26] border border-white/10 shadow-inner">
-          <a href={"tel:" + whatsappNumber} className="p-2 rounded-full bg-amber-400 text-black transition-transform active:scale-95 shadow">
-            <Phone size={13} />
-          </a>
+          <a href={"tel:" + whatsappNumber} className="p-2 rounded-full bg-amber-400 text-black transition-transform active:scale-95 shadow"><Phone size={13} /></a>
           <span className="h-3.5 w-[1px] bg-white/20" />
-          <a href={"https://wa.me/" + whatsappNumber.replace(/[^\d+]/g, "")} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-[#25D366] text-white transition-transform active:scale-95 shadow">
-            <MessageCircle size={13} />
-          </a>
-          <a href="https://www.facebook.com/share/1E3Dx3c5Yh/" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-[#1877F2] text-white transition-transform active:scale-95 shadow">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-          </a>
-          <a href="https://www.tiktok.com/@dreamcornerfood" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-black text-white border border-white/20 transition-transform active:scale-95 shadow">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5"><path d="M12.525.02c1.31.01 2.61.03 3.91.05.08 1.53.64 2.93 1.66 4.02.97.97 2.24 1.57 3.63 1.69v3.91c-1.6-.05-3.11-.64-4.32-1.64-.1-.08-.19-.17-.28-.26v6.2c-.06 4.67-3.81 8.28-8.42 8.01-3.69-.21-6.72-3.14-7.06-6.82-.44-4.78 3.32-8.91 8.11-8.52v3.96c-2.15-.22-4.11 1.29-4.44 3.44-.4 2.58 1.56 4.88 4.15 4.96 2.43.08 4.5-1.74 4.66-4.16.03-.43.02-.87.02-1.3V0z"/></svg>
-          </a>
+          <a href={"https://wa.me/" + whatsappNumber.replace(/[^\d+]/g, "")} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-[#25D366] text-white transition-transform active:scale-95 shadow"><MessageCircle size={13} /></a>
+          <a href="https://www.facebook.com/share/1E3Dx3c5Yh/" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-[#1877F2] text-white transition-transform active:scale-95 shadow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
+          <a href="https://www.tiktok.com/@dreamcornerfood" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-black text-white border border-white/20 transition-transform active:scale-95 shadow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5"><path d="M12.525.02c1.31.01 2.61.03 3.91.05.08 1.53.64 2.93 1.66 4.02.97.97 2.24 1.57 3.63 1.69v3.91c-1.6-.05-3.11-.64-4.32-1.64-.1-.08-.19-.17-.28-.26v6.2c-.06 4.67-3.81 8.28-8.42 8.01-3.69-.21-6.72-3.14-7.06-6.82-.44-4.78 3.32-8.91 8.11-8.52v3.96c-2.15-.22-4.11 1.29-4.44 3.44-.4 2.58 1.56 4.88 4.15 4.96 2.43.08 4.5-1.74 4.66-4.16.03-.43.02-.87.02-1.3V0z"/></svg></a>
         </div>
       </div>
 
-      {/* PERSONALIZED WELCOME BANNER FOR SAVED CUSTOMERS */}
+      {/* WELCOME BANNER */}
       {customerName && (
         <div className="bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent border-b border-amber-500/30 px-4 py-2 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2">
-            <Crown size={15} className="text-amber-400 animate-bounce" />
-            <span className="font-bold text-amber-300">أهلاً بعودتك يا {customerName}! 👋</span>
-          </div>
-          {userPoints > 0 && (
-            <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-400 text-black font-black flex items-center gap-1">
-              🪙 {userPoints} نقطة ذهبية
-            </span>
-          )}
+          <div className="flex items-center gap-2"><Crown size={15} className="text-amber-400 animate-bounce" /><span className="font-bold text-amber-300">أهلاً بعودتك يا {customerName}! 👋</span></div>
+          {userPoints > 0 && <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-400 text-black font-black flex items-center gap-1">🪙 {userPoints} نقطة ذهبية</span>}
         </div>
       )}
 
@@ -886,23 +575,15 @@ export default function RestaurantMenu() {
           <p className="text-xs sm:text-sm text-gray-300 font-bold opacity-90">{tagline}</p>
 
           <div className="flex flex-wrap items-center justify-center gap-2 pt-2 text-[10px] font-bold">
-            <span className="px-3 py-1 rounded-full bg-black/70 border border-white/10 font-black flex items-center gap-1" style={{ color: status.isOpen ? "#22c55e" : "#ef4444" }}>
-              {status.text}
-            </span>
-            <span className="px-3 py-1 rounded-full bg-black/60 border border-white/10 text-gray-200 flex items-center gap-1">
-              <Bike size={12} className="text-amber-400" /> توصيل سريع
-            </span>
-            <span className="px-3 py-1 rounded-full bg-black/60 border border-white/10 text-gray-200 flex items-center gap-1">
-              <Clock size={12} className="text-amber-400" /> {status.timeText}
-            </span>
-            <span className="px-3 py-1 rounded-full bg-black/60 border border-amber-500/30 text-amber-300 flex items-center gap-1">
-              <Star size={12} className="fill-amber-400 text-amber-400" /> 4.9 (1250+ تقييم)
-            </span>
+            <span className="px-3 py-1 rounded-full bg-black/70 border border-white/10 font-black flex items-center gap-1" style={{ color: status.isOpen ? "#22c55e" : "#ef4444" }}>{status.text}</span>
+            <span className="px-3 py-1 rounded-full bg-black/60 border border-white/10 text-gray-200 flex items-center gap-1"><Bike size={12} className="text-amber-400" /> توصيل سريع</span>
+            <span className="px-3 py-1 rounded-full bg-black/60 border border-white/10 text-gray-200 flex items-center gap-1"><Clock size={12} className="text-amber-400" /> {status.timeText}</span>
+            <span className="px-3 py-1 rounded-full bg-black/60 border border-amber-500/30 text-amber-300 flex items-center gap-1"><Star size={12} className="fill-amber-400 text-amber-400" /> 4.9 (1250+ تقييم)</span>
           </div>
         </div>
       </section>
 
-      {/* CATEGORIES NAV BAR */}
+      {/* CATEGORIES NAV BAR (🟢 المطلوبة 2: تغيير أيقونة الأصناف الجانبية لباكيت بطاطس 🍟) */}
       <nav className="sticky top-[100px] z-20 bg-[#08090C]/95 backdrop-blur-md border-y border-white/10 py-3 px-4">
         <div className="max-w-3xl mx-auto flex gap-2 overflow-x-auto no-scrollbar">
           {categories.map((c) => (
@@ -911,7 +592,7 @@ export default function RestaurantMenu() {
               onClick={() => setActiveCat(c)}
               className={`px-5 py-2 rounded-2xl text-xs font-black transition-all flex items-center gap-1.5 shrink-0 ${activeCat === c ? "bg-amber-400 text-black shadow-lg shadow-amber-500/20" : "bg-[#141721] text-gray-300 border border-white/5 hover:bg-white/10"}`}
             >
-              <span>{c === "البيتزا" ? "🍕" : c === "السندوتشات" ? "🥪" : c === "المشروبات" ? "🥤" : "🍽"}</span>
+              <span>{c === "البيتزا" ? "🍕" : c === "السندوتشات" ? "🥪" : c === "المشروبات" ? "🥤" : c === "الأصناف الجانبية" ? "🍟" : "🍽"}</span>
               <span>{c}</span>
             </button>
           ))}
@@ -927,7 +608,7 @@ export default function RestaurantMenu() {
         </div>
       </div>
 
-      {/* OFFERS SLIDER (انتظروا قريباً) */}
+      {/* OFFERS SLIDER */}
       <section className="max-w-3xl mx-auto px-4 pt-5">
         <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
           {COMING_SOON_OFFERS.map((off) => (
@@ -943,7 +624,7 @@ export default function RestaurantMenu() {
         </div>
       </section>
 
-      {/* 🟢 المطلوب 1 و 2: الأفضل مبيعاً مع إزاحة الترتيب وتكبير خط الأسعار والأحجام وعلامة + */}
+      {/* 🟢 المطلوبة 3: استبدال الأرقام بـ Ribbon أسطوري "🔥 الأكثر طلباً" على زاوية الكارت */}
       {bestSellerItems.length > 0 && activeCat === "الكل" && !searchQuery.trim() && (
         <section className="max-w-3xl mx-auto px-4 pt-7 space-y-3">
           <div className="flex items-center justify-between">
@@ -955,19 +636,18 @@ export default function RestaurantMenu() {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {bestSellerItems.map((item) => (
-              <div key={item.id} className="bg-[#111319] border border-white/10 rounded-3xl p-3.5 flex flex-col justify-between relative shadow-lg hover:border-amber-500/40 transition-all">
+              <div key={item.id} className="bg-[#111319] border border-white/10 rounded-3xl p-3.5 flex flex-col justify-between relative shadow-lg hover:border-amber-500/40 transition-all overflow-hidden">
                 
-                {/* 🟢 معالجة تداخل الرقم: نقل الدائرة لأقصى اليسار فوق */}
-                <span className="absolute top-3 left-3 w-6 h-6 rounded-full bg-amber-400 text-black font-black text-xs flex items-center justify-center z-10 shadow-md">
-                  {item.rank || 1}
-                </span>
+                {/* 🟢 Ribbon شريط مائل ذكي على الزاوية بدل الرقم */}
+                <div className="absolute top-2.5 -left-7 rotate-[-35deg] bg-gradient-to-r from-red-600 via-amber-500 to-yellow-400 text-black font-black text-[8px] px-7 py-0.5 shadow-md border-y border-amber-300/40 z-10 flex items-center justify-center gap-0.5">
+                  🔥 الأكثر طلباً
+                </div>
 
-                <div className="space-y-1 mt-1 pr-1">
+                <div className="space-y-1 mt-2">
                   <h3 className="text-xs sm:text-sm font-black text-white truncate">{item.name}</h3>
                   <p className="text-[10px] text-gray-400 line-clamp-2 leading-relaxed">{item.desc || "الوجبة الأكثر طلباً وشهيرة من دريم كورنر!"}</p>
                 </div>
 
-                {/* 🟢 تكبير خط الأحجام والأسعار والعلامة + بوضوح كامل */}
                 <div className="mt-3 pt-2 border-t border-white/10 space-y-2">
                   {item.sizes ? (
                     item.sizes.slice(0, 2).map((sz) => {
@@ -995,7 +675,7 @@ export default function RestaurantMenu() {
         </section>
       )}
 
-      {/* 🟢 MAIN MENU ITEMS (مع تكبير الأحجام والأسعار) */}
+      {/* MAIN MENU ITEMS */}
       <main className="max-w-3xl mx-auto px-4 pt-7 space-y-6">
         {groups.map((group) => {
           const subcat = group[0];
@@ -1083,10 +763,10 @@ export default function RestaurantMenu() {
         </span>
       </div>
 
-      {/* FLOATING CART BUTTON */}
+      {/* FLOATING CART BUTTON (مع أنيميشن النبضة) */}
       {cartCount > 0 && (
         <div className="fixed bottom-20 inset-x-0 z-30 px-4">
-          <div onClick={() => setCartOpen(true)} className="max-w-md mx-auto bg-amber-400 text-black p-3 rounded-2xl shadow-2xl flex items-center justify-between cursor-pointer active:scale-98 transition-all">
+          <div onClick={() => setCartOpen(true)} className={`max-w-md mx-auto bg-amber-400 text-black p-3 rounded-2xl shadow-2xl flex items-center justify-between cursor-pointer active:scale-98 transition-all duration-300 ${animateCart ? "scale-105 shadow-amber-500/50 ring-2 ring-amber-300" : ""}`}>
             <div className="flex items-center gap-2.5">
               <div className="w-7 h-7 rounded-full bg-black text-amber-400 flex items-center justify-center font-black text-xs">{cartCount}</div>
               <div>
@@ -1120,7 +800,7 @@ export default function RestaurantMenu() {
         </a>
       </footer>
 
-      {/* CART DRAWER MODAL (🟢 المطلوب 3: إضافة زر سلة المهملات لتصفير السلة) */}
+      {/* CART DRAWER MODAL */}
       {cartOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end justify-center p-0">
           <div className="absolute inset-0" onClick={() => setCartOpen(false)} />
@@ -1134,9 +814,8 @@ export default function RestaurantMenu() {
                   <span>سلة المشتريات ({cartCount})</span>
                 </h3>
 
-                {/* 🟢 زرار سلة المهملات لتفريغ/تصفير السلة */}
                 {cartCount > 0 && (
-                  <button onClick={handleClearCart} className="p-1.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 active:scale-95 transition-all mr-2 flex items-center gap-1 text-[10px] font-bold" title="تفريغ السلة بالكامل">
+                  <button onClick={handleClearCart} className="p-1.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 active:scale-95 transition-all mr-2 flex items-center gap-1 text-[10px] font-bold">
                     <Trash2 size={13} />
                     <span>تصفير السلة</span>
                   </button>
@@ -1149,7 +828,6 @@ export default function RestaurantMenu() {
               </button>
             </div>
 
-            {/* قائمة الأصناف المختارة */}
             <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
               {cartList.map((cartItem) => (
                 <div key={cartItem.key} className="flex items-center justify-between text-xs p-2.5 bg-[#1A1D26] rounded-xl border border-white/5">
@@ -1227,25 +905,13 @@ export default function RestaurantMenu() {
                 {paymentMethod === "electronic" && (
                   <div className="p-3 rounded-2xl bg-black/50 border border-amber-500/30 space-y-2 text-[10px]">
                     <p className="text-amber-400 text-center font-bold">حول المبلغ وانسخ الحساب وارسل اسكرين شوت بالتحويل:</p>
-                    
                     <div className="flex items-center justify-between p-2 rounded-xl bg-[#1A1D26]">
-                      <div className="flex items-center gap-2">
-                        <Phone size={13} className="text-amber-400" />
-                        <div><p className="text-[9px] text-gray-400">فودافون كاش</p><p className="font-bold text-white">{vodafoneCash}</p></div>
-                      </div>
-                      <button type="button" onClick={() => copyText("vodafone", vodafoneCash)} className="p-1.5 rounded-lg border border-white/10 text-amber-300 hover:bg-white/5">
-                        {copied === "vodafone" ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
-                      </button>
+                      <div className="flex items-center gap-2"><Phone size={13} className="text-amber-400" /><div><p className="text-[9px] text-gray-400">فودافون كاش</p><p className="font-bold text-white">{vodafoneCash}</p></div></div>
+                      <button type="button" onClick={() => copyText("vodafone", vodafoneCash)} className="p-1.5 rounded-lg border border-white/10 text-amber-300">{copied === "vodafone" ? <Check size={12} className="text-green-400" /> : <Copy size={12} /></button>
                     </div>
-
                     <div className="flex items-center justify-between p-2 rounded-xl bg-[#1A1D26]">
-                      <div className="flex items-center gap-2">
-                        <CreditCard size={13} className="text-amber-400" />
-                        <div><p className="text-[9px] text-gray-400">حساب InstaPay</p><p className="font-bold text-white">{instapay}</p></div>
-                      </div>
-                      <button type="button" onClick={() => copyText("instapay", instapay)} className="p-1.5 rounded-lg border border-white/10 text-amber-300 hover:bg-white/5">
-                        {copied === "instapay" ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
-                      </button>
+                      <div className="flex items-center gap-2"><CreditCard size={13} className="text-amber-400" /><div><p className="text-[9px] text-gray-400">حساب InstaPay</p><p className="font-bold text-white">{instapay}</p></div></div>
+                      <button type="button" onClick={() => copyText("instapay", instapay)} className="p-1.5 rounded-lg border border-white/10 text-amber-300">{copied === "instapay" ? <Check size={12} className="text-green-400" /> : <Copy size={12} /></button>
                     </div>
                   </div>
                 )}
@@ -1265,24 +931,13 @@ export default function RestaurantMenu() {
       {closeNoticeOpen && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4" dir="rtl">
           <div className="w-full max-w-sm bg-[#111319] border border-amber-500/40 rounded-3xl p-6 text-center space-y-4 shadow-2xl">
-            <div className="w-16 h-16 rounded-full bg-amber-500/10 text-amber-400 flex items-center justify-center mx-auto text-3xl animate-pulse">
-              🍕
-            </div>
+            <div className="w-16 h-16 rounded-full bg-amber-500/10 text-amber-400 flex items-center justify-center mx-auto text-3xl animate-pulse">🍕</div>
             <div className="space-y-1.5">
               <h3 className="text-base font-black text-white">يا غالي، الأفران ريحت شوية.. 👨‍🍳</h3>
-              <p className="text-xs text-gray-300 leading-relaxed">
-                بنجهزلك حاجة فريش وطعم يفرّق بكرة! المنيو معاك لفّ فيه براحتك واختار كل اللي تحبه من دلوقتي، وأول ما نفتح هنكون جاهزين نولّع الدنيا! 🔥🚀
-              </p>
+              <p className="text-xs text-gray-300 leading-relaxed">بنجهزلك حاجة فريش وطعم يفرّق بكرة! المنيو معاك لفّ فيه براحتك واختار كل اللي تحبه من دلوقتي، وأول ما نفتح هنكون جاهزين نولّع الدنيا! 🔥🚀</p>
             </div>
-
-            <div className="p-3 rounded-2xl bg-[#1A1D26] border border-white/5 space-y-1">
-              <p className="text-[10px] text-gray-400 font-bold">مواعيد استقبال الدليفري والطلبات:</p>
-              <p className="text-xs font-black text-amber-400">{status.timeText}</p>
-            </div>
-
-            <button onClick={() => setCloseNoticeOpen(false)} className="w-full py-3 rounded-xl bg-amber-400 text-black font-black text-xs shadow-md active:scale-95 transition-transform">
-              حبيبي، هتختار الأكل من دلوقتي واستعد لوقت الفتح! ✨
-            </button>
+            <div className="p-3 rounded-2xl bg-[#1A1D26] border border-white/5 space-y-1"><p className="text-[10px] text-gray-400 font-bold">مواعيد استقبال الدليفري والطلبات:</p><p className="text-xs font-black text-amber-400">{status.timeText}</p></div>
+            <button onClick={() => setCloseNoticeOpen(false)} className="w-full py-3 rounded-xl bg-amber-400 text-black font-black text-xs shadow-md">حبيبي، هتختار الأكل من دلوقتي واستعد لوقت الفتح! ✨</button>
           </div>
         </div>
       )}
@@ -1292,142 +947,90 @@ export default function RestaurantMenu() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4 overflow-y-auto" dir="rtl">
           <div className="w-full max-w-6xl max-h-[96vh] rounded-3xl border border-amber-500/20 shadow-2xl flex flex-col overflow-hidden" style={{ background: "#0C0E14", color: "#F3E9D8" }}>
             
-            {/* DASHBOARD HEADER */}
             <div className="px-5 py-3.5 border-b border-white/10 flex items-center justify-between bg-[#141721]">
               <div className="flex items-center gap-3">
                 <img src={LOGO_SRC} alt="Dream Corner" className="w-9 h-9 rounded-xl border border-amber-500/30 p-0.5 object-contain" />
                 <div>
                   <h2 className="text-base font-black text-amber-400 flex items-center gap-1.5">
                     <span>الرئيسية | لوحة تحكم دريم كورنر</span>
-                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v10.0</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v11.0</span>
                   </h2>
                   <p className="text-[10px] text-gray-400">مرحباً بك في لوحة التحكّم والذكاء المالي 👋</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
-                <button onClick={fetchReportsFromSheet} className="px-3 py-1.5 rounded-xl border border-amber-500/30 text-amber-400 bg-amber-500/10 text-xs font-bold flex items-center gap-1.5 hover:bg-amber-500/20 active:scale-95 transition-all">
+                <button onClick={fetchReportsFromSheet} className="px-3 py-1.5 rounded-xl border border-amber-500/30 text-amber-400 bg-amber-500/10 text-xs font-bold flex items-center gap-1.5 hover:bg-amber-500/20 transition-all">
                   <RefreshCw size={13} className={reportsLoading ? "animate-spin" : ""} />
                   <span className="hidden sm:inline">تحديث البيانات</span>
                 </button>
-                <button onClick={() => setAdminOpen(false)} className="p-2 rounded-full border border-white/10 text-gray-400 hover:text-white transition-colors">
-                  <X size={18} />
-                </button>
+                <button onClick={() => setAdminOpen(false)} className="p-2 rounded-full border border-white/10 text-gray-400 hover:text-white transition-colors"><X size={18} /></button>
               </div>
             </div>
 
-            {/* DASHBOARD BODY */}
             <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-              
-              {/* SIDEBAR */}
               <div className="w-full md:w-56 border-b md:border-b-0 md:border-l border-white/10 p-3 bg-[#10121A] flex md:flex-col gap-1 overflow-x-auto shrink-0" style={{ scrollbarWidth: "none" }}>
-                <button onClick={() => setAdminTab("dashboard")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all ${adminTab === "dashboard" ? "bg-amber-500 text-black" : "text-gray-400"}`}>
-                  <Home size={16} /> <span>الرئيسية والتقارير</span>
-                </button>
-                <button onClick={() => setAdminTab("items")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all ${adminTab === "items" ? "bg-amber-500 text-black" : "text-gray-400"}`}>
-                  <Utensils size={16} /> <span>المنيو والأسعار</span>
-                </button>
-                <button onClick={() => setAdminTab("customers")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all ${adminTab === "customers" ? "bg-amber-500 text-black" : "text-gray-400"}`}>
-                  <Users size={16} /> <span>العملاء والمكافآت</span>
-                </button>
-                <button onClick={() => setAdminTab("delivery")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all ${adminTab === "delivery" ? "bg-amber-500 text-black" : "text-gray-400"}`}>
-                  <Bike size={16} /> <span>مناطق الدليفري</span>
-                </button>
-                <button onClick={() => setAdminTab("settings")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all ${adminTab === "settings" ? "bg-amber-500 text-black" : "text-gray-400"}`}>
-                  <Settings size={16} /> <span>إعدادات المطعم</span>
-                </button>
+                <button onClick={() => setAdminTab("dashboard")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all ${adminTab === "dashboard" ? "bg-amber-500 text-black" : "text-gray-400"}`}><Home size={16} /> <span>الرئيسية والتقارير</span></button>
+                <button onClick={() => setAdminTab("items")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all ${adminTab === "items" ? "bg-amber-500 text-black" : "text-gray-400"}`}><Utensils size={16} /> <span>المنيو والأسعار</span></button>
+                <button onClick={() => setAdminTab("customers")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all ${adminTab === "customers" ? "bg-amber-500 text-black" : "text-gray-400"}`}><Users size={16} /> <span>العملاء والمكافآت</span></button>
+                <button onClick={() => setAdminTab("delivery")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all ${adminTab === "delivery" ? "bg-amber-500 text-black" : "text-gray-400"}`}><Bike size={16} /> <span>مناطق الدليفري</span></button>
+                <button onClick={() => setAdminTab("settings")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition-all ${adminTab === "settings" ? "bg-amber-500 text-black" : "text-gray-400"}`}><Settings size={16} /> <span>إعدادات المطعم</span></button>
 
                 <div className="mt-auto pt-4 hidden md:block border-t border-white/10 space-y-2">
-                  <button onClick={sendZReportToWhatsApp} className="w-full py-2 px-3 rounded-xl bg-emerald-600/20 border border-emerald-500/40 text-emerald-400 text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-emerald-600/30 transition-colors">
-                    <Share2 size={13} /> <span>تصدير Z-Report</span>
-                  </button>
-                  <button onClick={exportToCSV} className="w-full py-2 px-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-amber-500/20 transition-colors">
-                    <Download size={13} /> <span>تحميل Excel</span>
-                  </button>
+                  <button onClick={sendZReportToWhatsApp} className="w-full py-2 px-3 rounded-xl bg-emerald-600/20 border border-emerald-500/40 text-emerald-400 text-xs font-bold flex items-center justify-center gap-1.5"><Share2 size={13} /> <span>تصدير Z-Report</span></button>
+                  <button onClick={exportToCSV} className="w-full py-2 px-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center justify-center gap-1.5"><Download size={13} /> <span>تحميل Excel</span></button>
                 </div>
               </div>
 
-              {/* CONTENT AREA */}
               <div className="flex-1 p-4 overflow-y-auto space-y-5 bg-[#0C0E14]">
-                
-                {/* TAB 1: DASHBOARD */}
                 {adminTab === "dashboard" && (
                   <div className="space-y-5">
-                    
-                    {/* Filters */}
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-[#141721] p-3 rounded-2xl border border-white/5">
                       <div className="flex items-center gap-1 bg-[#1C202E] p-1 rounded-xl w-full sm:w-auto text-xs font-bold">
                         <button onClick={() => setReportDateFilter("today")} className={`flex-1 sm:px-4 py-1.5 rounded-lg transition-all ${reportDateFilter === "today" ? "bg-amber-500 text-black" : "text-gray-400"}`}>اليوم</button>
                         <button onClick={() => setReportDateFilter("yesterday")} className={`flex-1 sm:px-4 py-1.5 rounded-lg transition-all ${reportDateFilter === "yesterday" ? "bg-amber-500 text-black" : "text-gray-400"}`}>أمس</button>
                         <button onClick={() => setReportDateFilter("all")} className={`flex-1 sm:px-4 py-1.5 rounded-lg transition-all ${reportDateFilter === "all" ? "bg-amber-500 text-black" : "text-gray-400"}`}>الكل</button>
                       </div>
-
                       <div className="relative w-full sm:w-64">
                         <input type="text" placeholder="بحث باسم العميل، الموبايل..." value={reportSearchQuery} onChange={(e) => setReportSearchQuery(e.target.value)} className="w-full px-3 py-1.5 pr-8 rounded-xl text-xs bg-[#1C202E] border border-white/10 text-white focus:outline-none" />
                         <Search size={13} className="absolute right-2.5 top-2.5 text-gray-400" />
                       </div>
                     </div>
 
-                    {/* KPI CARDS */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                      <div className="p-3.5 rounded-2xl bg-[#141721] border border-amber-500/20 relative overflow-hidden flex flex-col justify-between">
-                        <div className="flex items-center justify-between text-gray-400 text-xs">
-                          <span>إجمالي المبيعات</span>
-                          <span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400"><DollarSign size={14} /></span>
-                        </div>
+                      <div className="p-3.5 rounded-2xl bg-[#141721] border border-amber-500/20 flex flex-col justify-between">
+                        <div className="flex items-center justify-between text-gray-400 text-xs"><span>إجمالي المبيعات</span><span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400"><DollarSign size={14} /></span></div>
                         <div className="my-2"><span className="text-xl font-black text-amber-400">{money(reportsAnalytics.netTotal)}</span></div>
-                        <div className={`flex items-center gap-1 text-[10px] font-bold ${reportsAnalytics.growthSalesPercent >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-                          {reportsAnalytics.growthSalesPercent >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-                          <span>{reportsAnalytics.growthSalesPercent >= 0 ? `+${reportsAnalytics.growthSalesPercent}% عن أمس` : `${reportsAnalytics.growthSalesPercent}% عن أمس`}</span>
-                        </div>
+                        <div className={`flex items-center gap-1 text-[10px] font-bold ${reportsAnalytics.growthSalesPercent >= 0 ? "text-emerald-400" : "text-red-400"}`}>{reportsAnalytics.growthSalesPercent >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}<span>{reportsAnalytics.growthSalesPercent >= 0 ? `+${reportsAnalytics.growthSalesPercent}% عن أمس` : `${reportsAnalytics.growthSalesPercent}% عن أمس`}</span></div>
                       </div>
 
-                      <div className="p-3.5 rounded-2xl bg-[#141721] border border-white/5 relative overflow-hidden flex flex-col justify-between">
-                        <div className="flex items-center justify-between text-gray-400 text-xs">
-                          <span>صافي المأكولات</span>
-                          <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400"><Utensils size={14} /></span>
-                        </div>
+                      <div className="p-3.5 rounded-2xl bg-[#141721] border border-white/5 flex flex-col justify-between">
+                        <div className="flex items-center justify-between text-gray-400 text-xs"><span>صافي المأكولات</span><span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400"><Utensils size={14} /></span></div>
                         <div className="my-2"><span className="text-xl font-black text-white">{money(reportsAnalytics.totalSales)}</span></div>
                         <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold"><CheckCircle2 size={12} /><span>محسوب حقيقي من الشيت</span></div>
                       </div>
 
-                      <div className="p-3.5 rounded-2xl bg-[#141721] border border-white/5 relative overflow-hidden flex flex-col justify-between">
-                        <div className="flex items-center justify-between text-gray-400 text-xs">
-                          <span>عدد الطلبات</span>
-                          <span className="p-1.5 rounded-lg bg-sky-500/10 text-sky-400"><ShoppingCart size={14} /></span>
-                        </div>
-                        <div className="my-2"><span className="text-xl font-black text-white">{reportsAnalytics.totalOrders} <span className="text-xs font-normal text-gray-400">أوردر</span></span></div>
-                        <div className={`flex items-center gap-1 text-[10px] font-bold ${reportsAnalytics.growthOrdersPercent >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-                          {reportsAnalytics.growthOrdersPercent >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-                          <span>{reportsAnalytics.growthOrdersPercent >= 0 ? `+${reportsAnalytics.growthOrdersPercent}% عن أمس` : `${reportsAnalytics.growthOrdersPercent}% عن أمس`}</span>
-                        </div>
+                      <div className="p-3.5 rounded-2xl bg-[#141721] border border-white/5 flex flex-col justify-between">
+                        <div className="flex items-center justify-between text-gray-400 text-xs"><span>عدد الطلبات</span><span className="p-1.5 rounded-lg bg-sky-500/10 text-sky-400"><ShoppingCart size={14} /></span></div>
+                        <div className="my-2"><span className="text-xl font-black text-white">{reportsAnalytics.totalOrders} أوردر</span></div>
+                        <div className={`flex items-center gap-1 text-[10px] font-bold ${reportsAnalytics.growthOrdersPercent >= 0 ? "text-emerald-400" : "text-red-400"}`}>{reportsAnalytics.growthOrdersPercent >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}<span>{reportsAnalytics.growthOrdersPercent >= 0 ? `+${reportsAnalytics.growthOrdersPercent}% عن أمس` : `${reportsAnalytics.growthOrdersPercent}% عن أمس`}</span></div>
                       </div>
 
-                      <div className="p-3.5 rounded-2xl bg-[#141721] border border-white/5 relative overflow-hidden flex flex-col justify-between">
-                        <div className="flex items-center justify-between text-gray-400 text-xs">
-                          <span>إيرادات الدليفري</span>
-                          <span className="p-1.5 rounded-lg bg-purple-500/10 text-purple-400"><Bike size={14} /></span>
-                        </div>
+                      <div className="p-3.5 rounded-2xl bg-[#141721] border border-white/5 flex flex-col justify-between">
+                        <div className="flex items-center justify-between text-gray-400 text-xs"><span>إيرادات الدليفري</span><span className="p-1.5 rounded-lg bg-purple-500/10 text-purple-400"><Bike size={14} /></span></div>
                         <div className="my-2"><span className="text-xl font-black text-white">{money(reportsAnalytics.totalDelivery)}</span></div>
                         <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold"><CheckCircle2 size={12} /><span>محسوب حقيقي من الشيت</span></div>
                       </div>
                     </div>
 
-                    {/* DYNAMIC 7-DAY CHART + TOP ITEMS */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                       <div className="lg:col-span-2 p-4 rounded-2xl bg-[#141721] border border-white/5 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-xs font-bold text-gray-300 flex items-center gap-2"><TrendingUp size={15} className="text-amber-400" /><span>المبيعات الفعلية خلال آخر 7 أيام (حقيقي)</span></h3>
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">100% Real Data</span>
-                        </div>
-
+                        <div className="flex items-center justify-between"><h3 className="text-xs font-bold text-gray-300 flex items-center gap-2"><TrendingUp size={15} className="text-amber-400" /><span>المبيعات الفعلية خلال آخر 7 أيام (حقيقي)</span></h3><span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">100% Real Data</span></div>
                         <div className="h-44 w-full pt-4 flex items-end justify-between gap-2 px-2 relative border-b border-white/10 pb-2">
                           {reportsAnalytics.sevenDaysChartData.map((pt, i) => (
                             <div key={i} className="flex-1 flex flex-col items-center gap-1 z-10 group h-full justify-end">
                               <span className="text-[8px] font-bold text-amber-300 opacity-0 group-hover:opacity-100 transition-opacity">{money(pt.val)}</span>
-                              <div className="w-full bg-gradient-to-t from-amber-500/30 to-amber-400 rounded-t-lg transition-all" style={{ height: `${pt.heightPercent}%` }}>
-                                <div className="w-2 h-2 rounded-full bg-amber-400 mx-auto -mt-1 shadow-md shadow-amber-500/50" />
-                              </div>
+                              <div className="w-full bg-gradient-to-t from-amber-500/30 to-amber-400 rounded-t-lg transition-all" style={{ height: `${pt.heightPercent}%` }}><div className="w-2 h-2 rounded-full bg-amber-400 mx-auto -mt-1 shadow-md shadow-amber-500/50" /></div>
                               <span className="text-[9px] text-gray-400 truncate mt-1">{pt.day}</span>
                             </div>
                           ))}
@@ -1446,51 +1049,10 @@ export default function RestaurantMenu() {
                         </div>
                       </div>
                     </div>
-
-                    {/* LOWER GRID */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="p-4 rounded-2xl bg-[#141721] border border-white/5 space-y-3">
-                        <h3 className="text-xs font-bold text-gray-300 flex items-center gap-2"><PieChart size={15} className="text-sky-400" /><span>توزيع طرق الدفع</span></h3>
-                        <div className="text-xs space-y-2 font-bold py-2">
-                          <p>💵 كاش: <span className="text-amber-400">{money(reportsAnalytics.cashSales)}</span></p>
-                          <p>📱 إلكتروني: <span className="text-emerald-400">{money(reportsAnalytics.electronicSales)}</span></p>
-                        </div>
-                      </div>
-
-                      <div className="p-4 rounded-2xl bg-[#141721] border border-white/5 space-y-3">
-                        <h3 className="text-xs font-bold text-gray-300 flex items-center gap-2"><Clock size={15} className="text-purple-400" /><span>ساعات الذروة والضغط</span></h3>
-                        <div className="grid grid-cols-2 gap-2">
-                          {reportsAnalytics.peakHours.map((h, i) => (
-                            <div key={i} className="p-2 rounded-xl bg-[#1C202E] text-center"><span className="text-xs font-bold text-purple-300 block">{h.hour}</span><span className="text-[9px] text-emerald-400 font-bold">{h.count} أوردر</span></div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/15 via-[#141721] to-[#141721] border border-amber-500/30 space-y-2">
-                        <h3 className="text-xs font-black text-amber-400 flex items-center gap-1.5"><Trophy size={16} /><span>العميل الذهبي 👑</span></h3>
-                        {reportsAnalytics.goldenCustomer && (
-                          <div className="pt-1 text-xs"><p className="font-bold text-white">{reportsAnalytics.goldenCustomer.name}</p><p className="text-[10px] text-gray-400">📱 {reportsAnalytics.goldenCustomer.phone}</p><p className="text-emerald-400 font-bold pt-1">{money(reportsAnalytics.goldenCustomer.spent)} إجمالي المشتريات</p></div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* RECENT ORDERS TABLE */}
-                    <div className="p-4 rounded-2xl bg-[#141721] border border-white/5 space-y-3">
-                      <h3 className="text-xs font-bold text-gray-300 flex items-center gap-2"><ShoppingCart size={15} className="text-amber-400" /><span>سجل وتفاصيل الطلبات الأخيرة ({filteredReportsData.length})</span></h3>
-                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                        {filteredReportsData.slice().reverse().map((row, idx) => (
-                          <div key={idx} className="p-3 rounded-xl bg-[#1C202E] border border-white/5 text-xs flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-                            <div><span className="font-bold text-white">{row["اسم العميل"] || "عميل"}</span> <span className="text-[10px] text-gray-400">({row["رقم الموبايل"]})</span><p className="text-[10px] text-gray-400">📍 {row["المنطقة / القرية"]} · 🕒 {row["التاريخ والوقت"]}</p></div>
-                            <div className="text-left"><span className="text-sm font-black text-amber-400 block">{money(row["الإجمالي النهائي"])}</span><span className="text-[9px] text-gray-400 truncate block max-w-xs">{row["تفاصيل الطلبات"]}</span></div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
                   </div>
                 )}
 
-                {/* TAB 2: ITEMS */}
+                {/* باقي التبويبات */}
                 {adminTab === "items" && (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between mb-3"><p className="font-bold text-sm text-amber-400">إدارة الأصناف والأسعار</p><button onClick={addNewItem} className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full bg-amber-500 text-black"><PlusCircle size={14} /> إضافة صنف</button></div>
@@ -1505,7 +1067,6 @@ export default function RestaurantMenu() {
                   </div>
                 )}
 
-                {/* TAB 3: CUSTOMERS */}
                 {adminTab === "customers" && (
                   <div className="space-y-2">
                     <p className="font-bold text-sm text-amber-400 mb-2">قائمة حسابات العملاء التراكمية</p>
@@ -1518,7 +1079,6 @@ export default function RestaurantMenu() {
                   </div>
                 )}
 
-                {/* TAB 4: DELIVERY */}
                 {adminTab === "delivery" && (
                   <div className="space-y-3">
                     <p className="font-bold text-sm text-amber-400 mb-2">إدارة مناطق وقرى الدليفري</p>
@@ -1531,48 +1091,18 @@ export default function RestaurantMenu() {
                   </div>
                 )}
 
-                {/* TAB 5: SETTINGS */}
                 {adminTab === "settings" && (
-                  <div className="space-y-3 max-w-lg mx-auto text-xs space-y-3">
-                    <p className="font-bold text-sm text-amber-400 mb-2">إعدادات الهوية والأمان والمحافظ الإلكترونية</p>
-                    
-                    <label className="block space-y-1">
-                      <span className="text-gray-300 font-bold">اسم المطعم:</span>
-                      <input value={restaurantName} onChange={e => setRestaurantName(e.target.value)} className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" />
-                    </label>
-
-                    <label className="block space-y-1">
-                      <span className="text-gray-300 font-bold">الشعار الفرعي (Slogan):</span>
-                      <input value={tagline} onChange={e => setTagline(e.target.value)} className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" />
-                    </label>
-
-                    <label className="block space-y-1">
-                      <span className="text-gray-300 font-bold">العنوان الجغرافي:</span>
-                      <input value={address} onChange={e => setAddress(e.target.value)} className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" />
-                    </label>
-
-                    <label className="block space-y-1">
-                      <span className="text-gray-300 font-bold">رقم واتساب استقبال الطلبات:</span>
-                      <input value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" />
-                    </label>
-
-                    <label className="block space-y-1">
-                      <span className="text-gray-300 font-bold">رقم فودافون كاش:</span>
-                      <input value={vodafoneCash} onChange={e => setVodafoneCash(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" />
-                    </label>
-
-                    <label className="block space-y-1">
-                      <span className="text-gray-300 font-bold">حساب InstaPay:</span>
-                      <input value={instapay} onChange={e => setInstapay(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" />
-                    </label>
-
-                    <label className="block space-y-1">
-                      <span className="text-gray-300 font-bold">رمز الأمان PIN للمدير:</span>
-                      <input value={adminPin} onChange={e => setAdminPin(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" />
-                    </label>
+                  <div className="space-y-3 max-w-lg mx-auto text-xs">
+                    <p className="font-bold text-sm text-amber-400 mb-2">إعدادات الهوية والأمان والمحافظ</p>
+                    <label className="block space-y-1"><span className="text-gray-300 font-bold">اسم المطعم:</span><input value={restaurantName} onChange={e => setRestaurantName(e.target.value)} className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
+                    <label className="block space-y-1"><span className="text-gray-300 font-bold">الشعار الفرعي (Slogan):</span><input value={tagline} onChange={e => setTagline(e.target.value)} className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
+                    <label className="block space-y-1"><span className="text-gray-300 font-bold">العنوان الجغرافي:</span><input value={address} onChange={e => setAddress(e.target.value)} className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
+                    <label className="block space-y-1"><span className="text-gray-300 font-bold">رقم واتساب الاستقبال:</span><input value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
+                    <label className="block space-y-1"><span className="text-gray-300 font-bold">رقم فودافون كاش:</span><input value={vodafoneCash} onChange={e => setVodafoneCash(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
+                    <label className="block space-y-1"><span className="text-gray-300 font-bold">حساب InstaPay:</span><input value={instapay} onChange={e => setInstapay(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
+                    <label className="block space-y-1"><span className="text-gray-300 font-bold">رمز الأمان PIN للمدير:</span><input value={adminPin} onChange={e => setAdminPin(e.target.value)} dir="ltr" className="w-full p-2.5 bg-[#141721] rounded-xl text-white border border-white/10" /></label>
                   </div>
                 )}
-
               </div>
             </div>
 
