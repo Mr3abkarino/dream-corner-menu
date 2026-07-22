@@ -7,8 +7,9 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "19.0"; // v19.0: عودة صافي المبيعات + عداد زوار نشطين حقيقي ومتصل بالشيت
-const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyJgJtl76mx8Dq-xRtYpHPDideWhBNQ6CqWtyAxKydTTNfwLp1mDjZZMt8eL4S8VSQ/exec";
+const MENU_VERSION = "22.0"; // v22.0: الكود الكامل النهائي (الوردية المحاسبية + كروت الداشبورد الكاملة)
+const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw6tHPbZct3TX2E76DhHtm6DUx9bEyzHeeOkNzbDXzr2YPrDdZkovv5LVSbI4x8yb0/exec";
+const ADMIN_SECRET_KEY = "Adam"; // كلمة المرور السرية الجديدة للوحة التحكم
 
 const DEFAULT_DELIVERY_AREAS = [
   { name: "البرامون (داخل البلد)", price: 10 },
@@ -22,8 +23,8 @@ const DEFAULT_DELIVERY_AREAS = [
 ];
 
 const DEFAULT_PROMO_CODES = [
-  { code: "OFF10", discount: 10, limit: 1, used: 0 },
-  { code: "DREAM", discount: 15, limit: 1, used: 0 }
+  { code: "OFF10", discount: 10, limit:  0, used: 0 },
+  { code: "DREAM", discount: 15, limit: 0, used: 0 }
 ];
 
 const COMING_SOON_OFFERS = [
@@ -126,6 +127,7 @@ export default function RestaurantMenu() {
   const [closeNoticeOpen, setCloseNoticeOpen] = useState(false);
   const [animateCart, setAnimateCart] = useState(false);
   const [activeVisitors, setActiveVisitors] = useState(1);
+  const [restaurantStatus, setRestaurantStatus] = useState(checkRestaurantStatus());
 
   const [deliveryAreas, setDeliveryAreas] = useState(DEFAULT_DELIVERY_AREAS);
   const [newAreaName, setNewAreaName] = useState("");
@@ -162,11 +164,13 @@ export default function RestaurantMenu() {
   const [reportDateFilter, setReportDateFilter] = useState("all");
   const [reportSearchQuery, setReportSearchQuery] = useState("");
 
-  const status = checkRestaurantStatus();
   const findItem = (id) => items.find((i) => i.id === id);
 
-  // إرسال وتحديث الزوار النشطين
   useEffect(() => {
+    const statusTimer = setInterval(() => {
+      setRestaurantStatus(checkRestaurantStatus());
+    }, 60000);
+
     let visitorId = localStorage.getItem("dc_visitor_id");
     if (!visitorId) {
       visitorId = 'vis_' + Math.random().toString(36).substr(2, 9);
@@ -189,8 +193,12 @@ export default function RestaurantMenu() {
     };
 
     sendPing();
-    const interval = setInterval(sendPing, 30000); // كل 30 ثانية
-    return () => clearInterval(interval);
+    const visitorTimer = setInterval(sendPing, 30000);
+
+    return () => {
+      clearInterval(statusTimer);
+      clearInterval(visitorTimer);
+    };
   }, []);
 
   useEffect(() => {
@@ -253,9 +261,13 @@ export default function RestaurantMenu() {
   const fetchReportsFromSheet = async () => {
     setReportsLoading(true);
     try {
-      const res = await fetch(GOOGLE_SHEET_SCRIPT_URL + "?pin=" + adminPin);
+      const res = await fetch(GOOGLE_SHEET_SCRIPT_URL + "?action=orders&adminKey=" + ADMIN_SECRET_KEY);
       const data = await res.json();
-      if (Array.isArray(data)) setReportsData(data);
+      if (data && data.status === "success" && Array.isArray(data.orders)) {
+        setReportsData(data.orders);
+      } else if (Array.isArray(data)) {
+        setReportsData(data);
+      }
     } catch (e) {
       console.error(e);
     } finally { setReportsLoading(false); }
@@ -265,18 +277,28 @@ export default function RestaurantMenu() {
 
   const filteredReportsData = useMemo(() => {
     if (!reportsData || !Array.isArray(reportsData) || reportsData.length === 0) return [];
+    
+    const getShiftDateStr = (dateObj) => {
+      const d = new Date(dateObj);
+      const hour = d.getHours();
+      if (hour < 3) { d.setDate(d.getDate() - 1); }
+      return d.toLocaleDateString("ar-EG");
+    };
+
     const now = new Date();
-    const todayStr = now.toLocaleDateString("ar-EG");
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toLocaleDateString("ar-EG");
+    const todayShiftStr = getShiftDateStr(now);
+    const yesterdayDate = new Date(now); yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    const yesterdayShiftStr = getShiftDateStr(yesterdayDate);
 
     return reportsData.filter(row => {
       if (!row) return false;
       const dateStr = String(row["التاريخ والوقت"] || "");
+      const rowDate = new Date(dateStr);
+      const rowShiftStr = !isNaN(rowDate.getTime()) ? getShiftDateStr(rowDate) : dateStr;
+
       let passesDate = true;
-      if (reportDateFilter === "today") passesDate = dateStr.includes(todayStr) || dateStr.startsWith(todayStr);
-      else if (reportDateFilter === "yesterday") passesDate = dateStr.includes(yesterdayStr) || dateStr.startsWith(yesterdayStr);
+      if (reportDateFilter === "today") passesDate = rowShiftStr === todayShiftStr || dateStr.includes(todayShiftStr);
+      else if (reportDateFilter === "yesterday") passesDate = rowShiftStr === yesterdayShiftStr || dateStr.includes(yesterdayShiftStr);
 
       let passesSearch = true;
       if (reportSearchQuery.trim()) {
@@ -292,11 +314,17 @@ export default function RestaurantMenu() {
       return { totalOrders: 0, totalSales: 0, totalDelivery: 0, netTotal: 0, cashSales: 0, electronicSales: 0, growthSalesPercent: 0, growthOrdersPercent: 0, topArea: "لا يوجد", goldenCustomer: null, allCustomersList: [], topItems: [], peakHours: [], sevenDaysChartData: [] };
     }
 
+    const getShiftDateStr = (dateObj) => {
+      const d = new Date(dateObj);
+      const hour = d.getHours();
+      if (hour < 3) { d.setDate(d.getDate() - 1); }
+      return d.toLocaleDateString("ar-EG");
+    };
+
     const now = new Date();
-    const todayStr = now.toLocaleDateString("ar-EG");
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toLocaleDateString("ar-EG");
+    const todayShiftStr = getShiftDateStr(now);
+    const yesterdayDate = new Date(now); yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    const yesterdayShiftStr = getShiftDateStr(yesterdayDate);
 
     let totalSales = 0, totalDelivery = 0, netTotal = 0, cashSales = 0, electronicSales = 0;
     let todayNetTotal = 0, todayOrdersCount = 0, yesterdayNetTotal = 0, yesterdayOrdersCount = 0;
@@ -305,7 +333,8 @@ export default function RestaurantMenu() {
 
     for (let i = 6; i >= 0; i--) {
       const d = new Date(now); d.setDate(d.getDate() - i);
-      daysMap[d.toLocaleDateString("ar-EG", { month: "short", day: "numeric" })] = 0;
+      const shiftKey = getShiftDateStr(d);
+      daysMap[shiftKey] = 0;
     }
 
     filteredReportsData.forEach(row => {
@@ -357,11 +386,14 @@ export default function RestaurantMenu() {
     reportsData.forEach(row => {
       if (!row) return;
       const dateStr = String(row["التاريخ والوقت"] || "");
+      const rowDate = new Date(dateStr);
+      const rowShiftStr = !isNaN(rowDate.getTime()) ? getShiftDateStr(rowDate) : dateStr;
       const finalVal = Number(row["الإجمالي النهائي"]) || 0;
-      if (dateStr.includes(todayStr) || dateStr.startsWith(todayStr)) { todayNetTotal += finalVal; todayOrdersCount++; }
-      else if (dateStr.includes(yesterdayStr) || dateStr.startsWith(yesterdayStr)) { yesterdayNetTotal += finalVal; yesterdayOrdersCount++; }
 
-      Object.keys(daysMap).forEach(dayKey => { if (dateStr.includes(dayKey)) daysMap[dayKey] += finalVal; });
+      if (rowShiftStr === todayShiftStr || dateStr.includes(todayShiftStr)) { todayNetTotal += finalVal; todayOrdersCount++; }
+      else if (rowShiftStr === yesterdayShiftStr || dateStr.includes(yesterdayShiftStr)) { yesterdayNetTotal += finalVal; yesterdayOrdersCount++; }
+
+      Object.keys(daysMap).forEach(dayKey => { if (rowShiftStr === dayKey || dateStr.includes(dayKey)) daysMap[dayKey] += finalVal; });
     });
 
     const growthSalesPercent = yesterdayNetTotal > 0 ? Math.round(((todayNetTotal - yesterdayNetTotal) / yesterdayNetTotal) * 100) : (todayNetTotal > 0 ? 100 : 0);
@@ -490,8 +522,16 @@ export default function RestaurantMenu() {
   }, [visibleItems]);
 
   const sendWhatsApp = () => {
-    if (!checkRestaurantStatus().isOpen) { setCloseNoticeOpen(true); return; }
-    if (cartList.length === 0 || !customerName.trim() || !customerPhone.trim() || !customerAddress.trim() || selectedAreaIndex === -1) return;
+    if (!restaurantStatus.isOpen) { setCloseNoticeOpen(true); return; }
+
+    if (cartList.length === 0) { setValidationError("السلة فارغة، اختر أصنافك أولاً."); return; }
+    if (!customerName.trim()) { setValidationError("من فضلك اكتب اسمك."); return; }
+    if (!customerPhone.trim()) { setValidationError("من فضلك اكتب رقم الموبايل."); return; }
+    if (!customerAddress.trim()) { setValidationError("من فضلك اكتب العنوان بالتفصيل."); return; }
+    if (selectedAreaIndex === -1) { setValidationError("من فضلك اختر منطقة التوصيل."); return; }
+    if (scheduleType === "later" && !scheduleTime.trim()) { setValidationError("من فضلك اكتب موعد التوصيل."); return; }
+
+    setValidationError("");
 
     if (typeof window !== "undefined" && window.localStorage) {
       localStorage.setItem("customer-name-cache", customerName.trim());
@@ -505,11 +545,28 @@ export default function RestaurantMenu() {
     
     const deliveryTimeText = scheduleType === "now" ? "⚡ توصيل فوري (الآن)" : "🕒 مجدول للموعد: " + scheduleTime;
     const paymentText = paymentMethod === "cash" ? "💵 نقدي (كاش)" : "📱 دفع إلكتروني";
+    const clientRequestId = "req_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
 
     try {
       fetch(GOOGLE_SHEET_SCRIPT_URL, {
         method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ timestamp: new Date().toLocaleString("ar-EG"), customerName: customerName.trim(), customerPhone: customerPhone.trim(), area: activeDeliveryArea.name, address: customerAddress.trim(), paymentMethod: paymentText, schedule: deliveryTimeText, itemsSummary, cartTotal, couponDiscount: discountAmount, pointsDiscount: 0, deliveryPrice: activeDeliveryArea.price, finalTotal })
+        body: JSON.stringify({
+          action: "create_order",
+          clientRequestId: clientRequestId,
+          customerName: customerName.trim(),
+          customerPhone: customerPhone.trim(),
+          area: activeDeliveryArea.name,
+          address: customerAddress.trim(),
+          geoLink: geoLink || "",
+          paymentMethod: paymentText,
+          schedule: deliveryTimeText,
+          itemsSummary: itemsSummary,
+          cartTotal: cartTotal,
+          couponDiscount: discountAmount,
+          deliveryPrice: activeDeliveryArea.price,
+          finalTotal: finalTotal,
+          customerNotes: customerNotes || ""
+        })
       });
     } catch (e) {}
 
@@ -573,9 +630,9 @@ export default function RestaurantMenu() {
           <p className="text-xs sm:text-sm text-gray-300 font-bold opacity-90">{tagline}</p>
 
           <div className="flex flex-wrap items-center justify-center gap-2 pt-2 text-[10px] font-bold">
-            <span className="px-3 py-1 rounded-full bg-black/70 border border-white/10 font-black flex items-center gap-1" style={{ color: status.isOpen ? "#22c55e" : "#ef4444" }}>{status.text}</span>
+            <span className="px-3 py-1 rounded-full bg-black/70 border border-white/10 font-black flex items-center gap-1" style={{ color: restaurantStatus.isOpen ? "#22c55e" : "#ef4444" }}>{restaurantStatus.text}</span>
             <span className="px-3 py-1 rounded-full bg-black/60 border border-white/10 text-gray-200 flex items-center gap-1"><Bike size={12} className="text-amber-400" /> توصيل سريع</span>
-            <span className="px-3 py-1 rounded-full bg-black/60 border border-white/10 text-gray-200 flex items-center gap-1"><Clock size={12} className="text-amber-400" /> {status.timeText}</span>
+            <span className="px-3 py-1 rounded-full bg-black/60 border border-white/10 text-gray-200 flex items-center gap-1"><Clock size={12} className="text-amber-400" /> {restaurantStatus.timeText}</span>
             <span className="px-3 py-1 rounded-full bg-black/60 border border-amber-500/30 text-amber-300 flex items-center gap-1"><Star size={12} className="fill-amber-400 text-amber-400" /> 4.9 (1250+ تقييم)</span>
           </div>
         </div>
@@ -855,10 +912,10 @@ export default function RestaurantMenu() {
             {promoError && <p className="text-[10px] text-red-400 font-bold">{promoError}</p>}
 
             <div className="space-y-2 pt-2 border-t border-white/10 text-xs">
-              <input type="text" placeholder="اسمك الكريم..." value={customerName} onChange={e => setCustomerName(e.target.value)} className="w-full p-2.5 rounded-xl bg-[#1A1D26] border border-white/10 text-white" />
-              <input type="tel" placeholder="رقم تليفونك..." value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} className="w-full p-2.5 rounded-xl bg-[#1A1D26] border border-white/10 text-white" />
+              <input type="text" placeholder="اسمك الكريم..." value={customerName} onChange={e => { setCustomerName(e.target.value); setValidationError(""); }} className="w-full p-2.5 rounded-xl bg-[#1A1D26] border border-white/10 text-white" />
+              <input type="tel" placeholder="رقم تليفونك..." value={customerPhone} onChange={e => { setCustomerPhone(e.target.value); setValidationError(""); }} className="w-full p-2.5 rounded-xl bg-[#1A1D26] border border-white/10 text-white" />
               
-              <select value={selectedAreaIndex} onChange={e => setSelectedAreaIndex(Number(e.target.value))} className="w-full p-2.5 rounded-xl bg-[#1A1D26] border border-white/10 text-white">
+              <select value={selectedAreaIndex} onChange={e => { setSelectedAreaIndex(Number(e.target.value)); setValidationError(""); }} className="w-full p-2.5 rounded-xl bg-[#1A1D26] border border-white/10 text-white">
                 <option value={-1}>اختر منطقة التوصيل...</option>
                 {deliveryAreas.map((a, i) => <option key={i} value={i}>{a.name} (+{money(a.price)})</option>)}
               </select>
@@ -869,11 +926,11 @@ export default function RestaurantMenu() {
                   <button type="button" onClick={() => setScheduleType("now")} className={`py-1.5 rounded-lg border ${scheduleType === "now" ? "bg-amber-400 text-black font-bold" : "border-white/10 text-gray-300"}`}>⚡ فوري الآن</button>
                   <button type="button" onClick={() => setScheduleType("later")} className={`py-1.5 rounded-lg border ${scheduleType === "later" ? "bg-amber-400 text-black font-bold" : "border-white/10 text-gray-300"}`}>🕒 مجدول لاحقاً</button>
                 </div>
-                {scheduleType === "later" && <input type="text" placeholder="الموعد (مثال: الساعة 9:30 مساءً)..." value={scheduleTime} onChange={e => setScheduleTime(e.target.value)} className="w-full p-2 mt-1 rounded-lg bg-[#111319] text-[10px] text-white border border-amber-500/30" />}
+                {scheduleType === "later" && <input type="text" placeholder="الموعد (مثال: الساعة 9:30 مساءً)..." value={scheduleTime} onChange={e => { setScheduleTime(e.target.value); setValidationError(""); }} className="w-full p-2 mt-1 rounded-lg bg-[#111319] text-[10px] text-white border border-amber-500/30" />}
               </div>
 
               <div className="flex gap-1.5">
-                <input type="text" placeholder="العنوان بالتفصيل..." value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} className="flex-1 p-2.5 rounded-xl bg-[#1A1D26] border border-white/10 text-white" />
+                <input type="text" placeholder="العنوان بالتفصيل..." value={customerAddress} onChange={e => { setCustomerAddress(e.target.value); setValidationError(""); }} className="flex-1 p-2.5 rounded-xl bg-[#1A1D26] border border-white/10 text-white" />
                 <button type="button" onClick={handleGetLocation} className="px-3 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 flex items-center justify-center">
                   {geoLoading ? "..." : <Navigation size={15} />}
                 </button>
@@ -956,7 +1013,7 @@ export default function RestaurantMenu() {
                 <div>
                   <h2 className="text-base font-black text-amber-400 flex items-center gap-1.5">
                     <span>الرئيسية | لوحة تحكم دريم كورنر</span>
-                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v19.0</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v22.0</span>
                   </h2>
                   <p className="text-[10px] text-gray-400">مرحباً بك في لوحة التحكّم والذكاء المالي 👋</p>
                 </div>
@@ -1000,27 +1057,36 @@ export default function RestaurantMenu() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                      {/* كارت الزوار النشطين الحاليين */}
+                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                      {/* 1. الزوار النشطون */}
                       <div className="p-3.5 rounded-2xl bg-[#141721] border border-amber-500/20 flex flex-col justify-between">
                         <div className="flex items-center justify-between text-gray-400 text-xs"><span>الزوار النشطون الآن</span><span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400"><Users size={14} /></span></div>
                         <div className="my-2"><span className="text-xl font-black text-amber-400">{activeVisitors} زائر 🟢</span></div>
                         <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold"><span>متصل لحظياً بالشيت</span></div>
                       </div>
 
+                      {/* 2. إجمالي المبيعات */}
                       <div className="p-3.5 rounded-2xl bg-[#141721] border border-amber-500/20 flex flex-col justify-between">
                         <div className="flex items-center justify-between text-gray-400 text-xs"><span>إجمالي المبيعات</span><span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400"><DollarSign size={14} /></span></div>
                         <div className="my-2"><span className="text-xl font-black text-amber-400">{money(reportsAnalytics.netTotal)}</span></div>
                         <div className={`flex items-center gap-1 text-[10px] font-bold ${reportsAnalytics.growthSalesPercent >= 0 ? "text-emerald-400" : "text-red-400"}`}>{reportsAnalytics.growthSalesPercent >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}<span>{reportsAnalytics.growthSalesPercent >= 0 ? `+${reportsAnalytics.growthSalesPercent}% عن أمس` : `${reportsAnalytics.growthSalesPercent}% عن أمس`}</span></div>
                       </div>
 
-                      {/* إرجاع كارت صافي المأكولات */}
+                      {/* 3. صافي المأكولات */}
                       <div className="p-3.5 rounded-2xl bg-[#141721] border border-white/5 flex flex-col justify-between">
                         <div className="flex items-center justify-between text-gray-400 text-xs"><span>صافي المأكولات</span><span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400"><Utensils size={14} /></span></div>
                         <div className="my-2"><span className="text-xl font-black text-white">{money(reportsAnalytics.totalSales)}</span></div>
                         <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold"><CheckCircle2 size={12} /><span>بدون مصاريف التوصيل</span></div>
                       </div>
 
+                      {/* 4. إيرادات التوصيل (الراجع لمكانه) */}
+                      <div className="p-3.5 rounded-2xl bg-[#141721] border border-white/5 flex flex-col justify-between">
+                        <div className="flex items-center justify-between text-gray-400 text-xs"><span>إيرادات التوصيل</span><span className="p-1.5 rounded-lg bg-purple-500/10 text-purple-400"><Bike size={14} /></span></div>
+                        <div className="my-2"><span className="text-xl font-black text-white">{money(reportsAnalytics.totalDelivery)}</span></div>
+                        <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold"><CheckCircle2 size={12} /><span>محسوب حقيقي من الشيت</span></div>
+                      </div>
+
+                      {/* 5. عدد الطلبات */}
                       <div className="p-3.5 rounded-2xl bg-[#141721] border border-white/5 flex flex-col justify-between">
                         <div className="flex items-center justify-between text-gray-400 text-xs"><span>عدد الطلبات</span><span className="p-1.5 rounded-lg bg-sky-500/10 text-sky-400"><ShoppingCart size={14} /></span></div>
                         <div className="my-2"><span className="text-xl font-black text-white">{reportsAnalytics.totalOrders} أوردر</span></div>
