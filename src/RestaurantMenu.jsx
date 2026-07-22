@@ -7,9 +7,9 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "22.0"; // v22.0: الكود الكامل النهائي (الوردية المحاسبية + كروت الداشبورد الكاملة)
+const MENU_VERSION = "23.0"; // v23.0: النسخة الكاملة النهائية (التتبع فوق الأقسام + أزرار تغيير الحالة للآدمن)
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw6tHPbZct3TX2E76DhHtm6DUx9bEyzHeeOkNzbDXzr2YPrDdZkovv5LVSbI4x8yb0/exec";
-const ADMIN_SECRET_KEY = "Adam"; // كلمة المرور السرية الجديدة للوحة التحكم
+const ADMIN_SECRET_KEY = "Adam";
 
 const DEFAULT_DELIVERY_AREAS = [
   { name: "البرامون (داخل البلد)", price: 10 },
@@ -23,8 +23,8 @@ const DEFAULT_DELIVERY_AREAS = [
 ];
 
 const DEFAULT_PROMO_CODES = [
-  { code: "OFF10", discount: 10, limit:  0, used: 0 },
-  { code: "DREAM", discount: 15, limit: 0, used: 0 }
+  { code: "OFF10", discount: 10, limit: 1, used: 0 },
+  { code: "DREAM", discount: 15, limit: 1, used: 0 }
 ];
 
 const COMING_SOON_OFFERS = [
@@ -128,6 +128,13 @@ export default function RestaurantMenu() {
   const [animateCart, setAnimateCart] = useState(false);
   const [activeVisitors, setActiveVisitors] = useState(1);
   const [restaurantStatus, setRestaurantStatus] = useState(checkRestaurantStatus());
+
+  // حالات تتبع الأوردر للعميل
+  const [trackModalOpen, setTrackModalOpen] = useState(false);
+  const [trackQuery, setTrackQuery] = useState("");
+  const [trackedOrderResult, setTrackedOrderResult] = useState(null);
+  const [trackLoading, setTrackLoading] = useState(false);
+  const [trackError, setTrackError] = useState("");
 
   const [deliveryAreas, setDeliveryAreas] = useState(DEFAULT_DELIVERY_AREAS);
   const [newAreaName, setNewAreaName] = useState("");
@@ -274,6 +281,72 @@ export default function RestaurantMenu() {
   };
 
   useEffect(() => { if (adminOpen) fetchReportsFromSheet(); }, [adminOpen]);
+
+  // دالة تتبع الأوردر للعميل من المنيو
+  const handleTrackOrder = async () => {
+    const q = trackQuery.trim();
+    if (!q) {
+      setTrackError("من فضلك اكتب رقم الأوردر أو رقم الموبايل.");
+      return;
+    }
+    setTrackLoading(true);
+    setTrackError("");
+    setTrackedOrderResult(null);
+
+    try {
+      const res = await fetch(GOOGLE_SHEET_SCRIPT_URL + "?action=orders&adminKey=" + ADMIN_SECRET_KEY);
+      const data = await res.json();
+      
+      let ordersList = [];
+      if (data && data.status === "success" && Array.isArray(data.orders)) {
+        ordersList = data.orders;
+      } else if (Array.isArray(data)) {
+        ordersList = data;
+      }
+
+      const found = ordersList.find(o => 
+        String(o["رقم الأوردر"] || "").trim().toLowerCase() === q.toLowerCase() ||
+        String(o["رقم الموبايل"] || "").trim() === q
+      );
+
+      if (found) {
+        setTrackedOrderResult(found);
+      } else {
+        setTrackError("لم يتم العثور على أوردر بهذا الرقم، تأكد من البيانات المدخلة.");
+      }
+    } catch (e) {
+      setTrackError("حدث خطأ أثناء الاتصال بالسيستم، حاول مرة أخرى.");
+    } finally {
+      setTrackLoading(false);
+    }
+  };
+
+  // دالة تحديث حالة الأوردر من لوحة التحكم للإدارة
+  const handleUpdateStatus = async (orderId, newStatus) => {
+    try {
+      await fetch(GOOGLE_SHEET_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update_order_status",
+          adminKey: ADMIN_SECRET_KEY,
+          orderId: orderId,
+          status: newStatus,
+          note: "تحديث الحالة من لوحة التحكم"
+        })
+      });
+      
+      setReportsData(prev => prev.map(row => {
+        if (String(row["رقم الأوردر"]) === String(orderId)) {
+          return { ...row, "حالة الطلب": newStatus };
+        }
+        return row;
+      }));
+    } catch (e) {
+      alert("حدث خطأ أثناء تحديث حالة الأوردر.");
+    }
+  };
 
   const filteredReportsData = useMemo(() => {
     if (!reportsData || !Array.isArray(reportsData) || reportsData.length === 0) return [];
@@ -638,8 +711,27 @@ export default function RestaurantMenu() {
         </div>
       </section>
 
+      {/* TRACK ORDER STRIP (فوق شريط الأقسام مباشرة بشكل احترافي) */}
+      <div className="max-w-3xl mx-auto px-4 pt-3">
+        <div onClick={() => setTrackModalOpen(true)} className="w-full bg-gradient-to-r from-amber-500/20 via-[#1A1D26] to-amber-500/15 border border-amber-500/40 rounded-2xl p-3 flex items-center justify-between cursor-pointer hover:border-amber-400 transition-all shadow-md group">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-amber-400 text-black font-black group-hover:scale-110 transition-transform">
+              <Bike size={16} />
+            </div>
+            <div>
+              <p className="text-xs font-black text-amber-300">تتبع حالة طلبك لحظياً 🛵</p>
+              <p className="text-[10px] text-gray-300">اضغط هنا واكتب رقم الأوردر لمعرفة أين وصل طلبك الآن</p>
+            </div>
+          </div>
+          <button className="px-3 py-1.5 rounded-xl bg-amber-400 text-black text-xs font-black flex items-center gap-1 shadow">
+            <span>استعلم الآن</span>
+            <ChevronLeft size={14} />
+          </button>
+        </div>
+      </div>
+
       {/* CATEGORIES NAV BAR */}
-      <nav className="sticky top-[100px] z-20 bg-[#08090C]/95 backdrop-blur-md border-y border-white/10 py-3 px-4">
+      <nav className="sticky top-[100px] z-20 bg-[#08090C]/95 backdrop-blur-md border-y border-white/10 py-3 px-4 mt-3">
         <div className="max-w-3xl mx-auto flex gap-2 overflow-x-auto no-scrollbar">
           {categories.map((c) => (
             <button
@@ -854,6 +946,79 @@ export default function RestaurantMenu() {
         </a>
       </footer>
 
+      {/* TRACK ORDER MODAL */}
+      {trackModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" dir="rtl">
+          <div className="w-full max-w-md bg-[#111319] border border-amber-500/40 rounded-3xl p-5 space-y-4 shadow-2xl text-white">
+            
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <h3 className="text-base font-black text-amber-400 flex items-center gap-1.5">
+                <Bike size={18} />
+                <span>تتبع حالة طلبك لحظياً 🔍</span>
+              </h3>
+              <button onClick={() => setTrackModalOpen(false)} className="p-1.5 rounded-full bg-white/10 text-gray-300 hover:text-white"><X size={16} /></button>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-xs text-gray-300">اكتب رقم الأوردر (مثلاً: DC-...) أو رقم تليفونك لمعرفة حالة الوجبة:</p>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  placeholder="رقم الأوردر أو الموبايل..." 
+                  value={trackQuery} 
+                  onChange={(e) => setTrackQuery(e.target.value)} 
+                  className="flex-1 p-2.5 rounded-xl bg-[#1A1D26] border border-white/10 text-xs text-white focus:outline-none focus:border-amber-400"
+                />
+                <button onClick={handleTrackOrder} className="px-4 py-2.5 rounded-xl bg-amber-400 text-black font-black text-xs">
+                  {trackLoading ? "جاري..." : "بحث"}
+                </button>
+              </div>
+              {trackError && <p className="text-[10px] text-red-400 font-bold bg-red-500/10 p-2 rounded-lg">{trackError}</p>}
+            </div>
+
+            {trackedOrderResult && (
+              <div className="p-4 rounded-2xl bg-[#1A1D26] border border-amber-500/30 space-y-3 text-xs">
+                <div className="flex justify-between items-center border-b border-white/10 pb-2">
+                  <div>
+                    <span className="text-[10px] text-gray-400 block">رقم الطلب:</span>
+                    <span className="font-black text-amber-400">{trackedOrderResult["رقم الأوردر"]}</span>
+                  </div>
+                  <div className="text-left">
+                    <span className="text-[10px] text-gray-400 block">الحالة الحالية:</span>
+                    <span className="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 font-black border border-amber-500/30 text-[11px]">
+                      {trackedOrderResult["حالة الطلب"] || "جديد"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-1 text-gray-300">
+                  <p>👤 العميل: <span className="font-bold text-white">{trackedOrderResult["اسم العميل"]}</span></p>
+                  <p>📍 المنطقة: <span className="font-bold text-white">{trackedOrderResult["المنطقة / القرية"]}</span></p>
+                  <p>🛍️ الأصناف: <span className="font-bold text-white">{trackedOrderResult["تفاصيل الطلبات"]}</span></p>
+                  <p>💰 الإجمالي: <span className="font-bold text-amber-400">{money(trackedOrderResult["الإجمالي النهائي"])}</span></p>
+                </div>
+
+                <div className="pt-2 border-t border-white/10 space-y-1.5">
+                  <p className="text-[10px] text-gray-400 font-bold">مراحل تنفيذ الأوردر:</p>
+                  <div className="grid grid-cols-4 gap-1 text-center text-[9px] font-bold">
+                    <div className={`p-1.5 rounded-lg border ${["جديد", "تم التأكيد", "جاري التحضير", "خرج للتوصيل", "تم التسليم"].includes(trackedOrderResult["حالة الطلب"]) ? "bg-amber-400 text-black border-amber-400" : "bg-black/40 text-gray-500 border-white/5"}`}>1. استلام الطلب</div>
+                    <div className={`p-1.5 rounded-lg border ${["جاري التحضير", "خرج للتوصيل", "تم التسليم"].includes(trackedOrderResult["حالة الطلب"]) ? "bg-amber-400 text-black border-amber-400" : "bg-black/40 text-gray-500 border-white/5"}`}>2. التحضير 👨‍🍳</div>
+                    <div className={`p-1.5 rounded-lg border ${["خرج للتوصيل", "تم التسليم"].includes(trackedOrderResult["حالة الطلب"]) ? "bg-amber-400 text-black border-amber-400" : "bg-black/40 text-gray-500 border-white/5"}`}>3. في الطريق 🛵</div>
+                    <div className={`p-1.5 rounded-lg border ${trackedOrderResult["حالة الطلب"] === "تم التسليم" ? "bg-emerald-500 text-white border-emerald-500" : "bg-black/40 text-gray-500 border-white/5"}`}>4. تم التسليم 🎉</div>
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            <button onClick={() => setTrackModalOpen(false)} className="w-full py-2.5 rounded-xl bg-white/10 text-gray-300 hover:text-white text-xs font-bold">
+              إغلاق النافذة
+            </button>
+
+          </div>
+        </div>
+      )}
+
       {/* CART DRAWER MODAL */}
       {cartOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end justify-center p-0">
@@ -996,7 +1161,7 @@ export default function RestaurantMenu() {
               <h3 className="text-base font-black text-white">يا غالي، الأفران ريحت شوية.. 👨‍🍳</h3>
               <p className="text-xs text-gray-300 leading-relaxed">بنجهزلك حاجة فريش وطعم يفرّق بكرة! المنيو معاك لفّ فيه براحتك واختار كل اللي تحبه من دلوقتي، وأول ما نفتح هنكون جاهزين نولّع الدنيا! 🔥🚀</p>
             </div>
-            <div className="p-3 rounded-2xl bg-[#1A1D26] border border-white/5 space-y-1"><p className="text-[10px] text-gray-400 font-bold">مواعيد استقبال الدليفري والطلبات:</p><p className="text-xs font-black text-amber-400">{status.timeText}</p></div>
+            <div className="p-3 rounded-2xl bg-[#1A1D26] border border-white/5 space-y-1"><p className="text-[10px] text-gray-400 font-bold">مواعيد استقبال الدليفري والطلبات:</p><p className="text-xs font-black text-amber-400">{restaurantStatus.timeText}</p></div>
             <button onClick={() => setCloseNoticeOpen(false)} className="w-full py-3 rounded-xl bg-amber-400 text-black font-black text-xs shadow-md">حبيبي، هتختار الأكل من دلوقتي واستعد لوقت الفتح! ✨</button>
           </div>
         </div>
@@ -1013,7 +1178,7 @@ export default function RestaurantMenu() {
                 <div>
                   <h2 className="text-base font-black text-amber-400 flex items-center gap-1.5">
                     <span>الرئيسية | لوحة تحكم دريم كورنر</span>
-                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v22.0</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v23.0</span>
                   </h2>
                   <p className="text-[10px] text-gray-400">مرحباً بك في لوحة التحكّم والذكاء المالي 👋</p>
                 </div>
@@ -1058,35 +1223,30 @@ export default function RestaurantMenu() {
                     </div>
 
                     <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-                      {/* 1. الزوار النشطون */}
                       <div className="p-3.5 rounded-2xl bg-[#141721] border border-amber-500/20 flex flex-col justify-between">
                         <div className="flex items-center justify-between text-gray-400 text-xs"><span>الزوار النشطون الآن</span><span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400"><Users size={14} /></span></div>
                         <div className="my-2"><span className="text-xl font-black text-amber-400">{activeVisitors} زائر 🟢</span></div>
                         <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold"><span>متصل لحظياً بالشيت</span></div>
                       </div>
 
-                      {/* 2. إجمالي المبيعات */}
                       <div className="p-3.5 rounded-2xl bg-[#141721] border border-amber-500/20 flex flex-col justify-between">
                         <div className="flex items-center justify-between text-gray-400 text-xs"><span>إجمالي المبيعات</span><span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400"><DollarSign size={14} /></span></div>
                         <div className="my-2"><span className="text-xl font-black text-amber-400">{money(reportsAnalytics.netTotal)}</span></div>
                         <div className={`flex items-center gap-1 text-[10px] font-bold ${reportsAnalytics.growthSalesPercent >= 0 ? "text-emerald-400" : "text-red-400"}`}>{reportsAnalytics.growthSalesPercent >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}<span>{reportsAnalytics.growthSalesPercent >= 0 ? `+${reportsAnalytics.growthSalesPercent}% عن أمس` : `${reportsAnalytics.growthSalesPercent}% عن أمس`}</span></div>
                       </div>
 
-                      {/* 3. صافي المأكولات */}
                       <div className="p-3.5 rounded-2xl bg-[#141721] border border-white/5 flex flex-col justify-between">
                         <div className="flex items-center justify-between text-gray-400 text-xs"><span>صافي المأكولات</span><span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400"><Utensils size={14} /></span></div>
                         <div className="my-2"><span className="text-xl font-black text-white">{money(reportsAnalytics.totalSales)}</span></div>
                         <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold"><CheckCircle2 size={12} /><span>بدون مصاريف التوصيل</span></div>
                       </div>
 
-                      {/* 4. إيرادات التوصيل (الراجع لمكانه) */}
                       <div className="p-3.5 rounded-2xl bg-[#141721] border border-white/5 flex flex-col justify-between">
                         <div className="flex items-center justify-between text-gray-400 text-xs"><span>إيرادات التوصيل</span><span className="p-1.5 rounded-lg bg-purple-500/10 text-purple-400"><Bike size={14} /></span></div>
                         <div className="my-2"><span className="text-xl font-black text-white">{money(reportsAnalytics.totalDelivery)}</span></div>
                         <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold"><CheckCircle2 size={12} /><span>محسوب حقيقي من الشيت</span></div>
                       </div>
 
-                      {/* 5. عدد الطلبات */}
                       <div className="p-3.5 rounded-2xl bg-[#141721] border border-white/5 flex flex-col justify-between">
                         <div className="flex items-center justify-between text-gray-400 text-xs"><span>عدد الطلبات</span><span className="p-1.5 rounded-lg bg-sky-500/10 text-sky-400"><ShoppingCart size={14} /></span></div>
                         <div className="my-2"><span className="text-xl font-black text-white">{reportsAnalytics.totalOrders} أوردر</span></div>
@@ -1147,15 +1307,58 @@ export default function RestaurantMenu() {
                       </div>
                     </div>
 
+                    {/* إدارة وتحديث حالات الطلبات الحية (مع أزرار التعديل الفوري للآدمن) */}
                     <div className="p-4 rounded-2xl bg-[#141721] border border-white/5 space-y-3">
-                      <h3 className="text-xs font-bold text-gray-300 flex items-center gap-2"><ShoppingCart size={15} className="text-amber-400" /><span>سجل وتفاصيل الطلبات الأخيرة ({filteredReportsData.length})</span></h3>
-                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                        {filteredReportsData.slice().reverse().map((row, idx) => (
-                          <div key={idx} className="p-3 rounded-xl bg-[#1C202E] border border-white/5 text-xs flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-                            <div><span className="font-bold text-white">{row["اسم العميل"] || "عميل"}</span> <span className="text-[10px] text-gray-400">({row["رقم الموبايل"]})</span><p className="text-[10px] text-gray-400">📍 {row["المنطقة / القرية"]} · 🕒 {row["التاريخ والوقت"]}</p></div>
-                            <div className="text-left"><span className="text-sm font-black text-amber-400 block">{money(row["الإجمالي النهائي"])}</span><span className="text-[9px] text-gray-400 truncate block max-w-xs">{row["تفاصيل الطلبات"]}</span></div>
-                          </div>
-                        ))}
+                      <h3 className="text-xs font-bold text-gray-300 flex items-center gap-2">
+                        <ShoppingCart size={15} className="text-amber-400" />
+                        <span>إدارة وتحديث حالات الطلبات الحية ({filteredReportsData.length})</span>
+                      </h3>
+
+                      <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+                        {filteredReportsData.slice().reverse().map((row, idx) => {
+                          const orderId = String(row["رقم الأوردر"] || "");
+                          const currentStatus = String(row["حالة الطلب"] || "جديد");
+
+                          return (
+                            <div key={idx} className="p-3.5 rounded-2xl bg-[#1C202E] border border-white/10 text-xs space-y-2.5">
+                              
+                              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-white/5 pb-2">
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-black text-amber-400">{orderId}</span>
+                                    <span className="text-white font-bold">- {row["اسم العميل"]}</span>
+                                    <span className="text-[10px] text-gray-400">({row["رقم الموبايل"]})</span>
+                                  </div>
+                                  <p className="text-[10px] text-gray-400 mt-0.5">📍 {row["المنطقة / القرية"]} ({row["العنوان بالتفصيل"]}) · 🕒 {row["التاريخ والوقت"]}</p>
+                                </div>
+
+                                <div className="text-left flex items-center gap-2">
+                                  <span className="text-sm font-black text-amber-400">{money(row["الإجمالي النهائي"])}</span>
+                                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-black border ${
+                                    currentStatus === "تم التسليم" ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" :
+                                    currentStatus === "ملغي" ? "bg-red-500/20 text-red-400 border-red-500/30" :
+                                    "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                                  }`}>
+                                    {currentStatus}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-[10px] gap-2">
+                                <span className="text-gray-300 font-bold truncate max-w-xs">🛍️ {row["تفاصيل الطلبات"]}</span>
+                                
+                                <div className="flex items-center gap-1 flex-wrap">
+                                  <span className="text-gray-400 ml-1">تغيير الحالة:</span>
+                                  <button onClick={() => handleUpdateStatus(orderId, "جاري التحضير")} className={`px-2 py-1 rounded-lg border font-bold ${currentStatus === "جاري التحضير" ? "bg-amber-400 text-black border-amber-400" : "bg-black/40 text-gray-300 border-white/10 hover:bg-white/10"}`}>تحضير 👨‍🍳</button>
+                                  <button onClick={() => handleUpdateStatus(orderId, "خرج للتوصيل")} className={`px-2 py-1 rounded-lg border font-bold ${currentStatus === "خرج للتوصيل" ? "bg-amber-400 text-black border-amber-400" : "bg-black/40 text-gray-300 border-white/10 hover:bg-white/10"}`}>في الطريق 🛵</button>
+                                  <button onClick={() => handleUpdateStatus(orderId, "تم التسليم")} className={`px-2 py-1 rounded-lg border font-bold ${currentStatus === "تم التسليم" ? "bg-emerald-500 text-white border-emerald-500" : "bg-black/40 text-gray-300 border-white/10 hover:bg-white/10"}`}>تسليم ✅</button>
+                                  <button onClick={() => handleUpdateStatus(orderId, "ملغي")} className={`px-2 py-1 rounded-lg border font-bold ${currentStatus === "ملغي" ? "bg-red-500 text-white border-red-500" : "bg-black/40 text-gray-300 border-white/10 hover:bg-white/10"}`}>إلغاء ❌</button>
+                                </div>
+                              </div>
+
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
 
