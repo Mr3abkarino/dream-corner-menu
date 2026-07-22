@@ -7,8 +7,8 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "23.0"; // v23.0: النسخة الكاملة النهائية (التتبع فوق الأقسام + أزرار تغيير الحالة للآدمن)
-const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwGoDcRBceQIL7-P8glbR4KxemKbvspbGBNWX7_zrTJXraKdYUeb7gxC7AE5MeNDBc/exec";
+const MENU_VERSION = "24.0"; // v24.0: النسخة الكاملة النهائية (التتبع فوق الأقسام + أزرار تغيير الحالة للآدمن + ظبط التليفونات)
+const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOdW_zaF7Dlwzu8O1Pti7xruZ6gMo8Uqfb3YBFihvOzCgAaW29qOTQO8ETBDX_T9M/exec";
 const ADMIN_SECRET_KEY = "Adam";
 
 const DEFAULT_DELIVERY_AREAS = [
@@ -23,8 +23,8 @@ const DEFAULT_DELIVERY_AREAS = [
 ];
 
 const DEFAULT_PROMO_CODES = [
-  { code: "OFF10", discount: 10, limit: 1, used: 0 },
-  { code: "DREAM", discount: 15, limit: 1, used: 0 }
+  { code: "OFF10", discount: 10, limit: 0, used: 0 },
+  { code: "DREAM", discount: 15, limit: 0, used: 0 }
 ];
 
 const COMING_SOON_OFFERS = [
@@ -619,6 +619,7 @@ export default function RestaurantMenu() {
     const deliveryTimeText = scheduleType === "now" ? "⚡ توصيل فوري (الآن)" : "🕒 مجدول للموعد: " + scheduleTime;
     const paymentText = paymentMethod === "cash" ? "💵 نقدي (كاش)" : "📱 دفع إلكتروني";
     const clientRequestId = "req_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+    const orderTempId = "DC-" + new Date().toISOString().replace(/[-:T]/g, "").slice(0, 12) + "-" + Math.floor(100 + Math.random() * 900);
 
     try {
       fetch(GOOGLE_SHEET_SCRIPT_URL, {
@@ -643,7 +644,7 @@ export default function RestaurantMenu() {
       });
     } catch (e) {}
 
-    let text = `طلب جديد من منيو ${restaurantName} 🍽\n\n👤 العميل: ${customerName}\n📱 الهاتف: ${customerPhone}\n💳 الدفع: ${paymentText}\n📍 المنطقة: ${activeDeliveryArea.name}\n🏠 العنوان: ${customerAddress}\n\nالطلبات:\n${lines.join("\n")}\n\n💵 حساب الأكل: ${money(cartTotal)}\n🛵 التوصيل: ${money(activeDeliveryArea.price)}\n💰 الإجمالي: ${money(finalTotal)}`;
+    let text = `طلب جديد من منيو ${restaurantName} 🍽\n\n🆔 رقم الأوردر المقترح: ${orderTempId}\n👤 العميل: ${customerName}\n📱 الهاتف: ${customerPhone}\n💳 الدفع: ${paymentText}\n📍 المنطقة: ${activeDeliveryArea.name}\n🏠 العنوان: ${customerAddress}\n\nالطلبات:\n${lines.join("\n")}\n\n💵 حساب الأكل: ${money(cartTotal)}\n🛵 التوصيل: ${money(activeDeliveryArea.price)}\n💰 الإجمالي: ${money(finalTotal)}`;
     window.open("https://wa.me/" + whatsappNumber.replace(/[^\d+]/g, "") + "?text=" + encodeURIComponent(text), "_blank");
 
     setCartOpen(false); setCart({}); setOrderSuccess(true);
@@ -720,7 +721,7 @@ export default function RestaurantMenu() {
             </div>
             <div>
               <p className="text-xs font-black text-amber-300">تتبع حالة طلبك لحظياً 🛵</p>
-              <p className="text-[10px] text-gray-300">اضغط هنا واكتب رقم الأوردر لمعرفة أين وصل طلبك الآن</p>
+              <p className="text-[10px] text-gray-300">اضغط هنا واكتب رقم تليفونك لمعرفة أين وصل طلبك الآن</p>
             </div>
           </div>
           <button className="px-3 py-1.5 rounded-xl bg-amber-400 text-black text-xs font-black flex items-center gap-1 shadow">
@@ -960,7 +961,7 @@ export default function RestaurantMenu() {
             </div>
 
             <div className="space-y-3">
-              <p className="text-xs text-gray-300">اكتب رقم الأوردر (مثلاً: DC-...) أو رقم تليفونك لمعرفة حالة الوجبة:</p>
+              <p className="text-xs text-gray-300">اكتب رقم الأوردر أو رقم تليفونك لمعرفة حالة الوجبة:</p>
               <div className="flex gap-2">
                 <input 
                   type="text" 
@@ -1178,7 +1179,7 @@ export default function RestaurantMenu() {
                 <div>
                   <h2 className="text-base font-black text-amber-400 flex items-center gap-1.5">
                     <span>الرئيسية | لوحة تحكم دريم كورنر</span>
-                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v23.0</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v24.0</span>
                   </h2>
                   <p className="text-[10px] text-gray-400">مرحباً بك في لوحة التحكّم والذكاء المالي 👋</p>
                 </div>
@@ -1444,12 +1445,33 @@ export default function RestaurantMenu() {
 
       {/* SUCCESS ORDER MODAL */}
       {orderSuccess && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-[#111319] border border-amber-500/30 p-6 rounded-3xl text-center space-y-3 max-w-xs">
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" dir="rtl">
+          <div className="bg-[#111319] border border-amber-500/30 p-6 rounded-3xl text-center space-y-4 max-w-sm w-full">
             <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto text-2xl">✓</div>
-            <h3 className="text-sm font-bold text-white">تم إرسال أوردرك بنجاح! 🎉</h3>
-            <p className="text-xs text-gray-400 leading-relaxed">جاري تحويلك لواتساب المطعم لتأكيد واستلام الفاتورة.</p>
-            <button onClick={() => setOrderSuccess(false)} className="w-full py-2 rounded-xl bg-amber-400 text-black font-black text-xs">فهمت، شكراً لك</button>
+            <div className="space-y-1">
+              <h3 className="text-base font-black text-white">تم إرسال أوردرك بنجاح! 🎉</h3>
+              <p className="text-xs text-gray-400 leading-relaxed">تم تحويلك لواتساب المطعم. احتفظ برقم هاتفك لتتبع حالته في زر التتبع بالأعلى:</p>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-[#1A1D26] border border-amber-500/40 flex items-center justify-between">
+              <div className="text-right">
+                <span className="text-[10px] text-gray-400 block">رقم هاتفك المسجل:</span>
+                <span className="text-xs font-black text-amber-400 tracking-wider">{customerPhone}</span>
+              </div>
+              <button 
+                onClick={() => {
+                  copyTextToClipboard(customerPhone);
+                  alert("تم نسخ رقم تليفونك بنجاح! يمكنك استخدامه مباشرة في نافذة التتبع.");
+                }} 
+                className="px-3 py-1.5 rounded-xl bg-amber-400 text-black text-xs font-black flex items-center gap-1 active:scale-95"
+              >
+                <Copy size={13} /> <span>نسخ</span>
+              </button>
+            </div>
+
+            <button onClick={() => setOrderSuccess(false)} className="w-full py-2.5 rounded-xl bg-amber-400 text-black font-black text-xs shadow-md">
+              فهمت، شكراً لك
+            </button>
           </div>
         </div>
       )}
