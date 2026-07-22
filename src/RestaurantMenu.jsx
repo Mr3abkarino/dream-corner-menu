@@ -8,7 +8,7 @@ import {
 
 const LOGO_SRC = restaurantLogo;
 const MENU_VERSION = "23.0"; // v23.0: النسخة الكاملة النهائية (التتبع فوق الأقسام + أزرار تغيير الحالة للآدمن)
-const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw6tHPbZct3TX2E76DhHtm6DUx9bEyzHeeOkNzbDXzr2YPrDdZkovv5LVSbI4x8yb0/exec";
+const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwGoDcRBceQIL7-P8glbR4KxemKbvspbGBNWX7_zrTJXraKdYUeb7gxC7AE5MeNDBc/exec";
 const ADMIN_SECRET_KEY = "Adam";
 
 const DEFAULT_DELIVERY_AREAS = [
