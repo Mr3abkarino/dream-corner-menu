@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "25.0"; // v25.0: الكود الكامل النهائي (رقم الأوردر قابل للنسخ + رسالة الواتساب + أزرار الآدمن + الوردية المحاسبية)
+const MENU_VERSION = "25.1"; // v25.1: الكود الكامل النهائي (رقم الأوردر قابل للنسخ + رسالة الواتساب + أزرار الآدمن + الوردية المحاسبية)
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOdW_zaF7Dlwzu8O1Pti7xruZ6gMo8Uqfb3YBFihvOzCgAaW29qOTQO8ETBDX_T9M/exec";
 const ADMIN_SECRET_KEY = "Adam";
 
@@ -37,17 +37,18 @@ const DEFAULT_MENU = [
   { id: "p1", cat: "البيتزا", name: "بيتزا مارجريتا", desc: "صلصة طماطم غنية - موزاريللا صافية - ريحان", sizes: [{ label: "كبير", price: 90 }, { label: "وسط", price: 70 }, { label: "صغير", price: 45 }] },
   { id: "p2", cat: "البيتزا", name: "بيتزا ميكس جبنة", desc: "تشكيلة أجبان فاخرة غرقانة موزاريللا وشيدر ورومي", isBestSeller: true, rank: 1, sizes: [{ label: "كبير", price: 120 }, { label: "وسط", price: 90 }, { label: "صغير", price: 60 }] },
   { id: "p3", cat: "البيتزا", name: "بيتزا خضروات", desc: "فلفل - بصل - زيتون - طماطم - مشروم فريش", sizes: [{ label: "كبير", price: 120 }, { label: "وسط", price: 90 }, { label: "صغير", price: 60 }] },
-  { id: "p4", cat: "البيتزا", name: "بيتزا هوت دوج", desc: "قطع هوت دوج فاخرة مع الصوص الخاص", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 100 }, { label: "صغير", price: 70 }] },
-  { id: "p5", cat: "البيتزا", name: "بيتزا سجق", desc: "سجق مشوي بلدي طازج يومياً", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 100 }, { label: "صغير", price: 70 }] },
-  { id: "p6", cat: "البيتزا", name: "بيتزا لحمة مفرومة", desc: "لحم بقر مفروم مع التوابل الشرقية", sizes: [{ label: "كبير", price: 145 }, { label: "وسط", price: 110 }, { label: "صغير", price: 75 }] },
-  { id: "p7", cat: "البيتزا", name: "بيتزا بيروني", desc: "شرائح بيبيروني إيطالية شهية", sizes: [{ label: "كبير", price: 110 }, { label: "وسط", price: 90 }, { label: "صغير", price: 70 }] },
-  { id: "p8", cat: "البيتزا", name: "بيتزا سلامي", desc: "شرائح سلامي مدخن ممتازة", sizes: [{ label: "كبير", price: 110 }, { label: "وسط", price: 90 }, { label: "صغير", price: 70 }] },
-  { id: "p9", cat: "البيتزا", name: "بيتزا شاورما دجاج", desc: "قطع شاورما دجاج متبلة بالخلطة السحرية", isBestSeller: true, rank: 2, sizes: [{ label: "كبير", price: 155 }, { label: "وسط", price: 120 }, { label: "صغير", price: 80 }] },
-  { id: "p10", cat: "البيتزا", name: "بيتزا دجاج رانش", desc: "قطع دجاج مع صوص الرانش المفضل للجميع", sizes: [{ label: "كبير", price: 155 }, { label: "وسط", price: 120 }, { label: "صغير", price: 80 }] },
-  { id: "p11", cat: "البيتزا", name: "بيتزا دريم كورنر سبيشال", desc: "خلطة البيت الخاصة المميزة والمحشوة بالكامل", isBestSeller: true, rank: 3, sizes: [{ label: "كبير", price: 170 }, { label: "وسط", price: 130 }, { label: "صغير", price: 90 }] },
-  { id: "p12", cat: "البيتزا", name: "بيتزا كرانشي (حار أو بارد)", desc: "قطع دجاج مقرمشة حارة أو عادية", sizes: [{ label: "كبير", price: 130 }, { label: "وسط", price: 100 }, { label: "صغير", price: 80 }] },
-  { id: "p13", cat: "البيتزا", name: "بيتزا ميكس دجاج", desc: "توليفة دجاج كرانشي ورانش وشاورما", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 105 }, { label: "صغير", price: 85 }] },
-  { id: "p14", cat: "البيتزا", name: "حشو الأطراف", desc: "إضافة أطراف محشوة لأي بيتزا", sizes: [{ label: "كبير", price: 35 }, { label: "وسط", price: 30 }, { label: "صغير", price: 25 }] },
+  { id: "p4", cat: "البيتزا", name: "بيتزا باربيكيو", desc: "قطع فراخ متبلة مع صلصة الباربيكيو والجبنة الموتزريلا", sizes: [{ label: "كبير", price: 160 }, { label: "وسط", price: 125 }, { label: "صغير", price: 85 }] },
+  { id: "p5", cat: "البيتزا", name: "بيتزا هوت دوج", desc: "قطع هوت دوج فاخرة مع الصوص الخاص", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 100 }, { label: "صغير", price: 70 }] },
+  { id: "p6", cat: "البيتزا", name: "بيتزا سجق", desc: "سجق مشوي بلدي طازج يومياً", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 100 }, { label: "صغير", price: 70 }] },
+  { id: "p7", cat: "البيتزا", name: "بيتزا لحمة مفرومة", desc: "لحم بقر مفروم مع التوابل الشرقية", sizes: [{ label: "كبير", price: 145 }, { label: "وسط", price: 110 }, { label: "صغير", price: 75 }] },
+  { id: "p8", cat: "البيتزا", name: "بيتزا بيروني", desc: "شرائح بيبيروني إيطالية شهية", sizes: [{ label: "كبير", price: 110 }, { label: "وسط", price: 90 }, { label: "صغير", price: 70 }] },
+  { id: "p9", cat: "البيتزا", name: "بيتزا سلامي", desc: "شرائح سلامي مدخن ممتازة", sizes: [{ label: "كبير", price: 110 }, { label: "وسط", price: 90 }, { label: "صغير", price: 70 }] },
+  { id: "p10", cat: "البيتزا", name: "بيتزا شاورما دجاج", desc: "قطع شاورما دجاج متبلة بالخلطة السحرية", isBestSeller: true, rank: 2, sizes: [{ label: "كبير", price: 155 }, { label: "وسط", price: 120 }, { label: "صغير", price: 80 }] },
+  { id: "p11", cat: "البيتزا", name: "بيتزا دجاج رانش", desc: "قطع دجاج مع صوص الرانش المفضل للجميع", sizes: [{ label: "كبير", price: 155 }, { label: "وسط", price: 120 }, { label: "صغير", price: 80 }] },
+  { id: "p12", cat: "البيتزا", name: "بيتزا دريم كورنر سبيشال", desc: "خلطة البيت الخاصة المميزة والمحشوة بالكامل", isBestSeller: true, rank: 3, sizes: [{ label: "كبير", price: 170 }, { label: "وسط", price: 130 }, { label: "صغير", price: 90 }] },
+  { id: "p13", cat: "البيتزا", name: "بيتزا كرانشي (حار أو بارد)", desc: "قطع دجاج مقرمشة حارة أو عادية", sizes: [{ label: "كبير", price: 130 }, { label: "وسط", price: 100 }, { label: "صغير", price: 80 }] },
+  { id: "p14", cat: "البيتزا", name: "بيتزا ميكس دجاج", desc: "توليفة دجاج كرانشي ورانش وشاورما", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 105 }, { label: "صغير", price: 85 }] },
+  { id: "p15", cat: "البيتزا", name: "حشو الأطراف", desc: "إضافة أطراف محشوة لأي بيتزا", sizes: [{ label: "كبير", price: 35 }, { label: "وسط", price: 30 }, { label: "صغير", price: 25 }] },
   { id: "s1", cat: "السندوتشات", subcat: "اللحوم", name: "كفتة مشوية", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
   { id: "s2", cat: "السندوتشات", subcat: "اللحوم", name: "سجق مشوي", sizes: [{ label: "كبير", price: 70 }, { label: "وسط", price: 60 }] },
   { id: "s3", cat: "السندوتشات", subcat: "اللحوم", name: "كبدة إسكندراني", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
@@ -70,6 +71,7 @@ const DEFAULT_MENU = [
   { id: "d3", cat: "المشروبات", name: "ميرندا برتقال كانز", price: 15 },
   { id: "d4", cat: "المشروبات", name: "مياة معدنية صغيرة", price: 6 }
 ];
+
 
 const money = (n) => Number(n || 0).toLocaleString("en-US") + " جنيه";
 
