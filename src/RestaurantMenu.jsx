@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "25.2"; // v25.2: الكود الكامل النهائي (رقم الأوردر قابل للنسخ + رسالة الواتساب + أزرار الآدمن + الوردية المحاسبية)
+const MENU_VERSION = "25.3"; // v25.3: الكود الكامل النهائي (رقم الأوردر قابل للنسخ + رسالة الواتساب + أزرار الآدمن + الوردية المحاسبية)
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOdW_zaF7Dlwzu8O1Pti7xruZ6gMo8Uqfb3YBFihvOzCgAaW29qOTQO8ETBDX_T9M/exec";
 const ADMIN_SECRET_KEY = "Adam";
 
@@ -80,16 +80,10 @@ const checkRestaurantStatus = () => {
   const hours = now.getHours();
   const minutes = now.getMinutes();
   
-  // حساب إجمالي الدقائق من بداية اليوم (من 00:00)
   const currentMinutesTotal = hours * 60 + minutes;
-  
-  // وقت الفتح: 1:00 ظهراً (يعني 13:00 × 60 = 780 دقيقة)
-  const openMinutes = 13 * 60; 
-  
-  // وقت القفل: 3:00 فجراً (يعني 3:00 × 60 = 180 دقيقة)
-  const closeMinutes = 3 * 60; 
+  const openMinutes = 13 * 60; // 1:00 ظهراً (780 دقيقة)
+  const closeMinutes = 3 * 60; // 3:00 فجراً (180 دقيقة)
 
-  // المطعم مفتوح لو الوقت بعد 1 ظهراً (أو مساوٍ ليه) لحد قبل 3 فجراً اليوم التالي
   const isOpen = currentMinutesTotal >= openMinutes || currentMinutesTotal < closeMinutes;
 
   return {
@@ -98,6 +92,7 @@ const checkRestaurantStatus = () => {
     timeText: "يومياً من 1:00 ظهراً لـ 3:00 صباحاً"
   };
 };
+
 
 
 const copyTextToClipboard = (text) => {
@@ -190,10 +185,18 @@ export default function RestaurantMenu() {
 
   const findItem = (id) => items.find((i) => i.id === id);
 
-  useEffect(() => {
+    useEffect(() => {
+    // تحديث فوري عند فتح المنيو
+    setRestaurantStatus(checkRestaurantStatus());
+
+    // تحديث دوري كل 10 ثواني عشان لو الساعة دخلت 1 الظهر يقلب لوحده أوتوماتيك
     const statusTimer = setInterval(() => {
       setRestaurantStatus(checkRestaurantStatus());
-    }, 60000);
+    }, 10000);
+
+    return () => clearInterval(statusTimer);
+  }, []);
+
 
     let visitorId = localStorage.getItem("dc_visitor_id");
     if (!visitorId) {
