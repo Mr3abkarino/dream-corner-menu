@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "25.3"; // v25.3: الكود الكامل النهائي (رقم الأوردر قابل للنسخ + رسالة الواتساب + أزرار الآدمن + الوردية المحاسبية)
+const MENU_VERSION = "25.4"; // v25.4: الكود الكامل النهائي (رقم الأوردر قابل للنسخ + رسالة الواتساب + أزرار الآدمن + الوردية المحاسبية)
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOdW_zaF7Dlwzu8O1Pti7xruZ6gMo8Uqfb3YBFihvOzCgAaW29qOTQO8ETBDX_T9M/exec";
 const ADMIN_SECRET_KEY = "Adam";
 
@@ -76,9 +76,10 @@ const DEFAULT_MENU = [
 const money = (n) => Number(n || 0).toLocaleString("en-US") + " جنيه";
 
 const checkRestaurantStatus = () => {
-  const now = new Date();
-  const hours = now.getHours();
-  const minutes = now.getMinutes();
+  // جلب الوقت الحالي بتوقيت مصر حصرياً
+  const nowInEgypt = new Date(new Date().toLocaleString("en-US", { timeZone: "Africa/Cairo" }));
+  const hours = nowInEgypt.getHours();
+  const minutes = nowInEgypt.getMinutes();
   
   const currentMinutesTotal = hours * 60 + minutes;
   const openMinutes = 13 * 60; // 1:00 ظهراً (780 دقيقة)
