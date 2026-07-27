@@ -3,12 +3,12 @@ import restaurantLogo from "./assets/logo.png";
 import {
   ShoppingCart, Plus, Minus, X, Pencil, Trash2, Check, Copy,
   QrCode, Settings, Phone, CreditCard, Sparkles, Search, RotateCcw,
-  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation, Award, Calendar, DollarSign, Wallet, Flame, BarChart3, RefreshCw, Share2, TrendingUp, Download, PieChart, Crown, Clock, Bike, Utensils, Trophy, Users, Home, ChevronLeft, Star, Percent, ShieldCheck, Headphones, ArrowUpRight, ArrowDownRight, LayoutGrid, CheckCircle2
+  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation, Award, Calendar, DollarSign, Wallet, Flame, BarChart3, RefreshCw, Share2, TrendingUp, Download, PieChart, Crown, Clock, Bike, Utensils, Trophy, Users, Home, ChevronLeft, Star, Percent, ShieldCheck, Headphones, ArrowUpRight, ArrowDownRight, LayoutGrid, CheckCircle2, Bell
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "25.4"; // v25.4: الكود الكامل النهائي (رقم الأوردر قابل للنسخ + رسالة الواتساب + أزرار الآدمن + الوردية المحاسبية)
-const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOdW_zaF7Dlwzu8O1Pti7xruZ6gMo8Uqfb3YBFihvOzCgAaW29qOTQO8ETBDX_T9M/exec";
+const MENU_VERSION = "27.0"; // v27.0: الكود الكامل النهائي مع جرس الإشعارات الصوتي
+const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbybuw8CuUGV-hf_ecUyevpGB5YioMKCdeOP3PxSKKuzGgMmtcfbHyrd0F81eJg3Z_U/exec";
 const ADMIN_SECRET_KEY = "Adam";
 
 const DEFAULT_DELIVERY_AREAS = [
@@ -19,7 +19,7 @@ const DEFAULT_DELIVERY_AREAS = [
   { name: "الخيارية", price: 50 },
   { name: "كفر البرامون", price: 40 },
   { name: "كفر بداوي", price: 50 },
-  { name: "شربين", price: 80 
+  { name: "شربين", price: 80 }
 ];
 
 const DEFAULT_PROMO_CODES = [
@@ -72,18 +72,16 @@ const DEFAULT_MENU = [
   { id: "d4", cat: "المشروبات", name: "مياة معدنية صغيرة", price: 6 }
 ];
 
-
 const money = (n) => Number(n || 0).toLocaleString("en-US") + " جنيه";
 
 const checkRestaurantStatus = () => {
-  // جلب الوقت الحالي بتوقيت مصر حصرياً
   const nowInEgypt = new Date(new Date().toLocaleString("en-US", { timeZone: "Africa/Cairo" }));
   const hours = nowInEgypt.getHours();
   const minutes = nowInEgypt.getMinutes();
   
   const currentMinutesTotal = hours * 60 + minutes;
-  const openMinutes = 13 * 60; // 1:00 ظهراً (780 دقيقة)
-  const closeMinutes = 3 * 60; // 3:00 فجراً (180 دقيقة)
+  const openMinutes = 13 * 60; // 1:00 ظهراً
+  const closeMinutes = 3 * 60; // 3:00 فجراً
 
   const isOpen = currentMinutesTotal >= openMinutes || currentMinutesTotal < closeMinutes;
 
@@ -93,8 +91,6 @@ const checkRestaurantStatus = () => {
     timeText: "يومياً من 1:00 ظهراً لـ 3:00 صباحاً"
   };
 };
-
-
 
 const copyTextToClipboard = (text) => {
   if (typeof document === "undefined") return false;
@@ -108,6 +104,28 @@ const copyTextToClipboard = (text) => {
   try { success = document.execCommand("copy"); } catch (err) {}
   document.body.removeChild(textArea);
   return success;
+};
+
+// دالة جرس الإشعارات الصوتي
+const playSuccessBeep = () => {
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15);
+
+    gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.3);
+  } catch (e) {}
 };
 
 export default function RestaurantMenu() {
@@ -141,12 +159,13 @@ export default function RestaurantMenu() {
   const [activeVisitors, setActiveVisitors] = useState(1);
   const [restaurantStatus, setRestaurantStatus] = useState(checkRestaurantStatus());
 
-  // حالات تتبع الأوردر للعميل
   const [trackModalOpen, setTrackModalOpen] = useState(false);
   const [trackQuery, setTrackQuery] = useState("");
   const [trackedOrderResult, setTrackedOrderResult] = useState(null);
   const [trackLoading, setTrackLoading] = useState(false);
   const [trackError, setTrackError] = useState("");
+
+  const [googleReviewModalOpen, setGoogleReviewModalOpen] = useState(false);
 
   const [deliveryAreas, setDeliveryAreas] = useState(DEFAULT_DELIVERY_AREAS);
   const [newAreaName, setNewAreaName] = useState("");
@@ -186,18 +205,10 @@ export default function RestaurantMenu() {
 
   const findItem = (id) => items.find((i) => i.id === id);
 
-    useEffect(() => {
-    // تحديث فوري عند فتح المنيو
-    setRestaurantStatus(checkRestaurantStatus());
-
-    // تحديث دوري كل 10 ثواني عشان لو الساعة دخلت 1 الظهر يقلب لوحده أوتوماتيك
+  useEffect(() => {
     const statusTimer = setInterval(() => {
       setRestaurantStatus(checkRestaurantStatus());
     }, 10000);
-
-    return () => clearInterval(statusTimer);
-  }, []);
-
 
     let visitorId = localStorage.getItem("dc_visitor_id");
     if (!visitorId) {
@@ -223,9 +234,19 @@ export default function RestaurantMenu() {
     sendPing();
     const visitorTimer = setInterval(sendPing, 30000);
 
+    const hasSeenReview = localStorage.getItem("dc_seen_google_review");
+    let reviewTimer = null;
+    if (!hasSeenReview) {
+      reviewTimer = setTimeout(() => {
+        setGoogleReviewModalOpen(true);
+        localStorage.setItem("dc_seen_google_review", "true");
+      }, 30000);
+    }
+
     return () => {
       clearInterval(statusTimer);
       clearInterval(visitorTimer);
+      if (reviewTimer) clearTimeout(reviewTimer);
     };
   }, []);
 
@@ -303,7 +324,23 @@ export default function RestaurantMenu() {
 
   useEffect(() => { if (adminOpen) fetchReportsFromSheet(); }, [adminOpen]);
 
-  // دالة تتبع الأوردر للعميل من المنيو
+  const handleShareMenu = async () => {
+    const shareData = {
+      title: restaurantName,
+      text: "تعال اطلب أطعم بيتزا وسندوتشات من " + restaurantName + "! 🍕🔥 إليك المنيو:",
+      url: window.location.href,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {}
+    } else {
+      copyTextToClipboard(window.location.href);
+      alert("تم نسخ رابط المنيو بنجاح! يمكنك لصقه ومشاركته مع أصدقائك 📋✨");
+    }
+  };
+
   const handleTrackOrder = async () => {
     const q = trackQuery.trim();
     if (!q) {
@@ -342,7 +379,6 @@ export default function RestaurantMenu() {
     }
   };
 
-  // دالة تحديث حالة الأوردر من لوحة التحكم للإدارة
   const handleUpdateStatus = async (orderId, newStatus) => {
     try {
       await fetch(GOOGLE_SHEET_SCRIPT_URL, {
@@ -508,6 +544,49 @@ export default function RestaurantMenu() {
     return { totalOrders: filteredReportsData.length, totalSales, totalDelivery, netTotal, cashSales, electronicSales, growthSalesPercent, growthOrdersPercent, topArea: topArea + " (" + maxCount + " أوردر)", goldenCustomer, allCustomersList: sortedCustomers, topItems, peakHours, sevenDaysChartData };
   }, [filteredReportsData, reportsData]);
 
+  // استخراج الأكثر طلباً ديناميكياً من الشيت
+  const dynamicBestSellers = useMemo(() => {
+    if (!reportsData || !Array.isArray(reportsData) || reportsData.length === 0) {
+      return [];
+    }
+
+    const itemsCountMap = {};
+
+    reportsData.forEach(row => {
+      if (!row) return;
+      const itemsText = String(row["تفاصيل الطلبات"] || "");
+      if (itemsText) {
+        itemsText.split("|").forEach(part => {
+          const trimmed = part.trim();
+          if (trimmed) {
+            const match = trimmed.match(/(.+) x(\d+)/);
+            if (match) {
+              const rawName = match[1].trim();
+              const cleanName = rawName.replace(/\s*\([^)]*\)/g, "").trim();
+              const qty = Number(match[2]) || 1;
+              itemsCountMap[cleanName] = (itemsCountMap[cleanName] || 0) + qty;
+            } else {
+              const cleanName = trimmed.replace(/\s*\([^)]*\)/g, "").trim();
+              itemsCountMap[cleanName] = (itemsCountMap[cleanName] || 0) + 1;
+            }
+          }
+        });
+      }
+    });
+
+    const sortedNames = Object.entries(itemsCountMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+      .map(([name]) => name);
+
+    if (sortedNames.length === 0) return [];
+
+    return sortedNames.map(name => {
+      return items.find(it => it.name.trim().toLowerCase() === name.toLowerCase());
+    }).filter(Boolean);
+
+  }, [reportsData, items]);
+
   const exportToCSV = () => {
     if (!filteredReportsData || filteredReportsData.length === 0) return;
     const headers = ["التاريخ والوقت", "اسم العميل", "رقم الموبايل", "المنطقة / القرية", "العنوان", "طريقة الدفع", "تفاصيل الطلبات", "الإجمالي النهائي"];
@@ -627,6 +706,9 @@ export default function RestaurantMenu() {
 
     setValidationError("");
 
+    // 🔔 تشغيل جرس التنبيه الصوتي فور نجاح الطلب
+    playSuccessBeep();
+
     if (typeof window !== "undefined" && window.localStorage) {
       localStorage.setItem("customer-name-cache", customerName.trim());
       localStorage.setItem("customer-phone-cache", customerPhone.trim());
@@ -699,7 +781,7 @@ export default function RestaurantMenu() {
         </div>
       </header>
 
-      {/* SOCIAL MEDIA STRIP */}
+      {/* SOCIAL MEDIA & SHARE STRIP */}
       <div className="w-full flex justify-center items-center py-2.5 bg-[#0C0E14]/80 border-b border-white/5 sticky top-[57px] z-20 backdrop-blur-md">
         <div className="flex items-center gap-3 px-4 py-1 rounded-full bg-[#1A1D26] border border-white/10 shadow-inner">
           <a href={"tel:" + whatsappNumber} className="p-2 rounded-full bg-amber-400 text-black transition-transform active:scale-95 shadow"><Phone size={13} /></a>
@@ -707,6 +789,11 @@ export default function RestaurantMenu() {
           <a href={"https://wa.me/" + whatsappNumber.replace(/[^\d+]/g, "")} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-[#25D366] text-white transition-transform active:scale-95 shadow"><MessageCircle size={13} /></a>
           <a href="https://www.facebook.com/share/1E3Dx3c5Yh/" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-[#1877F2] text-white transition-transform active:scale-95 shadow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
           <a href="https://www.tiktok.com/@dreamcornerfood" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-black text-white border border-white/20 transition-transform active:scale-95 shadow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5"><path d="M12.525.02c1.31.01 2.61.03 3.91.05.08 1.53.64 2.93 1.66 4.02.97.97 2.24 1.57 3.63 1.69v3.91c-1.6-.05-3.11-.64-4.32-1.64-.1-.08-.19-.17-.28-.26v6.2c-.06 4.67-3.81 8.28-8.42 8.01-3.69-.21-6.72-3.14-7.06-6.82-.44-4.78 3.32-8.91 8.11-8.52v3.96c-2.15-.22-4.11 1.29-4.44 3.44-.4 2.58 1.56 4.88 4.15 4.96 2.43.08 4.5-1.74 4.66-4.16.03-.43.02-.87.02-1.3V0z"/></svg></a>
+          
+          <span className="h-3.5 w-[1px] bg-white/20" />
+          <button onClick={handleShareMenu} title="شارك المنيو مع أصدقائك" className="p-2 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 transition-transform active:scale-95 shadow flex items-center justify-center">
+            <Share2 size={13} />
+          </button>
         </div>
       </div>
 
@@ -735,7 +822,7 @@ export default function RestaurantMenu() {
         </div>
       </section>
 
-      {/* TRACK ORDER STRIP (فوق شريط الأقسام مباشرة بشكل احترافي) */}
+      {/* TRACK ORDER STRIP */}
       <div className="max-w-3xl mx-auto px-4 pt-3">
         <div onClick={() => setTrackModalOpen(true)} className="w-full bg-gradient-to-r from-amber-500/20 via-[#1A1D26] to-amber-500/15 border border-amber-500/40 rounded-2xl p-3 flex items-center justify-between cursor-pointer hover:border-amber-400 transition-all shadow-md group">
           <div className="flex items-center gap-2.5">
@@ -773,7 +860,7 @@ export default function RestaurantMenu() {
       {/* SEARCH BAR */}
       <div className="max-w-3xl mx-auto px-4 pt-4">
         <div className="relative">
-          <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="ابحث عن بيتزا، سندوتش، مشروب..." className="w-full px-4 py-2.5 pr-10 rounded-2xl bg-[#111319] border border-white/10 text-xs text-white focus:outline-none focus:border-amber-500/50" />
+          <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="ابحث عن بيتزا باربيكيو، سندوتش، مشروب..." className="w-full px-4 py-2.5 pr-10 rounded-2xl bg-[#111319] border border-white/10 text-xs text-white focus:outline-none focus:border-amber-500/50" />
           <Search size={15} className="absolute right-3.5 top-3 text-gray-400" />
           {searchQuery && <button onClick={() => setSearchQuery("")} className="absolute left-3 top-2.5 p-1 rounded-full text-gray-400"><X size={14} /></button>}
         </div>
@@ -795,27 +882,27 @@ export default function RestaurantMenu() {
         </div>
       </section>
 
-      {/* BEST SELLERS SECTION */}
-      {bestSellerItems.length > 0 && activeCat === "الكل" && !searchQuery.trim() && (
+      {/* DYNAMIC BEST SELLERS SECTION (محدث أوتوماتيكياً من الشيت) */}
+      {(dynamicBestSellers.length > 0 ? dynamicBestSellers : bestSellerItems).length > 0 && activeCat === "الكل" && !searchQuery.trim() && (
         <section className="max-w-3xl mx-auto px-4 pt-7 space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-xs font-black text-amber-400 flex items-center gap-1 uppercase tracking-wide">
               <Flame size={16} className="text-red-500 animate-pulse" />
-              <span>الأكثر طلباً الآن 🔥</span>
+              <span>الأكثر طلباً الآن (تحديث حقيقي من الشيت) 🔥</span>
             </h2>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {bestSellerItems.map((item) => (
+            {(dynamicBestSellers.length > 0 ? dynamicBestSellers : bestSellerItems).map((item) => (
               <div key={item.id} className="bg-[#111319] border border-white/10 rounded-3xl p-3.5 flex flex-col justify-between relative shadow-lg hover:border-amber-500/40 transition-all overflow-hidden">
                 
                 <div className="absolute top-2.5 -left-7 rotate-[-35deg] bg-gradient-to-r from-red-600 via-amber-500 to-yellow-400 text-black font-black text-[8px] px-7 py-0.5 shadow-md border-y border-amber-300/40 z-10 flex items-center justify-center gap-0.5">
-                  🔥 الأكثر طلباً
+                  🔥 ترند اليوم
                 </div>
 
                 <div className="space-y-1 mt-2">
                   <h3 className="text-xs sm:text-sm font-black text-white truncate">{item.name}</h3>
-                  <p className="text-[10px] text-gray-400 line-clamp-2 leading-relaxed">{item.desc || "الوجبة الأكثر طلباً وشهيرة من دريم كورنر!"}</p>
+                  <p className="text-[10px] text-gray-400 line-clamp-2 leading-relaxed">{item.desc || "الوجبة الأكثر طلباً الآن من دريم كورنر!"}</p>
                 </div>
 
                 <div className="mt-3 pt-2 border-t border-white/10 space-y-2">
@@ -1043,6 +1130,55 @@ export default function RestaurantMenu() {
         </div>
       )}
 
+      {/* GOOGLE REVIEW MODAL (تظهر أوتوماتيكياً بعد 30 ثانية) */}
+      {googleReviewModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4" dir="rtl">
+          <div className="w-full max-w-sm bg-[#111319] border border-amber-500/40 rounded-3xl p-6 text-center space-y-4 shadow-2xl relative animate-in fade-in zoom-in duration-300">
+            
+            <button onClick={() => setGoogleReviewModalOpen(false)} className="absolute top-4 left-4 p-1.5 rounded-full bg-white/10 text-gray-300 hover:text-white">
+              <X size={16} />
+            </button>
+
+            <div className="w-16 h-16 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto text-3xl shadow-lg border border-amber-500/30">
+              ⭐
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-base font-black text-white">إيه رأيك في جودة وأكل <span className="text-amber-400">دريم كورنر</span>؟ 🍕</h3>
+              <p className="text-xs text-gray-300 leading-relaxed">
+                رأيك يهمنا جداً وبيساعدنا نتحسن ونقدم دايماً أفضل طعم يفرق معاك! هل تفضل تقييمنا بـ 5 نجوم على جوجل؟
+              </p>
+            </div>
+
+            <div className="flex items-center justify-center gap-1.5 py-1">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} size={24} className="fill-amber-400 text-amber-400 drop-shadow" />
+              ))}
+            </div>
+
+            <div className="space-y-2 pt-1">
+              <a 
+                href="https://maps.app.goo.gl/ppAKjBqJB1sP2z78A" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                onClick={() => setGoogleReviewModalOpen(false)}
+                className="w-full py-3 rounded-xl bg-amber-400 text-black font-black text-xs flex items-center justify-center gap-1.5 shadow-lg active:scale-98 transition-transform"
+              >
+                <span>قيمنا على جوجل ماب ⭐⭐⭐⭐⭐</span>
+              </a>
+
+              <button 
+                onClick={() => setGoogleReviewModalOpen(false)} 
+                className="w-full py-2.5 rounded-xl bg-white/10 text-gray-300 hover:text-white text-xs font-bold transition-colors"
+              >
+                لاحقاً، شكراً لك
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
       {/* CART DRAWER MODAL */}
       {cartOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end justify-center p-0">
@@ -1202,7 +1338,7 @@ export default function RestaurantMenu() {
                 <div>
                   <h2 className="text-base font-black text-amber-400 flex items-center gap-1.5">
                     <span>الرئيسية | لوحة تحكم دريم كورنر</span>
-                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v25.0</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v27.0</span>
                   </h2>
                   <p className="text-[10px] text-gray-400">مرحباً بك في لوحة التحكّم والذكاء المالي 👋</p>
                 </div>
@@ -1331,7 +1467,6 @@ export default function RestaurantMenu() {
                       </div>
                     </div>
 
-                    {/* إدارة وتحديث حالات الطلبات الحية (مع أزرار التعديل الفوري للآدمن) */}
                     <div className="p-4 rounded-2xl bg-[#141721] border border-white/5 space-y-3">
                       <h3 className="text-xs font-bold text-gray-300 flex items-center gap-2">
                         <ShoppingCart size={15} className="text-amber-400" />
