@@ -7,8 +7,8 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "29.1"; // v29.1: الكود الكامل النهائي مع جرس الإشعارات الصوتي
-const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbybuw8CuUGV-hf_ecUyevpGB5YioMKCdeOP3PxSKKuzGgMmtcfbHyrd0F81eJg3Z_U/exec";
+const MENU_VERSION = "29.5"; // v29.5: الكود الكامل النهائي مع المرونة الذكية لجلب الشيت
+const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxoJBFVMk_jbmuLC5w59zQko5tYn9NvoZ9iWWPnLyyBMf4u-J6OfArH6JhIU8UK95o/exec";
 const ADMIN_SECRET_KEY = "Adam";
 
 const DEFAULT_DELIVERY_AREAS = [
@@ -234,6 +234,9 @@ export default function RestaurantMenu() {
     sendPing();
     const visitorTimer = setInterval(sendPing, 30000);
 
+    // سحب أولي صامت لبيانات الشيت في الخلفية لتفعيل قسم الأكثر طلباً فور فتح المنيو
+    fetchReportsFromSheetSilent();
+
     const hasSeenReview = localStorage.getItem("dc_seen_google_review");
     let reviewTimer = null;
     if (!hasSeenReview) {
@@ -307,19 +310,72 @@ export default function RestaurantMenu() {
   const discountAmount = useMemo(() => Math.round((cartTotal * appliedDiscountPercent) / 100), [cartTotal, appliedDiscountPercent]);
   const finalTotal = useMemo(() => Math.max(0, cartTotal - discountAmount) + activeDeliveryArea.price, [cartTotal, discountAmount, activeDeliveryArea]);
 
+  // دالة جلب البيانات المرنة والآمنة للشيت
   const fetchReportsFromSheet = async () => {
     setReportsLoading(true);
     try {
       const res = await fetch(GOOGLE_SHEET_SCRIPT_URL + "?action=orders&adminKey=" + ADMIN_SECRET_KEY);
       const data = await res.json();
-      if (data && data.status === "success" && Array.isArray(data.orders)) {
-        setReportsData(data.orders);
-      } else if (Array.isArray(data)) {
-        setReportsData(data);
+      
+      let rawOrders = [];
+      if (Array.isArray(data)) {
+        rawOrders = data;
+      } else if (data && Array.isArray(data.orders)) {
+        rawOrders = data.orders;
+      } else if (data && data.status === "success" && Array.isArray(data.data)) {
+        rawOrders = data.data;
       }
+
+      const normalizedOrders = rawOrders.map(row => {
+        return {
+          "التاريخ والوقت": row["التاريخ والوقت"] || row["Timestamp"] || "",
+          "رقم الأوردر": row["رقم الأوردر"] || row["رقم الطلب"] || row["Order ID"] || "",
+          "اسم العميل": row["اسم العميل"] || row["Customer Name"] || "عميل",
+          "رقم الموبايل": row["رقم الموبايل"] || row["Phone"] || "",
+          "المنطقة / القرية": row["المنطقة / القرية"] || row["Area"] || "غير محدد",
+          "العنوان بالتفصيل": row["العنوان بالتفصيل"] || row["Address"] || "",
+          "طريقة الدفع": row["طريقة الدفع"] || row["Payment"] || "كاش",
+          "تفاصيل الطلبات": row["تفاصيل الطلبات"] || row["Items"] || "",
+          "الإجمالي النهائي": Number(row["الإجمالي النهائي"] || row["Final Total"] || row["Total"] || 0),
+          "حساب الأكل الأصلي": Number(row["حساب الأكل الأصلي"] || 0),
+          "مصاريف التوصيل": Number(row["مصاريف التوصيل"] || 0),
+          "حالة الطلب": row["حالة الطلب"] || row["Status"] || "جديد"
+        };
+      });
+
+      setReportsData(normalizedOrders);
     } catch (e) {
-      console.error(e);
-    } finally { setReportsLoading(false); }
+      console.error("خطأ في جلب بيانات الشيت:", e);
+    } finally { 
+      setReportsLoading(false); 
+    }
+  };
+
+  const fetchReportsFromSheetSilent = async () => {
+    try {
+      const res = await fetch(GOOGLE_SHEET_SCRIPT_URL + "?action=orders&adminKey=" + ADMIN_SECRET_KEY);
+      const data = await res.json();
+      let rawOrders = [];
+      if (Array.isArray(data)) rawOrders = data;
+      else if (data && Array.isArray(data.orders)) rawOrders = data.orders;
+
+      const normalizedOrders = rawOrders.map(row => ({
+        "التاريخ والوقت": row["التاريخ والوقت"] || row["Timestamp"] || "",
+        "رقم الأوردر": row["رقم الأوردر"] || row["رقم الطلب"] || row["Order ID"] || "",
+        "اسم العميل": row["اسم العميل"] || row["Customer Name"] || "عميل",
+        "رقم الموبايل": row["رقم الموبايل"] || row["Phone"] || "",
+        "المنطقة / القرية": row["المنطقة / القرية"] || row["Area"] || "غير محدد",
+        "العنوان بالتفصيل": row["العنوان بالتفصيل"] || row["Address"] || "",
+        "طريقة الدفع": row["طريقة الدفع"] || row["Payment"] || "كاش",
+        "تفاصيل الطلبات": row["تفاصيل الطلبات"] || row["Items"] || "",
+        "الإجمالي النهائي": Number(row["الإجمالي النهائي"] || row["Final Total"] || row["Total"] || 0),
+        "حساب الأكل الأصلي": Number(row["حساب الأكل الأصلي"] || 0),
+        "مصاريف التوصيل": Number(row["مصاريف التوصيل"] || 0),
+        "حالة الطلب": row["حالة الطلب"] || row["Status"] || "جديد"
+      }));
+
+      setReportsData(normalizedOrders);
+    } catch (e) {}
   };
 
   useEffect(() => { if (adminOpen) fetchReportsFromSheet(); }, [adminOpen]);
@@ -356,19 +412,24 @@ export default function RestaurantMenu() {
       const data = await res.json();
       
       let ordersList = [];
-      if (data && data.status === "success" && Array.isArray(data.orders)) {
-        ordersList = data.orders;
-      } else if (Array.isArray(data)) {
-        ordersList = data;
-      }
+      if (Array.isArray(data)) ordersList = data;
+      else if (data && Array.isArray(data.orders)) ordersList = data.orders;
 
       const found = ordersList.find(o => 
-        String(o["رقم الأوردر"] || "").trim().toLowerCase() === q.toLowerCase() ||
-        String(o["رقم الموبايل"] || "").trim() === q
+        String(o["رقم الأوردر"] || o["رقم الطلب"] || "").trim().toLowerCase() === q.toLowerCase() ||
+        String(o["رقم الموبايل"] || o["Phone"] || "").trim() === q
       );
 
       if (found) {
-        setTrackedOrderResult(found);
+        setTrackedOrderResult({
+          "رقم الأوردر": found["رقم الأوردر"] || found["رقم الطلب"] || "DC-ORDER",
+          "اسم العميل": found["اسم العميل"] || found["Customer Name"] || "عميل",
+          "رقم الموبايل": found["رقم الموبايل"] || found["Phone"] || "",
+          "المنطقة / القرية": found["المنطقة / القرية"] || found["Area"] || "",
+          "تفاصيل الطلبات": found["تفاصيل الطلبات"] || found["Items"] || "",
+          "الإجمالي النهائي": found["الإجمالي النهائي"] || found["Final Total"] || 0,
+          "حالة الطلب": found["حالة الطلب"] || found["Status"] || "جديد"
+        });
       } else {
         setTrackError("لم يتم العثور على أوردر بهذا الرقم، تأكد من البيانات المدخلة.");
       }
@@ -1338,7 +1399,7 @@ export default function RestaurantMenu() {
                 <div>
                   <h2 className="text-base font-black text-amber-400 flex items-center gap-1.5">
                     <span>الرئيسية | لوحة تحكم دريم كورنر</span>
-                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v27.0</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v27.1</span>
                   </h2>
                   <p className="text-[10px] text-gray-400">مرحباً بك في لوحة التحكّم والذكاء المالي 👋</p>
                 </div>
