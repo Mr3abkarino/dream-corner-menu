@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "27.0"; // v27.0: الكود الكامل النهائي مع جرس الإشعارات الصوتي
+const MENU_VERSION = "29.1"; // v29.1: الكود الكامل النهائي مع جرس الإشعارات الصوتي
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbybuw8CuUGV-hf_ecUyevpGB5YioMKCdeOP3PxSKKuzGgMmtcfbHyrd0F81eJg3Z_U/exec";
 const ADMIN_SECRET_KEY = "Adam";
 
