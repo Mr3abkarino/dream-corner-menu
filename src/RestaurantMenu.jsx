@@ -1,17 +1,13 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import restaurantLogo from "./assets/logo.png";
 import {
-  ShoppingCart, Plus, Minus, X, Trash2, Check, Copy,
-  Settings, Phone, CreditCard, Search, PlusCircle, MessageCircle,
-  MapPin, KeyRound, Share2, TrendingUp, Download, PieChart,
-  Crown, Clock, Bike, Utensils, Trophy, Users, Home, ChevronLeft,
-  Star, Percent, ShieldCheck, Headphones, ArrowUpRight, ArrowDownRight,
-  LayoutGrid, CheckCircle2, RefreshCw, DollarSign, Wallet, BarChart3
+  ShoppingCart, Plus, Minus, X, Pencil, Trash2, Check, Copy,
+  QrCode, Settings, Phone, CreditCard, Sparkles, Search, RotateCcw,
+  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation, Award, Calendar, DollarSign, Wallet, Flame, BarChart3, RefreshCw, Share2, TrendingUp, Download, PieChart, Crown, Clock, Bike, Utensils, Trophy, Users, Home, ChevronLeft, Star, Percent, ShieldCheck, Headphones, ArrowUpRight, ArrowDownRight, LayoutGrid, CheckCircle2, Bell
 } from "lucide-react";
 
-import restaurantLogo from "./assets/logo.png";
-
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "38.0"; // v38.0: إصلاح الشاشة البيضاء في السلة وقراءة الشيت بذكاء
+const MENU_VERSION = "39.0"; // v39.0: الكود الكامل المستقر مع السلة الأصلية وقراءة الشيت المحدثة
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxoJBFVMk_jbmuLC5w59zQko5tYn9NvoZ9iWWPnLyyBMf4u-J6OfArH6JhIU8UK95o/exec";
 const ADMIN_SECRET_KEY = "Adam";
 
@@ -82,9 +78,11 @@ const checkRestaurantStatus = () => {
   const nowInEgypt = new Date(new Date().toLocaleString("en-US", { timeZone: "Africa/Cairo" }));
   const hours = nowInEgypt.getHours();
   const minutes = nowInEgypt.getMinutes();
+  
   const currentMinutesTotal = hours * 60 + minutes;
   const openMinutes = 13 * 60; 
   const closeMinutes = 3 * 60; 
+
   const isOpen = currentMinutesTotal >= openMinutes || currentMinutesTotal < closeMinutes;
 
   return {
@@ -167,6 +165,7 @@ export default function RestaurantMenu() {
   const [trackError, setTrackError] = useState("");
 
   const [googleReviewModalOpen, setGoogleReviewModalOpen] = useState(false);
+
   const [deliveryAreas, setDeliveryAreas] = useState(DEFAULT_DELIVERY_AREAS);
   const [newAreaName, setNewAreaName] = useState("");
   const [newAreaPrice, setNewAreaPrice] = useState("");
@@ -222,9 +221,12 @@ export default function RestaurantMenu() {
           method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "ping_visitor", visitorId })
         });
+        
         const res = await fetch(GOOGLE_SHEET_SCRIPT_URL + "?type=visitors");
         const data = await res.json();
-        if (data && data.activeVisitors) setActiveVisitors(data.activeVisitors);
+        if (data && data.activeVisitors) {
+          setActiveVisitors(data.activeVisitors);
+        }
       } catch (e) {}
     };
 
@@ -281,6 +283,7 @@ export default function RestaurantMenu() {
       nextCart[key] = Math.max(0, (c[key] || 0) + delta);
       return nextCart;
     });
+
     if (delta > 0) {
       setAnimateCart(true);
       setTimeout(() => setAnimateCart(false), 500);
@@ -309,6 +312,7 @@ export default function RestaurantMenu() {
     try {
       const res = await fetch(GOOGLE_SHEET_SCRIPT_URL + "?action=orders&adminKey=" + ADMIN_SECRET_KEY);
       const data = await res.json();
+      
       let rawOrders = [];
       if (Array.isArray(data)) rawOrders = data;
       else if (data && Array.isArray(data.orders)) rawOrders = data.orders;
@@ -328,6 +332,7 @@ export default function RestaurantMenu() {
         "مصاريف التوصيل": Number(row["مصاريف التوصيل"] || 0),
         "حالة الطلب": row["حالة الطلب"] || row["Status"] || "جديد"
       }));
+
       setReportsData(normalizedOrders);
     } catch (e) {
     } finally { setReportsLoading(false); }
@@ -356,6 +361,7 @@ export default function RestaurantMenu() {
         "مصاريف التوصيل": Number(row["مصاريف التوصيل"] || 0),
         "حالة الطلب": row["حالة الطلب"] || row["Status"] || "جديد"
       }));
+
       setReportsData(normalizedOrders);
     } catch (e) {}
   };
@@ -803,7 +809,8 @@ export default function RestaurantMenu() {
         <section className="max-w-3xl mx-auto px-4 pt-7 space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-xs font-black text-amber-400 flex items-center gap-1 uppercase tracking-wide">
-              <span>🔥 الأكثر طلباً الآن (تحديث حقيقي من الشيت)</span>
+              <span className="text-red-500 animate-pulse">🔥</span>
+              <span>الأكثر طلباً الآن (تحديث حقيقي من الشيت)</span>
             </h2>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -1055,44 +1062,24 @@ export default function RestaurantMenu() {
               </div>
 
               <div className="space-y-2 pt-1">
-                <p className="text-[11px] font-bold text-amber-400">اختر طريقة الدفع المفضلة:</p>
+                <p className="text-[11px] font-bold text-amber-400">طريقة الدفع:</p>
                 <div className="grid grid-cols-2 gap-1.5">
                   <button type="button" onClick={() => setPaymentMethod("cash")} className={`py-2 rounded-xl border text-[10px] font-bold flex items-center justify-center gap-1 ${paymentMethod === "cash" ? "bg-amber-400 text-black border-amber-400" : "border-white/10 text-gray-300 bg-[#1A1D26]"}`}><DollarSign size={13}/> كاش</button>
                   <button type="button" onClick={() => setPaymentMethod("electronic")} className={`py-2 rounded-xl border text-[10px] font-bold flex items-center justify-center gap-1 ${paymentMethod === "electronic" ? "bg-amber-400 text-black border-amber-400" : "border-white/10 text-gray-300 bg-[#1A1D26]"}`}><Wallet size={13}/> دفع إلكتروني</button>
                 </div>
-
                 {paymentMethod === "electronic" && (
-                  <div className="p-3.5 rounded-2xl bg-black/60 border border-amber-500/40 space-y-2.5 text-[11px] animate-in fade-in duration-200">
-                    <p className="text-amber-300 text-center font-black">تحويل فوري عبر الوسائل الآتية وارسس سكرين شوت:</p>
+                  <div className="p-3 rounded-2xl bg-black/50 border border-amber-500/30 space-y-2 text-[10px]">
+                    <p className="text-amber-400 text-center font-bold">حول وارسض اسكرين شوت بالتحويل:</p>
                     
-                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#1A1D26] border border-white/5">
-                      <div className="flex items-center gap-2">
-                        <Phone size={14} className="text-amber-400" />
-                        <div>
-                          <p className="text-[9px] text-gray-400">فودافون كاش</p>
-                          <p className="font-black text-white" dir="ltr">{vodafoneCash}</p>
-                        </div>
-                      </div>
-                      <button type="button" onClick={() => copyText("vodafone", vodafoneCash)} className="px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 font-bold flex items-center gap-1 text-[10px]">
-                        {copied === "vodafone" ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
-                        <span>{copied === "vodafone" ? "تم النسخ" : "نسخ"}</span>
-                      </button>
+                    <div className="flex items-center justify-between p-2 rounded-xl bg-[#1A1D26]">
+                      <div><p className="text-[9px] text-gray-400">فودافون كاش</p><p className="font-bold text-white" dir="ltr">{vodafoneCash}</p></div>
+                      <button type="button" onClick={() => copyText("vodafone", vodafoneCash)} className="p-1.5 rounded-lg border border-white/10 text-amber-300">{copied === "vodafone" ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}</button>
                     </div>
 
-                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#1A1D26] border border-white/5">
-                      <div className="flex items-center gap-2">
-                        <CreditCard size={14} className="text-amber-400" />
-                        <div>
-                          <p className="text-[9px] text-gray-400">حساب InstaPay</p>
-                          <p className="font-black text-white" dir="ltr">{instapay}</p>
-                        </div>
-                      </div>
-                      <button type="button" onClick={() => copyText("instapay", instapay)} className="px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 font-bold flex items-center gap-1 text-[10px]">
-                        {copied === "instapay" ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
-                        <span>{copied === "instapay" ? "تم النسخ" : "نسخ"}</span>
-                      </button>
+                    <div className="flex items-center justify-between p-2 rounded-xl bg-[#1A1D26]">
+                      <div><p className="text-[9px] text-gray-400">حساب InstaPay</p><p className="font-bold text-white" dir="ltr">{instapay}</p></div>
+                      <button type="button" onClick={() => copyText("instapay", instapay)} className="p-1.5 rounded-lg border border-white/10 text-amber-300">{copied === "instapay" ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}</button>
                     </div>
-
                   </div>
                 )}
               </div>
@@ -1117,7 +1104,7 @@ export default function RestaurantMenu() {
                 <div>
                   <h2 className="text-base font-black text-amber-400 flex items-center gap-1.5">
                     <span>الرئيسية | لوحة تحكم دريم كورنر</span>
-                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v38.0</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v39.0</span>
                   </h2>
                   <p className="text-[10px] text-gray-400">مرحباً بك في لوحة التحكّم والذكاء المالي 👋</p>
                 </div>
