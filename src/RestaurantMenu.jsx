@@ -4,13 +4,14 @@ import {
   Settings, Phone, CreditCard, Search, PlusCircle, MessageCircle,
   MapPin, KeyRound, Share2, TrendingUp, Download, PieChart,
   Crown, Clock, Bike, Utensils, Trophy, Users, Home, ChevronLeft,
-  Star, Percent, ShieldCheck, Headphones, ArrowUpRight, ArrowDownRight, LayoutGrid, CheckCircle2
+  Star, Percent, ShieldCheck, Headphones, ArrowUpRight, ArrowDownRight,
+  LayoutGrid, CheckCircle2
 } from "lucide-react";
 
 import restaurantLogo from "./assets/logo.png";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "31.0";
+const MENU_VERSION = "33.0";
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxoJBFVMk_jbmuLC5w59zQko5tYn9NvoZ9iWWPnLyyBMf4u-J6OfArH6JhIU8UK95o/exec";
 const ADMIN_SECRET_KEY = "Adam";
 
@@ -796,8 +797,7 @@ export default function RestaurantMenu() {
         <section className="max-w-3xl mx-auto px-4 pt-7 space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-xs font-black text-amber-400 flex items-center gap-1 uppercase tracking-wide">
-              <Flame size={16} className="text-red-500 animate-pulse" />
-              <span>الأكثر طلباً الآن (تحديث حقيقي من الشيت) 🔥</span>
+              <span>🔥 الأكثر طلباً الآن (تحديث حقيقي من الشيت)</span>
             </h2>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -1078,7 +1078,7 @@ export default function RestaurantMenu() {
             <div className="px-5 py-3.5 border-b border-white/10 flex items-center justify-between bg-[#141721]">
               <div className="flex items-center gap-3">
                 <img src={LOGO_SRC} alt="Logo" className="w-9 h-9 rounded-xl border border-amber-500/30 p-0.5 object-contain" />
-                <div><h2 className="text-base font-black text-amber-400">لوحة تحكم دريم كورنر <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold">Enterprise v31.0</span></h2></div>
+                <div><h2 className="text-base font-black text-amber-400">لوحة تحكم دريم كورنر <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold">Enterprise v33.0</span></h2></div>
               </div>
               <div className="flex items-center gap-2">
                 <button onClick={fetchReportsFromSheet} className="px-3 py-1.5 rounded-xl border border-amber-500/30 text-amber-400 bg-amber-500/10 text-xs font-bold flex items-center gap-1.5"><RefreshCw size={13} className={reportsLoading ? "animate-spin" : ""} /><span className="hidden sm:inline">تحديث</span></button>
