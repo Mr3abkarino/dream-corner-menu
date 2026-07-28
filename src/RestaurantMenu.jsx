@@ -1,13 +1,16 @@
-import { useState, useEffect, useMemo, useRef } from "react";
-import restaurantLogo from "./assets/logo.png";
+import React, { useState, useEffect, useMemo } from "react";
 import {
-  ShoppingCart, Plus, Minus, X, Pencil, Trash2, Check, Copy,
-  QrCode, Settings, Phone, CreditCard, Sparkles, Search, RotateCcw,
-  Palette, Save, PlusCircle, MessageCircle, MapPin, KeyRound, LogOut, FileText, ChevronDown, User, Tag, Navigation, Award, Calendar, DollarSign, Wallet, Flame, BarChart3, RefreshCw, Share2, TrendingUp, Download, PieChart, Crown, Clock, Bike, Utensils, Trophy, Users, Home, ChevronLeft, Star, Percent, ShieldCheck, Headphones, ArrowUpRight, ArrowDownRight, LayoutGrid, CheckCircle2, Bell
+  ShoppingCart, Plus, Minus, X, Trash2, Check, Copy,
+  Settings, Phone, CreditCard, Search, PlusCircle, MessageCircle,
+  MapPin, KeyRound, Share2, TrendingUp, Download, PieChart,
+  Crown, Clock, Bike, Utensils, Trophy, Users, Home, ChevronLeft,
+  Star, Percent, ShieldCheck, Headphones, ArrowUpRight, ArrowDownRight, LayoutGrid, CheckCircle2
 } from "lucide-react";
 
+import restaurantLogo from "./assets/logo.png";
+
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "30.0"; // v30.0: الكود الكامل النهائي المحدث مع منع الأوردرات الوهمية وقراءة الشيت بدقة
+const MENU_VERSION = "31.0";
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxoJBFVMk_jbmuLC5w59zQko5tYn9NvoZ9iWWPnLyyBMf4u-J6OfArH6JhIU8UK95o/exec";
 const ADMIN_SECRET_KEY = "Adam";
 
@@ -78,11 +81,9 @@ const checkRestaurantStatus = () => {
   const nowInEgypt = new Date(new Date().toLocaleString("en-US", { timeZone: "Africa/Cairo" }));
   const hours = nowInEgypt.getHours();
   const minutes = nowInEgypt.getMinutes();
-  
   const currentMinutesTotal = hours * 60 + minutes;
-  const openMinutes = 13 * 60; // 1:00 ظهراً
-  const closeMinutes = 3 * 60; // 3:00 فجراً
-
+  const openMinutes = 13 * 60; 
+  const closeMinutes = 3 * 60; 
   const isOpen = currentMinutesTotal >= openMinutes || currentMinutesTotal < closeMinutes;
 
   return {
@@ -111,17 +112,13 @@ const playSuccessBeep = () => {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
-
     oscillator.type = "sine";
     oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime);
     oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15);
-
     gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-
     oscillator.connect(gainNode);
     gainNode.connect(audioCtx.destination);
-
     oscillator.start();
     oscillator.stop(audioCtx.currentTime + 0.3);
   } catch (e) {}
@@ -165,7 +162,6 @@ export default function RestaurantMenu() {
   const [trackError, setTrackError] = useState("");
 
   const [googleReviewModalOpen, setGoogleReviewModalOpen] = useState(false);
-
   const [deliveryAreas, setDeliveryAreas] = useState(DEFAULT_DELIVERY_AREAS);
   const [newAreaName, setNewAreaName] = useState("");
   const [newAreaPrice, setNewAreaPrice] = useState("");
@@ -184,10 +180,7 @@ export default function RestaurantMenu() {
   const [selectedAreaIndex, setSelectedAreaIndex] = useState(-1);
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [validationError, setValidationError] = useState("");
-  
-  // حالات منع الأوردرات الوهمية
-  const [pendingOrderData, setPendingOrderData] = useState(null);
-  const [orderSuccessModal, setOrderSuccessModal] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState(false);
   const [lastCreatedOrderId, setLastCreatedOrderId] = useState("");
 
   const [scheduleType, setScheduleType] = useState("now"); 
@@ -224,12 +217,9 @@ export default function RestaurantMenu() {
           method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "ping_visitor", visitorId })
         });
-        
         const res = await fetch(GOOGLE_SHEET_SCRIPT_URL + "?type=visitors");
         const data = await res.json();
-        if (data && data.activeVisitors) {
-          setActiveVisitors(data.activeVisitors);
-        }
+        if (data && data.activeVisitors) setActiveVisitors(data.activeVisitors);
       } catch (e) {}
     };
 
@@ -286,7 +276,6 @@ export default function RestaurantMenu() {
       nextCart[key] = Math.max(0, (c[key] || 0) + delta);
       return nextCart;
     });
-
     if (delta > 0) {
       setAnimateCart(true);
       setTimeout(() => setAnimateCart(false), 500);
@@ -315,7 +304,6 @@ export default function RestaurantMenu() {
     try {
       const res = await fetch(GOOGLE_SHEET_SCRIPT_URL + "?action=orders&adminKey=" + ADMIN_SECRET_KEY);
       const data = await res.json();
-      
       let rawOrders = [];
       if (Array.isArray(data)) rawOrders = data;
       else if (data && Array.isArray(data.orders)) rawOrders = data.orders;
@@ -334,7 +322,6 @@ export default function RestaurantMenu() {
         "مصاريف التوصيل": Number(row["مصاريف التوصيل"] || 0),
         "حالة الطلب": row["حالة الطلب"] || row["Status"] || "جديد"
       }));
-
       setReportsData(normalizedOrders);
     } catch (e) {
     } finally { setReportsLoading(false); }
@@ -362,7 +349,6 @@ export default function RestaurantMenu() {
         "مصاريف التوصيل": Number(row["مصاريف التوصيل"] || 0),
         "حالة الطلب": row["حالة الطلب"] || row["Status"] || "جديد"
       }));
-
       setReportsData(normalizedOrders);
     } catch (e) {}
   };
@@ -615,14 +601,6 @@ export default function RestaurantMenu() {
     else { setAppliedDiscountPercent(0); setPromoError("كود الخصم غير صحيح!"); }
   };
 
-  useEffect(() => {
-    if (typeof window !== "undefined" && window.localStorage) {
-      if (localStorage.getItem("customer-name-cache")) setCustomerName(localStorage.getItem("customer-name-cache"));
-      if (localStorage.getItem("customer-phone-cache")) setCustomerPhone(localStorage.getItem("customer-phone-cache"));
-      if (localStorage.getItem("customer-address-cache")) setCustomerAddress(localStorage.getItem("customer-address-cache"));
-    }
-  }, []);
-
   const handleVerifyPin = (e) => {
     e.preventDefault();
     if (enteredPin === adminPin) { setIsAdmin(true); setPinModalOpen(false); setEnteredPin(""); setAdminOpen(true); }
@@ -655,49 +633,16 @@ export default function RestaurantMenu() {
     return Array.from(map.entries());
   }, [visibleItems]);
 
-  // 1️⃣ تجهيز الطلب للتحقق (بدون حفظ وهمي في الشيت)
-  const prepareOrder = () => {
+  const sendWhatsApp = () => {
     if (!restaurantStatus.isOpen) { setCloseNoticeOpen(true); return; }
-    if (cartList.length === 0) { setValidationError("السلة فارغة."); return; }
-    if (!customerName.trim()) { setValidationError("اكتب اسمك."); return; }
-    if (!customerPhone.trim()) { setValidationError("اكتب رقم الموبايل."); return; }
-    if (!customerAddress.trim()) { setValidationError("اكتب العنوان بالتفصيل."); return; }
-    if (selectedAreaIndex === -1) { setValidationError("اختر منطقة التوصيل."); return; }
-    if (scheduleType === "later" && !scheduleTime.trim()) { setValidationError("اكتب موعد التوصيل."); return; }
+    if (cartList.length === 0) { setValidationError("السلة فارغة، اختر أصنافك أولاً."); return; }
+    if (!customerName.trim()) { setValidationError("من فضلك اكتب اسمك."); return; }
+    if (!customerPhone.trim()) { setValidationError("من فضلك اكتب رقم الموبايل."); return; }
+    if (!customerAddress.trim()) { setValidationError("من فضلك اكتب العنوان بالتفصيل."); return; }
+    if (selectedAreaIndex === -1) { setValidationError("من فضلك اختر منطقة التوصيل."); return; }
+    if (scheduleType === "later" && !scheduleTime.trim()) { setValidationError("من فضلك اكتب موعد التوصيل."); return; }
 
     setValidationError("");
-
-    const itemsSummary = cartList.map(i => i.label + " x" + i.qty).join(" | ");
-    const lines = cartList.map(i => "• " + i.label + " x" + i.qty + " — " + money(i.price * i.qty));
-    const deliveryTimeText = scheduleType === "now" ? "⚡ توصيل فوري (الآن)" : "🕒 مجدول: " + scheduleTime;
-    const paymentText = paymentMethod === "cash" ? "💵 نقدي (كاش)" : "📱 دفع إلكتروني";
-    const generatedOrderId = "DC-" + new Date().toISOString().replace(/[-:T]/g, "").slice(0, 12) + "-" + Math.floor(100 + Math.random() * 900);
-
-    const orderPayload = {
-      clientRequestId: generatedOrderId,
-      customerName: customerName.trim(),
-      customerPhone: customerPhone.trim(),
-      area: activeDeliveryArea.name,
-      address: customerAddress.trim(),
-      geoLink: geoLink || "",
-      paymentMethod: paymentText,
-      schedule: deliveryTimeText,
-      itemsSummary,
-      cartTotal,
-      couponDiscount: discountAmount,
-      deliveryPrice: activeDeliveryArea.price,
-      finalTotal,
-      customerNotes: customerNotes || "",
-      whatsappText: `طلب جديد من منيو ${restaurantName} 🍽\n\n🆔 رقم الأوردر: ${generatedOrderId}\n👤 العميل: ${customerName}\n📱 الهاتف: ${customerPhone}\n💳 الدفع: ${paymentText}\n📍 المنطقة: ${activeDeliveryArea.name}\n🏠 العنوان: ${customerAddress}\n\nالطلبات:\n${lines.join("\n")}\n\n💵 حساب الأكل: ${money(cartTotal)}\n🛵 التوصيل: ${money(activeDeliveryArea.price)}\n💰 الإجمالي: ${money(finalTotal)}`
-    };
-
-    setPendingOrderData(orderPayload);
-  };
-
-  // 2️⃣ التأكيد الفعلي (الحفظ في الشيت + فتح الواتساب + الجرس)
-  const confirmAndSendWhatsApp = () => {
-    if (!pendingOrderData) return;
-
     playSuccessBeep();
 
     if (typeof window !== "undefined" && window.localStorage) {
@@ -707,43 +652,44 @@ export default function RestaurantMenu() {
       localStorage.removeItem("dream-corner-saved-cart");
     }
 
-    setLastCreatedOrderId(pendingOrderData.clientRequestId);
+    const itemsSummary = cartList.map((i) => i.label + " x" + i.qty).join(" | ");
+    const lines = cartList.map((i) => "• " + i.label + " x" + i.qty + " — " + money(i.price * i.qty));
+    const deliveryTimeText = scheduleType === "now" ? "⚡ توصيل فوري (الآن)" : "🕒 مجدول للموعد: " + scheduleTime;
+    const paymentText = paymentMethod === "cash" ? "💵 نقدي (كاش)" : "📱 دفع إلكتروني";
+    const generatedOrderId = "DC-" + new Date().toISOString().replace(/[-:T]/g, "").slice(0, 12) + "-" + Math.floor(100 + Math.random() * 900);
+    setLastCreatedOrderId(generatedOrderId);
 
     try {
       fetch(GOOGLE_SHEET_SCRIPT_URL, {
         method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "create_order",
-          clientRequestId: pendingOrderData.clientRequestId,
-          customerName: pendingOrderData.customerName,
-          customerPhone: pendingOrderData.customerPhone,
-          area: pendingOrderData.area,
-          address: pendingOrderData.address,
-          geoLink: pendingOrderData.geoLink,
-          paymentMethod: pendingOrderData.paymentMethod,
-          schedule: pendingOrderData.schedule,
-          itemsSummary: pendingOrderData.itemsSummary,
-          cartTotal: pendingOrderData.cartTotal,
-          couponDiscount: pendingOrderData.couponDiscount,
-          deliveryPrice: pendingOrderData.deliveryPrice,
-          finalTotal: pendingOrderData.finalTotal,
-          customerNotes: pendingOrderData.customerNotes
+          clientRequestId: generatedOrderId,
+          customerName: customerName.trim(),
+          customerPhone: customerPhone.trim(),
+          area: activeDeliveryArea.name,
+          address: customerAddress.trim(),
+          geoLink: geoLink || "",
+          paymentMethod: paymentText,
+          schedule: deliveryTimeText,
+          itemsSummary: itemsSummary,
+          cartTotal: cartTotal,
+          couponDiscount: discountAmount,
+          deliveryPrice: activeDeliveryArea.price,
+          finalTotal: finalTotal,
+          customerNotes: customerNotes || ""
         })
       });
     } catch (e) {}
 
-    window.open("https://wa.me/" + whatsappNumber.replace(/[^\d+]/g, "") + "?text=" + encodeURIComponent(pendingOrderData.whatsappText), "_blank");
+    let text = `طلب جديد من منيو ${restaurantName} 🍽\n\n🆔 رقم الأوردر: ${generatedOrderId}\n👤 العميل: ${customerName}\n📱 الهاتف: ${customerPhone}\n💳 الدفع: ${paymentText}\n📍 المنطقة: ${activeDeliveryArea.name}\n🏠 العنوان: ${customerAddress}\n\nالطلبات:\n${lines.join("\n")}\n\n💵 حساب الأكل: ${money(cartTotal)}\n🛵 التوصيل: ${money(activeDeliveryArea.price)}\n💰 الإجمالي: ${money(finalTotal)}`;
+    window.open("https://wa.me/" + whatsappNumber.replace(/[^\d+]/g, "") + "?text=" + encodeURIComponent(text), "_blank");
 
-    setCartOpen(false);
-    setPendingOrderData(null);
-    setCart({});
-    setOrderSuccessModal(true);
+    setCartOpen(false); setCart({}); setOrderSuccess(true);
   };
 
   return (
     <div dir="rtl" className="min-h-screen bg-[#08090C] text-white font-['Tajawal'] pb-32">
-      
-      {/* HEADER */}
       <header className="sticky top-0 z-30 bg-[#0C0E14]/90 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center justify-between">
         <div onClick={handleLogoClickLocal} className="cursor-pointer flex items-center gap-2">
           <img src={LOGO_SRC} alt="Dream Corner" className="w-9 h-9 object-contain border border-amber-500/20 rounded-full p-0.5" />
@@ -766,7 +712,6 @@ export default function RestaurantMenu() {
         </div>
       </header>
 
-      {/* SOCIAL MEDIA & SHARE STRIP */}
       <div className="w-full flex justify-center items-center py-2.5 bg-[#0C0E14]/80 border-b border-white/5 sticky top-[57px] z-20 backdrop-blur-md">
         <div className="flex items-center gap-3 px-4 py-1 rounded-full bg-[#1A1D26] border border-white/10 shadow-inner">
           <a href={"tel:" + whatsappNumber} className="p-2 rounded-full bg-amber-400 text-black transition-transform active:scale-95 shadow"><Phone size={13} /></a>
@@ -774,28 +719,23 @@ export default function RestaurantMenu() {
           <a href={"https://wa.me/" + whatsappNumber.replace(/[^\d+]/g, "")} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-[#25D366] text-white transition-transform active:scale-95 shadow"><MessageCircle size={13} /></a>
           <a href="https://www.facebook.com/share/1E3Dx3c5Yh/" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-[#1877F2] text-white transition-transform active:scale-95 shadow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
           <a href="https://www.tiktok.com/@dreamcornerfood" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-black text-white border border-white/20 transition-transform active:scale-95 shadow"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5"><path d="M12.525.02c1.31.01 2.61.03 3.91.05.08 1.53.64 2.93 1.66 4.02.97.97 2.24 1.57 3.63 1.69v3.91c-1.6-.05-3.11-.64-4.32-1.64-.1-.08-.19-.17-.28-.26v6.2c-.06 4.67-3.81 8.28-8.42 8.01-3.69-.21-6.72-3.14-7.06-6.82-.44-4.78 3.32-8.91 8.11-8.52v3.96c-2.15-.22-4.11 1.29-4.44 3.44-.4 2.58 1.56 4.88 4.15 4.96 2.43.08 4.5-1.74 4.66-4.16.03-.43.02-.87.02-1.3V0z"/></svg></a>
-          
           <span className="h-3.5 w-[1px] bg-white/20" />
           <button onClick={handleShareMenu} title="شارك المنيو" className="p-2 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 transition-transform active:scale-95 shadow flex items-center justify-center"><Share2 size={13} /></button>
         </div>
       </div>
 
-      {/* WELCOME BANNER */}
       {customerName && (
         <div className="bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent border-b border-amber-500/30 px-4 py-2 flex items-center justify-between text-xs">
           <div className="flex items-center gap-2"><Crown size={15} className="text-amber-400 animate-bounce" /><span className="font-bold text-amber-300">أهلاً بعودتك يا {customerName}! 👋</span></div>
         </div>
       )}
 
-      {/* HERO BANNER SECTION */}
       <section className="relative w-full h-60 sm:h-72 overflow-hidden flex items-center justify-center">
         <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1200&q=80" alt="Pizza" className="absolute inset-0 w-full h-full object-cover opacity-30 scale-105" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#08090C] via-[#08090C]/60 to-transparent" />
-
         <div className="relative z-10 text-center px-4 space-y-2.5">
           <h1 className="text-2xl sm:text-4xl font-black text-amber-400 tracking-wide drop-shadow-md">{restaurantName}</h1>
           <p className="text-xs sm:text-sm text-gray-300 font-bold opacity-90">{tagline}</p>
-
           <div className="flex flex-wrap items-center justify-center gap-2 pt-2 text-[10px] font-bold">
             <span className="px-3 py-1 rounded-full bg-black/70 border border-white/10 font-black flex items-center gap-1" style={{ color: restaurantStatus.isOpen ? "#22c55e" : "#ef4444" }}>{restaurantStatus.text}</span>
             <span className="px-3 py-1 rounded-full bg-black/60 border border-white/10 text-gray-200 flex items-center gap-1"><Bike size={12} className="text-amber-400" /> توصيل سريع</span>
@@ -805,7 +745,6 @@ export default function RestaurantMenu() {
         </div>
       </section>
 
-      {/* TRACK ORDER STRIP */}
       <div className="max-w-3xl mx-auto px-4 pt-3">
         <div onClick={() => setTrackModalOpen(true)} className="w-full bg-gradient-to-r from-amber-500/20 via-[#1A1D26] to-amber-500/15 border border-amber-500/40 rounded-2xl p-3 flex items-center justify-between cursor-pointer hover:border-amber-400 transition-all shadow-md group">
           <div className="flex items-center gap-2.5">
@@ -819,7 +758,6 @@ export default function RestaurantMenu() {
         </div>
       </div>
 
-      {/* CATEGORIES NAV BAR */}
       <nav className="sticky top-[100px] z-20 bg-[#08090C]/95 backdrop-blur-md border-y border-white/10 py-3 px-4 mt-3">
         <div className="max-w-3xl mx-auto flex gap-2 overflow-x-auto no-scrollbar">
           {categories.map((c) => (
@@ -831,7 +769,6 @@ export default function RestaurantMenu() {
         </div>
       </nav>
 
-      {/* SEARCH BAR */}
       <div className="max-w-3xl mx-auto px-4 pt-4">
         <div className="relative">
           <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="ابحث عن بيتزا باربيكيو، سندوتش، مشروب..." className="w-full px-4 py-2.5 pr-10 rounded-2xl bg-[#111319] border border-white/10 text-xs text-white focus:outline-none focus:border-amber-500/50" />
@@ -840,7 +777,6 @@ export default function RestaurantMenu() {
         </div>
       </div>
 
-      {/* OFFERS SLIDER */}
       <section className="max-w-3xl mx-auto px-4 pt-5">
         <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
           {COMING_SOON_OFFERS.map((off) => (
@@ -856,7 +792,6 @@ export default function RestaurantMenu() {
         </div>
       </section>
 
-      {/* DYNAMIC BEST SELLERS SECTION */}
       {(dynamicBestSellers.length > 0 ? dynamicBestSellers : bestSellerItems).length > 0 && activeCat === "الكل" && !searchQuery.trim() && (
         <section className="max-w-3xl mx-auto px-4 pt-7 space-y-3">
           <div className="flex items-center justify-between">
@@ -865,7 +800,6 @@ export default function RestaurantMenu() {
               <span>الأكثر طلباً الآن (تحديث حقيقي من الشيت) 🔥</span>
             </h2>
           </div>
-
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {(dynamicBestSellers.length > 0 ? dynamicBestSellers : bestSellerItems).map((item) => (
               <div key={item.id} className="bg-[#111319] border border-white/10 rounded-3xl p-3.5 flex flex-col justify-between relative shadow-lg hover:border-amber-500/40 transition-all overflow-hidden">
@@ -898,7 +832,6 @@ export default function RestaurantMenu() {
         </section>
       )}
 
-      {/* MAIN MENU ITEMS */}
       <main className="max-w-3xl mx-auto px-4 pt-7 space-y-6">
         {groups.map((group) => {
           const subcat = group[0];
@@ -962,7 +895,6 @@ export default function RestaurantMenu() {
         })}
       </main>
 
-      {/* TRUST BADGES STRIP */}
       <section className="max-w-3xl mx-auto px-4 pt-10">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-[#111319] p-3.5 rounded-3xl border border-white/10 text-center text-[10px]">
           <div className="space-y-1 p-1"><Headphones size={18} className="mx-auto text-amber-400" /><p className="font-bold text-white">خدمة عملاء 24/7</p></div>
@@ -972,14 +904,12 @@ export default function RestaurantMenu() {
         </div>
       </section>
 
-      {/* FOOTER RIGHTS */}
       <div className="fixed bottom-12 inset-x-0 z-20 border-t border-white/10 px-4 py-2.5 flex items-center justify-center gap-3 text-xs font-semibold bg-[#08090C]/90 backdrop-blur-md">
         <a href="https://fb.com/mr.3abkarino" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 font-bold text-amber-400 hover:underline">Mr3abkarino© <span className="text-red-500 text-sm animate-pulse">❤️</span></a>
         <span className="opacity-30">|</span>
         <span className="flex items-center gap-1 truncate text-gray-400 text-[10px]"><MapPin size={12} className="shrink-0 text-amber-400" /><span className="truncate">{address}</span></span>
       </div>
 
-      {/* FLOATING CART BUTTON */}
       {cartCount > 0 && (
         <div className="fixed bottom-20 inset-x-0 z-30 px-4">
           <div onClick={() => setCartOpen(true)} className={`max-w-md mx-auto bg-amber-400 text-black p-3 rounded-2xl shadow-2xl flex items-center justify-between cursor-pointer active:scale-98 transition-all duration-300 ${animateCart ? "scale-105 shadow-amber-500/50 ring-2 ring-amber-300" : ""}`}>
@@ -992,7 +922,6 @@ export default function RestaurantMenu() {
         </div>
       )}
 
-      {/* BOTTOM NAVIGATION APP BAR */}
       <footer className="fixed bottom-0 inset-x-0 z-40 bg-[#0C0E14] border-t border-white/10 px-6 py-2 flex items-center justify-between text-[10px] text-gray-400">
         <button onClick={() => setActiveCat("الكل")} className="flex flex-col items-center gap-1 text-amber-400 font-bold"><Home size={18} /> <span>الرئيسية</span></button>
         <button onClick={() => setActiveCat("البيتزا")} className="flex flex-col items-center gap-1 hover:text-white"><Utensils size={18} /> <span>المنيو</span></button>
@@ -1001,7 +930,6 @@ export default function RestaurantMenu() {
         <a href={"https://wa.me/" + whatsappNumber.replace(/[^\d+]/g, "")} target="_blank" rel="noreferrer" className="flex flex-col items-center gap-1 hover:text-white"><Phone size={18} /> <span>تواصل معنا</span></a>
       </footer>
 
-      {/* TRACK ORDER MODAL */}
       {trackModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" dir="rtl">
           <div className="w-full max-w-md bg-[#111319] border border-amber-500/40 rounded-3xl p-5 space-y-4 shadow-2xl text-white">
@@ -1036,7 +964,6 @@ export default function RestaurantMenu() {
         </div>
       )}
 
-      {/* GOOGLE REVIEW MODAL */}
       {googleReviewModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4" dir="rtl">
           <div className="w-full max-w-sm bg-[#111319] border border-amber-500/40 rounded-3xl p-6 text-center space-y-4 shadow-2xl relative">
@@ -1057,7 +984,6 @@ export default function RestaurantMenu() {
         </div>
       )}
 
-      {/* CART DRAWER MODAL */}
       {cartOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end justify-center p-0">
           <div className="absolute inset-0" onClick={() => setCartOpen(false)} />
@@ -1106,7 +1032,7 @@ export default function RestaurantMenu() {
               </select>
 
               <div className="p-2.5 rounded-xl bg-[#1A1D26] space-y-1.5 border border-white/5">
-                <p className="text-[10px] text-gray-400 font-bold">موعد التوصيل:</p>
+                <p className="text-[10px] text-gray-400 font-bold">موعد التوصيل المطلق:</p>
                 <div className="grid grid-cols-2 gap-1.5 text-[10px]">
                   <button type="button" onClick={() => setScheduleType("now")} className={`py-1.5 rounded-lg border ${scheduleType === "now" ? "bg-amber-400 text-black font-bold" : "border-white/10 text-gray-300"}`}>⚡ فوري الآن</button>
                   <button type="button" onClick={() => setScheduleType("later")} className={`py-1.5 rounded-lg border ${scheduleType === "later" ? "bg-amber-400 text-black font-bold" : "border-white/10 text-gray-300"}`}>🕒 مجدول لاحقاً</button>
@@ -1120,14 +1046,14 @@ export default function RestaurantMenu() {
               </div>
 
               <div className="space-y-2 pt-1">
-                <p className="text-[11px] font-bold text-amber-400">طريقة الدفع:</p>
+                <p className="text-[11px] font-bold text-amber-400">اختر طريقة الدفع المفضلة:</p>
                 <div className="grid grid-cols-2 gap-1.5">
                   <button type="button" onClick={() => setPaymentMethod("cash")} className={`py-2 rounded-xl border text-[10px] font-bold flex items-center justify-center gap-1 ${paymentMethod === "cash" ? "bg-amber-400 text-black" : "border-white/10 text-gray-300 bg-[#1A1D26]"}`}><DollarSign size={13}/> كاش</button>
                   <button type="button" onClick={() => setPaymentMethod("electronic")} className={`py-2 rounded-xl border text-[10px] font-bold flex items-center justify-center gap-1 ${paymentMethod === "electronic" ? "bg-amber-400 text-black" : "border-white/10 text-gray-300 bg-[#1A1D26]"}`}><Wallet size={13}/> دفع إلكتروني</button>
                 </div>
                 {paymentMethod === "electronic" && (
                   <div className="p-3 rounded-2xl bg-black/50 border border-amber-500/30 space-y-2 text-[10px]">
-                    <p className="text-amber-400 text-center font-bold">حول وارسض اسكرين شوت:</p>
+                    <p className="text-amber-400 text-center font-bold">حول المبلغ وانسخ الحساب وارسل اسكرين شوت بالتحويل:</p>
                     <div className="flex items-center justify-between p-2 rounded-xl bg-[#1A1D26]">
                       <div><p className="text-[9px] text-gray-400">فودافون كاش</p><p className="font-bold text-white">{vodafoneCash}</p></div>
                       <button type="button" onClick={() => copyText("vodafone", vodafoneCash)} className="p-1.5 rounded-lg border border-white/10 text-amber-300">{copied === "vodafone" ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}</button>
@@ -1139,56 +1065,20 @@ export default function RestaurantMenu() {
 
             {validationError && <p className="text-[10px] text-red-400 text-center font-bold bg-red-500/10 py-1.5 rounded-lg">{validationError}</p>}
 
-            <button onClick={prepareOrder} className="w-full py-3.5 rounded-xl bg-[#25D366] text-white font-black text-xs flex items-center justify-center gap-2 active:scale-98 transition-transform shadow-lg">
+            <button onClick={sendWhatsApp} className="w-full py-3.5 rounded-xl bg-[#25D366] text-white font-black text-xs flex items-center justify-center gap-2 active:scale-98 transition-transform shadow-lg">
               <MessageCircle size={18} /> تأكيد وإرسال عبر واتساب
             </button>
           </div>
         </div>
       )}
 
-      {/* MODAL: نافذة التأكيد لمنع الأوردرات الوهمية */}
-      {pendingOrderData && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4" dir="rtl">
-          <div className="w-full max-w-sm bg-[#111319] border border-amber-500/40 rounded-3xl p-6 text-center space-y-4 shadow-2xl">
-            <div className="w-16 h-16 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto text-3xl">📱</div>
-            <div className="space-y-2">
-              <h3 className="text-base font-black text-white">خطوة أخيرة لتأكيد طلبك!</h3>
-              <p className="text-xs text-gray-300 leading-relaxed">اضغط على الزر أدناه لفتح الواتساب وإرسال تفاصيل الأوردر للمطعم. فور الضغط سيتم تسجيل الطلب رسمياً وتفعيل التتبع الصوتي! 🚀</p>
-            </div>
-            <div className="space-y-2 pt-2">
-              <button onClick={confirmAndSendWhatsApp} className="w-full py-3 rounded-xl bg-[#25D366] text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg active:scale-98">
-                <MessageCircle size={16} /> فتح الواتساب وتأكيد الأوردر الآن
-              </button>
-              <button onClick={() => setPendingOrderData(null)} className="w-full py-2.5 rounded-xl bg-white/10 text-gray-300 hover:text-white text-xs font-bold">تراجع</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* RESTAURANT CLOSED NOTICE MODAL */}
-      {closeNoticeOpen && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4" dir="rtl">
-          <div className="w-full max-w-sm bg-[#111319] border border-amber-500/40 rounded-3xl p-6 text-center space-y-4 shadow-2xl">
-            <div className="w-16 h-16 rounded-full bg-amber-500/10 text-amber-400 flex items-center justify-center mx-auto text-3xl animate-pulse">🍕</div>
-            <div className="space-y-1.5">
-              <h3 className="text-base font-black text-white">يا غالي، الأفران ريحت شوية.. 👨‍🍳</h3>
-              <p className="text-xs text-gray-300 leading-relaxed">المنيو معاك لفّ فيه براحتك واختار من دلوقتي، وأول ما نفتح هنكون جاهزين نولّع الدنيا! 🔥🚀</p>
-            </div>
-            <button onClick={() => setCloseNoticeOpen(false)} className="w-full py-3 rounded-xl bg-amber-400 text-black font-black text-xs shadow-md">فهمت، شكراً لك ✨</button>
-          </div>
-        </div>
-      )}
-
-      {/* ENTERPRISE ADMIN DASHBOARD MODAL */}
       {adminOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4 overflow-y-auto" dir="rtl">
           <div className="w-full max-w-6xl max-h-[96vh] rounded-3xl border border-amber-500/20 shadow-2xl flex flex-col overflow-hidden" style={{ background: "#0C0E14", color: "#F3E9D8" }}>
             <div className="px-5 py-3.5 border-b border-white/10 flex items-center justify-between bg-[#141721]">
               <div className="flex items-center gap-3">
                 <img src={LOGO_SRC} alt="Logo" className="w-9 h-9 rounded-xl border border-amber-500/30 p-0.5 object-contain" />
-                <div>
-                  <h2 className="text-base font-black text-amber-400 flex items-center gap-1.5"><span>لوحة تحكم دريم كورنر</span><span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v30.0</span></h2>
-                </div>
+                <div><h2 className="text-base font-black text-amber-400">لوحة تحكم دريم كورنر <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold">Enterprise v31.0</span></h2></div>
               </div>
               <div className="flex items-center gap-2">
                 <button onClick={fetchReportsFromSheet} className="px-3 py-1.5 rounded-xl border border-amber-500/30 text-amber-400 bg-amber-500/10 text-xs font-bold flex items-center gap-1.5"><RefreshCw size={13} className={reportsLoading ? "animate-spin" : ""} /><span className="hidden sm:inline">تحديث</span></button>
@@ -1200,14 +1090,9 @@ export default function RestaurantMenu() {
               <div className="w-full md:w-56 border-b md:border-b-0 md:border-l border-white/10 p-3 bg-[#10121A] flex md:flex-col gap-1 overflow-x-auto shrink-0">
                 <button onClick={() => setAdminTab("dashboard")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 ${adminTab === "dashboard" ? "bg-amber-500 text-black" : "text-gray-400"}`}><Home size={16} /> <span>الرئيسية والتقارير</span></button>
                 <button onClick={() => setAdminTab("items")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 ${adminTab === "items" ? "bg-amber-500 text-black" : "text-gray-400"}`}><Utensils size={16} /> <span>المنيو والأسعار</span></button>
-                <button onClick={() => setAdminTab("customers")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 ${adminTab === "customers" ? "bg-amber-500 text-black" : "text-gray-400"}`}><Users size={16} /> <span>العملاء والمكافآت</span></button>
-                <button onClick={() => setAdminTab("delivery")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 ${adminTab === "delivery" ? "bg-amber-500 text-black" : "text-gray-400"}`}><Bike size={16} /> <span>مناطق الدليفري</span></button>
+                <button onClick={() => setAdminTab("customers")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 ${adminTab === "customers" ? "bg-amber-500 text-black" : "text-gray-400"}`}><Users size={16} /> <span>العملاء</span></button>
+                <button onClick={() => setAdminTab("delivery")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 ${adminTab === "delivery" ? "bg-amber-500 text-black" : "text-gray-400"}`}><Bike size={16} /> <span>المناطق</span></button>
                 <button onClick={() => setAdminTab("settings")} className={`w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 ${adminTab === "settings" ? "bg-amber-500 text-black" : "text-gray-400"}`}><Settings size={16} /> <span>الإعدادات</span></button>
-                
-                <div className="mt-auto pt-4 hidden md:block border-t border-white/10 space-y-2">
-                  <button onClick={sendZReportToWhatsApp} className="w-full py-2 px-3 rounded-xl bg-emerald-600/20 border border-emerald-500/40 text-emerald-400 text-xs font-bold flex items-center justify-center gap-1.5"><Share2 size={13} /> <span>تصدير Z-Report</span></button>
-                  <button onClick={exportToCSV} className="w-full py-2 px-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center justify-center gap-1.5"><Download size={13} /> <span>تحميل Excel</span></button>
-                </div>
               </div>
 
               <div className="flex-1 p-4 overflow-y-auto space-y-5 bg-[#0C0E14]">
@@ -1220,81 +1105,6 @@ export default function RestaurantMenu() {
                       <div className="p-3.5 rounded-2xl bg-[#141721] border border-white/5"><span className="text-gray-400 text-xs">التوصيل</span><div className="my-2"><span className="text-xl font-black text-white">{money(reportsAnalytics.totalDelivery)}</span></div></div>
                       <div className="p-3.5 rounded-2xl bg-[#141721] border border-white/5"><span className="text-gray-400 text-xs">عدد الطلبات</span><div className="my-2"><span className="text-xl font-black text-white">{reportsAnalytics.totalOrders} أوردر</span></div></div>
                     </div>
-
-                    <div className="p-4 rounded-2xl bg-[#141721] border border-white/5 space-y-3">
-                      <h3 className="text-xs font-bold text-gray-300">إدارة وتحديث حالات الطلبات الحية ({filteredReportsData.length})</h3>
-                      <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
-                        {filteredReportsData.slice().reverse().map((row, idx) => {
-                          const orderId = String(row["رقم الأوردر"] || "");
-                          const currentStatus = String(row["حالة الطلب"] || "جديد");
-                          return (
-                            <div key={idx} className="p-3 rounded-2xl bg-[#1C202E] border border-white/10 text-xs space-y-2">
-                              <div className="flex justify-between items-center">
-                                <div><span className="font-black text-amber-400">{orderId}</span> - <span className="text-white font-bold">{row["اسم العميل"]}</span> ({row["رقم الموبايل"]})</div>
-                                <span className="text-amber-400 font-black">{money(row["الإجمالي النهائي"])}</span>
-                              </div>
-                              <div className="flex justify-between items-center text-[10px]">
-                                <span className="text-gray-300">🛍️ {row["تفاصيل الطلبات"]}</span>
-                                <div className="flex gap-1">
-                                  <button onClick={() => handleUpdateStatus(orderId, "جاري التحضير")} className={`px-2 py-1 rounded border ${currentStatus === "جاري التحضير" ? "bg-amber-400 text-black border-amber-400" : "bg-black/40 text-gray-300 border-white/10"}`}>تحضير</button>
-                                  <button onClick={() => handleUpdateStatus(orderId, "خرج للتوصيل")} className={`px-2 py-1 rounded border ${currentStatus === "خرج للتوصيل" ? "bg-amber-400 text-black border-amber-400" : "bg-black/40 text-gray-300 border-white/10"}`}>في الطريق</button>
-                                  <button onClick={() => handleUpdateStatus(orderId, "تم التسليم")} className={`px-2 py-1 rounded border ${currentStatus === "تم التسليم" ? "bg-emerald-500 text-white border-emerald-500" : "bg-black/40 text-gray-300 border-white/10"}`}>تسليم</button>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {adminTab === "items" && (
-                  <div className="space-y-3">
-                    <div className="flex justify-between"><p className="font-bold text-sm text-amber-400">إدارة الأصناف</p><button onClick={() => setItems([...items, { id: "n" + Date.now(), cat: "أصناف جديدة", name: "صنف جديد", price: 20 }])} className="px-3 py-1.5 rounded bg-amber-500 text-black text-xs font-bold">إضافة</button></div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {items.map(item => (
-                        <div key={item.id} className="p-3 rounded-xl bg-[#141721] border border-white/5 flex justify-between items-center text-xs">
-                          <div><p className="font-bold text-white">{item.name}</p><p className="text-gray-400">{money(item.price)}</p></div>
-                          <button onClick={() => setItems(items.filter(i => i.id !== item.id))} className="text-red-400"><Trash2 size={13}/></button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {adminTab === "customers" && (
-                  <div className="space-y-2">
-                    <p className="font-bold text-sm text-amber-400">قائمة العملاء</p>
-                    {reportsAnalytics.allCustomersList.map((c, i) => (
-                      <div key={i} className="p-3 rounded-xl bg-[#141721] border border-white/5 flex justify-between text-xs">
-                        <div><p className="font-bold text-white">{c.name}</p><p className="text-[10px] text-gray-400">{c.phone}</p></div>
-                        <span className="text-emerald-400 font-bold">{money(c.spent)}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {adminTab === "delivery" && (
-                  <div className="space-y-3">
-                    <p className="font-bold text-sm text-amber-400">مناطق التوصيل</p>
-                    <div className="flex gap-2">
-                      <input type="text" placeholder="المنطقة" value={newAreaName} onChange={e => setNewAreaName(e.target.value)} className="flex-1 p-2 bg-[#141721] rounded text-xs text-white" />
-                      <input type="number" placeholder="السعر" value={newAreaPrice} onChange={e => setNewAreaPrice(e.target.value)} className="w-24 p-2 bg-[#141721] rounded text-xs text-white" />
-                      <button onClick={() => { if(newAreaName && newAreaPrice) setDeliveryAreas([...deliveryAreas, {name: newAreaName, price: Number(newAreaPrice)}]); setNewAreaName(""); setNewAreaPrice(""); }} className="px-4 bg-emerald-600 rounded text-xs font-bold">إضافة</button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      {deliveryAreas.map((a, i) => (
-                        <div key={i} className="flex justify-between p-2.5 rounded bg-[#141721] text-xs"><span>{a.name} ({money(a.price)})</span><button onClick={() => setDeliveryAreas(deliveryAreas.filter((_, idx) => idx !== i))} className="text-red-400"><Trash2 size={12}/></button></div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {adminTab === "settings" && (
-                  <div className="space-y-3 max-w-lg mx-auto text-xs">
-                    <label className="block space-y-1"><span>اسم المطعم:</span><input value={restaurantName} onChange={e => setRestaurantName(e.target.value)} className="w-full p-2 bg-[#141721] rounded text-white" /></label>
-                    <label className="block space-y-1"><span>رقم واتساب:</span><input value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)} className="w-full p-2 bg-[#141721] rounded text-white" /></label>
                   </div>
                 )}
               </div>
@@ -1303,7 +1113,6 @@ export default function RestaurantMenu() {
         </div>
       )}
 
-      {/* PIN MODAL */}
       {pinModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
           <form onSubmit={handleVerifyPin} className="bg-[#111319] border border-amber-500/30 p-5 rounded-3xl space-y-3 w-full max-w-xs text-center">
@@ -1315,39 +1124,19 @@ export default function RestaurantMenu() {
         </div>
       )}
 
-      {/* SUCCESS ORDER MODAL */}
       {orderSuccess && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" dir="rtl">
           <div className="bg-[#111319] border border-amber-500/30 p-6 rounded-3xl text-center space-y-4 max-w-sm w-full">
             <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto text-2xl">✓</div>
-            <div className="space-y-1">
-              <h3 className="text-base font-black text-white">تم إرسال أوردرك بنجاح! 🎉</h3>
-              <p className="text-xs text-gray-400 leading-relaxed">تم تحويلك لواتساب المطعم. احتفظ برقم الأوردر أدناه لتتابع حالته في زر التتبع بالأعلى:</p>
-            </div>
-
+            <h3 className="text-base font-black text-white">تم إرسال أوردرك بنجاح! 🎉</h3>
             <div className="p-3 rounded-2xl bg-[#1A1D26] border border-amber-500/40 flex items-center justify-between">
-              <div className="text-right">
-                <span className="text-[10px] text-gray-400 block">رقم الأوردر الخاص بك:</span>
-                <span className="text-xs font-black text-amber-400 tracking-wider">{lastCreatedOrderId || "DC-ORDER-NEW"}</span>
-              </div>
-              <button 
-                onClick={() => {
-                  copyTextToClipboard(lastCreatedOrderId);
-                  alert("تم نسخ رقم الأوردر بنجاح! يمكنك استخدامه مباشرة في نافذة التتبع.");
-                }} 
-                className="px-3 py-1.5 rounded-xl bg-amber-400 text-black text-xs font-black flex items-center gap-1 active:scale-95"
-              >
-                <Copy size={13} /> <span>نسخ</span>
-              </button>
+              <span className="text-xs font-black text-amber-400">{lastCreatedOrderId}</span>
+              <button onClick={() => copyTextToClipboard(lastCreatedOrderId)} className="px-3 py-1.5 rounded-xl bg-amber-400 text-black text-xs font-black"><Copy size={13} /> نسخ</button>
             </div>
-
-            <button onClick={() => setOrderSuccess(false)} className="w-full py-2.5 rounded-xl bg-amber-400 text-black font-black text-xs shadow-md">
-              فهمت، شكراً لك
-            </button>
+            <button onClick={() => setOrderSuccess(false)} className="w-full py-2.5 rounded-xl bg-amber-400 text-black font-black text-xs">إغلاق</button>
           </div>
         </div>
       )}
-
     </div>
   );
 }
