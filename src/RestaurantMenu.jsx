@@ -5,13 +5,13 @@ import {
   MapPin, KeyRound, Share2, TrendingUp, Download, PieChart,
   Crown, Clock, Bike, Utensils, Trophy, Users, Home, ChevronLeft,
   Star, Percent, ShieldCheck, Headphones, ArrowUpRight, ArrowDownRight,
-  LayoutGrid, CheckCircle2, RefreshCw, DollarSign, Wallet, BarChart3, Flame
+  LayoutGrid, CheckCircle2, RefreshCw, DollarSign, Wallet, BarChart3
 } from "lucide-react";
 
 import restaurantLogo from "./assets/logo.png";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "37.0"; // v37.0: النسخة الكاملة النهائية مع ظهور InstaPay وفودافون كاش بوضوح وقراءة الشيت بدقة
+const MENU_VERSION = "38.0"; // v38.0: إصلاح الشاشة البيضاء في السلة وقراءة الشيت بذكاء
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxoJBFVMk_jbmuLC5w59zQko5tYn9NvoZ9iWWPnLyyBMf4u-J6OfArH6JhIU8UK95o/exec";
 const ADMIN_SECRET_KEY = "Adam";
 
@@ -167,7 +167,6 @@ export default function RestaurantMenu() {
   const [trackError, setTrackError] = useState("");
 
   const [googleReviewModalOpen, setGoogleReviewModalOpen] = useState(false);
-
   const [deliveryAreas, setDeliveryAreas] = useState(DEFAULT_DELIVERY_AREAS);
   const [newAreaName, setNewAreaName] = useState("");
   const [newAreaPrice, setNewAreaPrice] = useState("");
@@ -223,12 +222,9 @@ export default function RestaurantMenu() {
           method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "ping_visitor", visitorId })
         });
-        
         const res = await fetch(GOOGLE_SHEET_SCRIPT_URL + "?type=visitors");
         const data = await res.json();
-        if (data && data.activeVisitors) {
-          setActiveVisitors(data.activeVisitors);
-        }
+        if (data && data.activeVisitors) setActiveVisitors(data.activeVisitors);
       } catch (e) {}
     };
 
@@ -285,7 +281,6 @@ export default function RestaurantMenu() {
       nextCart[key] = Math.max(0, (c[key] || 0) + delta);
       return nextCart;
     });
-
     if (delta > 0) {
       setAnimateCart(true);
       setTimeout(() => setAnimateCart(false), 500);
@@ -314,7 +309,6 @@ export default function RestaurantMenu() {
     try {
       const res = await fetch(GOOGLE_SHEET_SCRIPT_URL + "?action=orders&adminKey=" + ADMIN_SECRET_KEY);
       const data = await res.json();
-      
       let rawOrders = [];
       if (Array.isArray(data)) rawOrders = data;
       else if (data && Array.isArray(data.orders)) rawOrders = data.orders;
@@ -334,7 +328,6 @@ export default function RestaurantMenu() {
         "مصاريف التوصيل": Number(row["مصاريف التوصيل"] || 0),
         "حالة الطلب": row["حالة الطلب"] || row["Status"] || "جديد"
       }));
-
       setReportsData(normalizedOrders);
     } catch (e) {
     } finally { setReportsLoading(false); }
@@ -363,7 +356,6 @@ export default function RestaurantMenu() {
         "مصاريف التوصيل": Number(row["مصاريف التوصيل"] || 0),
         "حالة الطلب": row["حالة الطلب"] || row["Status"] || "جديد"
       }));
-
       setReportsData(normalizedOrders);
     } catch (e) {}
   };
@@ -1049,7 +1041,7 @@ export default function RestaurantMenu() {
               </select>
 
               <div className="p-2.5 rounded-xl bg-[#1A1D26] space-y-1.5 border border-white/5">
-                <p className="text-[10px] text-gray-400 font-bold">موعد التوصيل المطلق:</p>
+                <p className="text-[10px] text-gray-400 font-bold">موعد التوصيل:</p>
                 <div className="grid grid-cols-2 gap-1.5 text-[10px]">
                   <button type="button" onClick={() => setScheduleType("now")} className={`py-1.5 rounded-lg border ${scheduleType === "now" ? "bg-amber-400 text-black font-bold" : "border-white/10 text-gray-300"}`}>⚡ فوري الآن</button>
                   <button type="button" onClick={() => setScheduleType("later")} className={`py-1.5 rounded-lg border ${scheduleType === "later" ? "bg-amber-400 text-black font-bold" : "border-white/10 text-gray-300"}`}>🕒 مجدول لاحقاً</button>
@@ -1125,7 +1117,7 @@ export default function RestaurantMenu() {
                 <div>
                   <h2 className="text-base font-black text-amber-400 flex items-center gap-1.5">
                     <span>الرئيسية | لوحة تحكم دريم كورنر</span>
-                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v36.0</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v38.0</span>
                   </h2>
                   <p className="text-[10px] text-gray-400">مرحباً بك في لوحة التحكّم والذكاء المالي 👋</p>
                 </div>
