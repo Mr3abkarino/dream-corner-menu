@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "39.0"; // v39.0: الكود الكامل المستقر مع السلة الأصلية وقراءة الشيت المحدثة
+const MENU_VERSION = "40.0"; // v40.0: المنيو الجديد بالكامل والأسعار المحدثة من صورة المطعم
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxoJBFVMk_jbmuLC5w59zQko5tYn9NvoZ9iWWPnLyyBMf4u-J6OfArH6JhIU8UK95o/exec";
 const ADMIN_SECRET_KEY = "Adam";
 
@@ -34,42 +34,57 @@ const COMING_SOON_OFFERS = [
 ];
 
 const DEFAULT_MENU = [
+  // البيتزا (حسب المنيو الجديد)
   { id: "p1", cat: "البيتزا", name: "بيتزا مارجريتا", desc: "صلصة طماطم غنية - موزاريللا صافية - ريحان", sizes: [{ label: "كبير", price: 90 }, { label: "وسط", price: 70 }, { label: "صغير", price: 45 }] },
-  { id: "p2", cat: "البيتزا", name: "بيتزا ميكس جبنة", desc: "تشكيلة أجبان فاخرة غرقانة موزاريللا وشيدر ورومي", isBestSeller: true, rank: 1, sizes: [{ label: "كبير", price: 120 }, { label: "وسط", price: 90 }, { label: "صغير", price: 60 }] },
+  { id: "p2", cat: "البيتزا", name: "بيتزا ميكس جبنة", desc: "تشكيلة أجبان فاخرة غرقانة موزاريللا وشيدر ورومي", isBestSeller: true, rank: 1, sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 105 }, { label: "صغير", price: 75 }] },
   { id: "p3", cat: "البيتزا", name: "بيتزا خضروات", desc: "فلفل - بصل - زيتون - طماطم - مشروم فريش", sizes: [{ label: "كبير", price: 120 }, { label: "وسط", price: 90 }, { label: "صغير", price: 60 }] },
-  { id: "p4", cat: "البيتزا", name: "بيتزا باربيكيو", desc: "قطع فراخ متبلة مع صلصة الباربيكيو والجبنة الموتزريلا", sizes: [{ label: "كبير", price: 160 }, { label: "وسط", price: 125 }, { label: "صغير", price: 85 }] },
-  { id: "p5", cat: "البيتزا", name: "بيتزا هوت دوج", desc: "قطع هوت دوج فاخرة مع الصوص الخاص", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 100 }, { label: "صغير", price: 70 }] },
-  { id: "p6", cat: "البيتزا", name: "بيتزا سجق", desc: "سجق مشوي بلدي طازج يومياً", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 100 }, { label: "صغير", price: 70 }] },
-  { id: "p7", cat: "البيتزا", name: "بيتزا لحمة مفرومة", desc: "لحم بقر مفروم مع التوابل الشرقية", sizes: [{ label: "كبير", price: 145 }, { label: "وسط", price: 110 }, { label: "صغير", price: 75 }] },
-  { id: "p8", cat: "البيتزا", name: "بيتزا بيروني", desc: "شرائح بيبيروني إيطالية شهية", sizes: [{ label: "كبير", price: 110 }, { label: "وسط", price: 90 }, { label: "صغير", price: 70 }] },
-  { id: "p9", cat: "البيتزا", name: "بيتزا سلامي", desc: "شرائح سلامي مدخن ممتازة", sizes: [{ label: "كبير", price: 110 }, { label: "وسط", price: 90 }, { label: "صغير", price: 70 }] },
-  { id: "p10", cat: "البيتزا", name: "بيتزا شاورما دجاج", desc: "قطع شاورما دجاج متبلة بالخلطة السحرية", isBestSeller: true, rank: 2, sizes: [{ label: "كبير", price: 155 }, { label: "وسط", price: 120 }, { label: "صغير", price: 80 }] },
-  { id: "p11", cat: "البيتزا", name: "بيتزا دجاج رانش", desc: "قطع دجاج مع صوص الرانش المفضل للجميع", sizes: [{ label: "كبير", price: 155 }, { label: "وسط", price: 120 }, { label: "صغير", price: 80 }] },
-  { id: "p12", cat: "البيتزا", name: "بيتزا دريم كورنر سبيشال", desc: "خلطة البيت الخاصة المميزة والمحشوة بالكامل", isBestSeller: true, rank: 3, sizes: [{ label: "كبير", price: 170 }, { label: "وسط", price: 130 }, { label: "صغير", price: 90 }] },
-  { id: "p13", cat: "البيتزا", name: "بيتزا كرانشي (حار أو بارد)", desc: "قطع دجاج مقرمشة حارة أو عادية", sizes: [{ label: "كبير", price: 130 }, { label: "وسط", price: 100 }, { label: "صغير", price: 80 }] },
-  { id: "p14", cat: "البيتزا", name: "بيتزا ميكس دجاج", desc: "توليفة دجاج كرانشي ورانش وشاورما", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 105 }, { label: "صغير", price: 85 }] },
+  { id: "p4", cat: "البيتزا", name: "بيتزا هوت دوج", desc: "قطع هوت دوج فاخرة مع الصوص الخاص", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 100 }, { label: "صغير", price: 70 }] },
+  { id: "p5", cat: "البيتزا", name: "بيتزا سجق", desc: "سجق مشوي بلدي طازج يومياً", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 100 }, { label: "صغير", price: 70 }] },
+  { id: "p6", cat: "البيتزا", name: "بيتزا لحم مفروم", desc: "لحم بقر مفروم مع التوابل الشرقية", sizes: [{ label: "كبير", price: 150 }, { label: "وسط", price: 120 }, { label: "صغير", price: 80 }] },
+  { id: "p7", cat: "البيتزا", name: "بيتزا بيروني", desc: "شرائح بيبيروني إيطالية شهية", sizes: [{ label: "كبير", price: 110 }, { label: "وسط", price: 90 }, { label: "صغير", price: 70 }] },
+  { id: "p8", cat: "البيتزا", name: "بيتزا سلامي", desc: "شرائح سلامي مدخن ممتازة", sizes: [{ label: "كبير", price: 135 }, { label: "وسط", price: 120 }, { label: "صغير", price: 80 }] },
+  { id: "p9", cat: "البيتزا", name: "بيتزا شاورما دجاج", desc: "قطع شاورما دجاج متبلة بالخلطة السحرية", isBestSeller: true, rank: 2, sizes: [{ label: "كبير", price: 155 }, { label: "وسط", price: 120 }, { label: "صغير", price: 80 }] },
+  { id: "p10", cat: "البيتزا", name: "بيتزا دجاج رانش", desc: "قطع دجاج مع صوص الرانش المفضل للجميع", sizes: [{ label: "كبير", price: 155 }, { label: "وسط", price: 120 }, { label: "صغير", price: 80 }] },
+  { id: "p11", cat: "البيتزا", name: "بيتزا دريم كورنر (سبيشال)", desc: "خلطة البيت الخاصة المميزة والمحشوة بالكامل", isBestSeller: true, rank: 3, sizes: [{ label: "كبير", price: 180 }, { label: "وسط", price: 135 }, { label: "صغير", price: 110 }] },
+  { id: "p12", cat: "البيتزا", name: "بيتزا كرانشي (حار أو بارد)", desc: "قطع دجاج مقرمشة حارة أو عادية", sizes: [{ label: "كبير", price: 150 }, { label: "وسط", price: 120 }, { label: "صغير", price: 90 }] },
+  { id: "p13", cat: "البيتزا", name: "بيتزا ميكس دجاج", desc: "توليفة دجاج كرانشي ورانش وشاورما", sizes: [{ label: "كبير", price: 150 }, { label: "وسط", price: 120 }, { label: "صغير", price: 90 }] },
+  { id: "p14", cat: "البيتزا", name: "بيتزا ميكس لحوم", desc: "توليفة لحوم وسجق وكبدة", sizes: [{ label: "كبير", price: 150 }, { label: "وسط", price: 120 }, { label: "صغير", price: 80 }] },
   { id: "p15", cat: "البيتزا", name: "حشو الأطراف", desc: "إضافة أطراف محشوة لأي بيتزا", sizes: [{ label: "كبير", price: 35 }, { label: "وسط", price: 30 }, { label: "صغير", price: 25 }] },
-  { id: "s1", cat: "السندوتشات", subcat: "اللحوم", name: "كفتة مشوية", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
-  { id: "s2", cat: "السندوتشات", subcat: "اللحوم", name: "سجق مشوي", sizes: [{ label: "كبير", price: 70 }, { label: "وسط", price: 60 }] },
-  { id: "s3", cat: "السندوتشات", subcat: "اللحوم", name: "كبدة إسكندراني", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
-  { id: "s4", cat: "السندوتشات", subcat: "اللحوم", name: "ميكس لحوم (سجق+كبدة)", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
-  { id: "s5", cat: "السندوتشات", subcat: "اللحوم", name: "حواوشي دبل طعم", price: 45 },
-  { id: "s6", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "تشكن بانية", sizes: [{ label: "كبير", price: 85 }, { label: "وسط", price: 70 }] },
-  { id: "s7", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "زنجر سوبريم", desc: "صدور دجاج حارة مقرمشة", isBestSeller: true, rank: 4, sizes: [{ label: "كبير", price: 95 }, { label: "وسط", price: 80 }] },
-  { id: "s8", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "سوبر كرانشي", sizes: [{ label: "كبير", price: 95 }, { label: "وسط", price: 80 }] },
-  { id: "s9", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "شيش طاووق", sizes: [{ label: "كبير", price: 90 }, { label: "وسط", price: 75 }] },
-  { id: "s10", cat: "السندوتشات", subcat: "ساندوتشات الدجاج", name: "تشكن رانش", sizes: [{ label: "كبير", price: 90 }, { label: "وسط", price: 75 }] },
-  { id: "s11", cat: "السندوتشات", subcat: "البرجر", name: "كلاسيك برجر", sizes: [{ label: "كبير", price: 65 }, { label: "وسط", price: 55 }] },
-  { id: "s12", cat: "السندوتشات", subcat: "البرجر", name: "تشيز برجر ليدر", sizes: [{ label: "كبير", price: 75 }, { label: "وسط", price: 65 }] },
-  { id: "s13", cat: "السندوتشات", subcat: "البرجر", name: "تشكن برجر مقرمش", sizes: [{ label: "كبير", price: 65 }, { label: "وسط", price: 50 }] },
-  { id: "s14", cat: "السندوتشات", subcat: "التوست", name: "ميكس توست جبن", price: 60 },
-  { id: "sd1", cat: "الأصناف الجانبية", name: "بطاطس مقلية ذهبية", price: 35 },
-  { id: "sd2", cat: "الأصناف الجانبية", name: "بطاطس بالجبنة الشيدر", price: 45 },
-  { id: "sd3", cat: "الأصناف الجانبية", name: "صوص رانش هوم ميد", price: 10 },
-  { id: "d1", cat: "المشروبات", name: "بيبسي كانز", price: 15 },
-  { id: "d2", cat: "المشروبات", name: "سفن أب كانز", price: 15 },
-  { id: "d3", cat: "المشروبات", name: "ميرندا برتقال كانز", price: 15 },
-  { id: "d4", cat: "المشروبات", name: "مياة معدنية صغيرة", price: 6 }
+
+  // السندوتشات - اللحوم
+  { id: "s1", cat: "السندوتشات", subcat: "اللحوم", name: "كفتة مشوية", sizes: [{ label: "كبير", price: 75 }] },
+  { id: "s2", cat: "السندوتشات", subcat: "اللحوم", name: "سجق", sizes: [{ label: "كبير", price: 70 }] },
+  { id: "s3", cat: "السندوتشات", subcat: "اللحوم", name: "كبدة إسكندراني", sizes: [{ label: "كبير", price: 75 }] },
+  { id: "s4", cat: "السندوتشات", subcat: "اللحوم", name: "ميكس لحوم (كفتة+سجق)", sizes: [{ label: "كبير", price: 75 }] },
+  { id: "s5", cat: "السندوتشات", subcat: "اللحوم", name: "حواوشي", price: 45 },
+
+  // السندوتشات - دجاج
+  { id: "s6", cat: "السندوتشات", subcat: "سندوتشات الدجاج", name: "تشكن بانية", sizes: [{ label: "كبير", price: 85 }] },
+  { id: "s7", cat: "السندوتشات", subcat: "سندوتشات الدجاج", name: "زنجر سوريم", isBestSeller: true, rank: 4, sizes: [{ label: "كبير", price: 95 }] },
+  { id: "s8", cat: "السندوتشات", subcat: "سندوتشات الدجاج", name: "سوبر كرانشي", sizes: [{ label: "كبير", price: 95 }] },
+  { id: "s9", cat: "السندوتشات", subcat: "سندوتشات الدجاج", name: "شيش طاووق", sizes: [{ label: "كبير", price: 90 }] },
+  { id: "s10", cat: "السندوتشات", subcat: "سندوتشات الدجاج", name: "تشكن رانش", sizes: [{ label: "كبير", price: 90 }] },
+  { id: "s15", cat: "السندوتشات", subcat: "سندوتشات الدجاج", name: "كوردون بلو", sizes: [{ label: "كبير", price: 95 }] },
+
+  // السندوتشات - البرجر
+  { id: "s11", cat: "السندوتشات", subcat: "البرجر", name: "كلاسيك برجر", sizes: [{ label: "كبير", price: 75 }] },
+  { id: "s12", cat: "السندوتشات", subcat: "البرجر", name: "تشيز برجر", sizes: [{ label: "كبير", price: 85 }] },
+  { id: "s13", cat: "السندوتشات", subcat: "البرجر", name: "تشيكن برجر", sizes: [{ label: "كبير", price: 75 }] },
+
+  // التوست
+  { id: "s14", cat: "التوست", subcat: "التوست", name: "ميكس توست", sizes: [{ label: "كبير", price: 65 }] },
+
+  // الأصناف الجانبية
+  { id: "sd1", cat: "الأصناف الجانبية", name: "بطاطا مقلية", price: 35 },
+  { id: "sd2", cat: "الأصناف الجانبية", name: "بطاطا بالجبنة الشيدر", price: 45 },
+  { id: "sd3", cat: "الأصناف الجانبية", name: "صوص رانش", price: 15 },
+  { id: "sd4", cat: "الأصناف الجانبية", name: "صوص باربيكيو", price: 15 },
+
+  // المشروبات
+  { id: "d1", cat: "المشروبات", name: "بييبسي", price: 15 },
+  { id: "d2", cat: "المشروبات", name: "سفن أب", price: 15 },
+  { id: "d3", cat: "المشروبات", name: "ميرندا", price: 15 },
+  { id: "d4", cat: "المشروبات", name: "مياة معدنية", price: 6 }
 ];
 
 const money = (n) => Number(n || 0).toLocaleString("en-US") + " جنيه";
@@ -78,11 +93,9 @@ const checkRestaurantStatus = () => {
   const nowInEgypt = new Date(new Date().toLocaleString("en-US", { timeZone: "Africa/Cairo" }));
   const hours = nowInEgypt.getHours();
   const minutes = nowInEgypt.getMinutes();
-  
   const currentMinutesTotal = hours * 60 + minutes;
   const openMinutes = 13 * 60; 
   const closeMinutes = 3 * 60; 
-
   const isOpen = currentMinutesTotal >= openMinutes || currentMinutesTotal < closeMinutes;
 
   return {
@@ -809,8 +822,7 @@ export default function RestaurantMenu() {
         <section className="max-w-3xl mx-auto px-4 pt-7 space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-xs font-black text-amber-400 flex items-center gap-1 uppercase tracking-wide">
-              <span className="text-red-500 animate-pulse">🔥</span>
-              <span>الأكثر طلباً الآن (تحديث حقيقي من الشيت)</span>
+              <span>🔥 الأكثر طلباً الآن (تحديث حقيقي من الشيت)</span>
             </h2>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -1048,7 +1060,7 @@ export default function RestaurantMenu() {
               </select>
 
               <div className="p-2.5 rounded-xl bg-[#1A1D26] space-y-1.5 border border-white/5">
-                <p className="text-[10px] text-gray-400 font-bold">موعد التوصيل:</p>
+                <p className="text-[10px] text-gray-400 font-bold">موعد التوصيل المطلق:</p>
                 <div className="grid grid-cols-2 gap-1.5 text-[10px]">
                   <button type="button" onClick={() => setScheduleType("now")} className={`py-1.5 rounded-lg border ${scheduleType === "now" ? "bg-amber-400 text-black font-bold" : "border-white/10 text-gray-300"}`}>⚡ فوري الآن</button>
                   <button type="button" onClick={() => setScheduleType("later")} className={`py-1.5 rounded-lg border ${scheduleType === "later" ? "bg-amber-400 text-black font-bold" : "border-white/10 text-gray-300"}`}>🕒 مجدول لاحقاً</button>
@@ -1062,24 +1074,44 @@ export default function RestaurantMenu() {
               </div>
 
               <div className="space-y-2 pt-1">
-                <p className="text-[11px] font-bold text-amber-400">طريقة الدفع:</p>
+                <p className="text-[11px] font-bold text-amber-400">اختر طريقة الدفع المفضلة:</p>
                 <div className="grid grid-cols-2 gap-1.5">
                   <button type="button" onClick={() => setPaymentMethod("cash")} className={`py-2 rounded-xl border text-[10px] font-bold flex items-center justify-center gap-1 ${paymentMethod === "cash" ? "bg-amber-400 text-black border-amber-400" : "border-white/10 text-gray-300 bg-[#1A1D26]"}`}><DollarSign size={13}/> كاش</button>
                   <button type="button" onClick={() => setPaymentMethod("electronic")} className={`py-2 rounded-xl border text-[10px] font-bold flex items-center justify-center gap-1 ${paymentMethod === "electronic" ? "bg-amber-400 text-black border-amber-400" : "border-white/10 text-gray-300 bg-[#1A1D26]"}`}><Wallet size={13}/> دفع إلكتروني</button>
                 </div>
+
                 {paymentMethod === "electronic" && (
-                  <div className="p-3 rounded-2xl bg-black/50 border border-amber-500/30 space-y-2 text-[10px]">
-                    <p className="text-amber-400 text-center font-bold">حول وارسض اسكرين شوت بالتحويل:</p>
+                  <div className="p-3.5 rounded-2xl bg-black/60 border border-amber-500/40 space-y-2.5 text-[11px]">
+                    <p className="text-amber-300 text-center font-black">تحويل فوري عبر الوسائل الآتية وارسس سكرين شوت بالتحويل:</p>
                     
-                    <div className="flex items-center justify-between p-2 rounded-xl bg-[#1A1D26]">
-                      <div><p className="text-[9px] text-gray-400">فودافون كاش</p><p className="font-bold text-white" dir="ltr">{vodafoneCash}</p></div>
-                      <button type="button" onClick={() => copyText("vodafone", vodafoneCash)} className="p-1.5 rounded-lg border border-white/10 text-amber-300">{copied === "vodafone" ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}</button>
+                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#1A1D26] border border-white/5">
+                      <div className="flex items-center gap-2">
+                        <Phone size={14} className="text-amber-400" />
+                        <div>
+                          <p className="text-[9px] text-gray-400">فودافون كاش</p>
+                          <p className="font-black text-white" dir="ltr">{vodafoneCash}</p>
+                        </div>
+                      </div>
+                      <button type="button" onClick={() => copyText("vodafone", vodafoneCash)} className="px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 font-bold flex items-center gap-1 text-[10px]">
+                        {copied === "vodafone" ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+                        <span>{copied === "vodafone" ? "تم" : "نسخ"}</span>
+                      </button>
                     </div>
 
-                    <div className="flex items-center justify-between p-2 rounded-xl bg-[#1A1D26]">
-                      <div><p className="text-[9px] text-gray-400">حساب InstaPay</p><p className="font-bold text-white" dir="ltr">{instapay}</p></div>
-                      <button type="button" onClick={() => copyText("instapay", instapay)} className="p-1.5 rounded-lg border border-white/10 text-amber-300">{copied === "instapay" ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}</button>
+                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#1A1D26] border border-white/5">
+                      <div className="flex items-center gap-2">
+                        <CreditCard size={14} className="text-amber-400" />
+                        <div>
+                          <p className="text-[9px] text-gray-400">حساب InstaPay</p>
+                          <p className="font-black text-white" dir="ltr">{instapay}</p>
+                        </div>
+                      </div>
+                      <button type="button" onClick={() => copyText("instapay", instapay)} className="px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 font-bold flex items-center gap-1 text-[10px]">
+                        {copied === "instapay" ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+                        <span>{copied === "instapay" ? "تم" : "نسخ"}</span>
+                      </button>
                     </div>
+
                   </div>
                 )}
               </div>
@@ -1104,7 +1136,7 @@ export default function RestaurantMenu() {
                 <div>
                   <h2 className="text-base font-black text-amber-400 flex items-center gap-1.5">
                     <span>الرئيسية | لوحة تحكم دريم كورنر</span>
-                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v39.0</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">Enterprise v40.0</span>
                   </h2>
                   <p className="text-[10px] text-gray-400">مرحباً بك في لوحة التحكّم والذكاء المالي 👋</p>
                 </div>
