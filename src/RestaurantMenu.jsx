@@ -7,13 +7,14 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "40.0"; // v40.0: المنيو الجديد بالكامل والأسعار المحدثة من صورة المطعم
+const MENU_VERSION = "41.0"; // v41.0: المنيو الجديد بالكامل والأسعار المحدثة من صورة المطعم
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxoJBFVMk_jbmuLC5w59zQko5tYn9NvoZ9iWWPnLyyBMf4u-J6OfArH6JhIU8UK95o/exec";
 const ADMIN_SECRET_KEY = "Adam";
 
 const DEFAULT_DELIVERY_AREAS = [
   { name: "البرامون (داخل البلد)", price: 10 },
-  { name: "البرامون (بر الترعة)", price: 20 },
+  { name: "البرامون (بر الترعة)", price: 25 },
+  { name: "عزبة القصبي", price: 15 },
   { name: "سرسو البرامون", price: 30 },
   { name: "البدالة", price: 40 },
   { name: "الخيارية", price: 50 },
