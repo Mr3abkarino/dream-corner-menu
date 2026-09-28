@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 const LOGO_SRC = restaurantLogo;
-const MENU_VERSION = "42.0"; // v42.0: المنيو الجديد بالكامل والأسعار المحدثة من صورة المطعم
+const MENU_VERSION = "43.0"; // v42.0: المنيو الجديد بالكامل والأسعار المحدثة من صورة المطعم
 const GOOGLE_SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxoJBFVMk_jbmuLC5w59zQko5tYn9NvoZ9iWWPnLyyBMf4u-J6OfArH6JhIU8UK95o/exec";
 const ADMIN_SECRET_KEY = "Adam";
 
@@ -82,9 +82,9 @@ const DEFAULT_MENU = [
   { id: "sd4", cat: "الأصناف الجانبية", name: "صوص باربيكيو", price: 15 },
 
   // المشروبات
-  { id: "d1", cat: "المشروبات", name: "بييبسي", price: 15 },
-  { id: "d2", cat: "المشروبات", name: "سفن أب", price: 15 },
-  { id: "d3", cat: "المشروبات", name: "ميرندا", price: 15 },
+  { id: "d1", cat: "المشروبات", name: "بييبسي", price: 20 },
+  { id: "d2", cat: "المشروبات", name: "سفن أب", price: 20 },
+  { id: "d3", cat: "المشروبات", name: "ميرندا", price: 20 },
   { id: "d4", cat: "المشروبات", name: "مياة معدنية", price: 6 }
 ];
 
